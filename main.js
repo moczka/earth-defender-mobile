@@ -511,7 +511,7 @@ function canvasApp(){
 		if(!userAgent.mobile){
 			mainCanvas.width = 600;
 			mainCanvas.height = 480;
-			mainCanvas.setAttribute('style', 'width: 600; height: 480;');
+			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
 		}
 		
 		loopOn = true;
@@ -542,7 +542,7 @@ function canvasApp(){
 	}
 	
 	function onTouchStart(e){
-		e.preventDefault();
+		//e.preventDefault();
 	}
 	
 	function startPlaying(){
