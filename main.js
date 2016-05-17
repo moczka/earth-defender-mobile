@@ -47,7 +47,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 8;
+	var itemsToLoad = 7;
 	var loadCount = 0;
 	var loopOn = false;
 	var shipSprite; 
