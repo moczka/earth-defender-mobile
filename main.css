@@ -1,0 +1,97 @@
+html, body{
+	margin: 0;
+	padding: 0;
+}
+
+canvas{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	background: transparent;
+}
+
+span{
+	font-family: Helvetica, Ariel, sans-serif;
+	color: #00FF00;
+	cursor: default;
+}
+a{
+	color: #00FF00;
+	cursor: pointer;
+	text-decoration: none;
+}
+
+a:hover{
+	color: aqua;
+}
+
+h1{
+	font-family: Helvetica, Ariel, sans-serif;
+	color: #FFFFFF;
+	letter-spacing: -1px;
+	font-size: 35px;
+	cursor: default;
+}
+
+button{
+	clear:both;
+}
+
+#bgCanvas{
+	background: '#000000';
+	z-index: -1;
+}
+
+.orientationMessage{
+	width: 250px;
+	margin: 100px auto;
+	text-align: center;
+	display: none;
+}
+
+.gamePlay{
+	position: absolute;
+	top: 0px;
+	left: 0px;
+}
+.gamePlay span{
+	font-size: 18px;
+	margin-left: 55px;
+}
+.gameStart{
+	position: absolute;
+	top: 140px;
+	left: 140px;
+	text-align: center;
+}
+.gameStart{
+	font-size: 18px;
+}
+.gameStart span:hover{
+	color: aqua;
+	cursor: pointer;
+}
+.gameStart span{
+	display: block;
+	margin-bottom: 20px;
+}
+
+
+.gameOver{
+	position: absolute;
+	top: 220px;
+	left: 220px;
+	text-align: center;
+}
+.gameOver span{
+	display: block;
+	font-size: 30px;
+}
+#restart{
+	clear: both;
+	font-size: 18px;
+}
+#restart:hover{
+	color: red;
+	cursor: pointer;
+}
