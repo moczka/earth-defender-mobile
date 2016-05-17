@@ -47,7 +47,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 24;
+	var itemsToLoad = 8;
 	var loadCount = 0;
 	var loopOn = false;
 	var shipSprite; 
@@ -527,7 +527,7 @@ function canvasApp(){
 			userAgent.portrait = true;
 			orientationMessageHolder.setAttribute('style', 'display: block;');
 			canvasHolder.setAttribute('style', 'display:none;');
-		}else if(window.innerHeight<=window.innerWidth && appState == STATE_LOADING){
+		}else if(window.innerHeight<=window.innerWidth && appState == STATE_LOADING && loadCount == itemsToLoad){
 			mainCanvas.width = window.innerWidth;
 			orientationMessageHolder.setAttribute('style', '');
 			canvasHolder.setAttribute('style', '');
@@ -1043,7 +1043,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 					var explosion = new Audio('assets/sounds/explosion'+supportedFormat);
 					explosion.volume = 0.50;
 					explosion.load();
-					explosion.addEventListener('canplaythrough', onAssetsLoad, false);
+					//explosion.addEventListener('canplaythrough', onAssetsLoad, false);
 					pool[i] = explosion;
 				}
 			}else if(object == "shoot"){
@@ -1051,7 +1051,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 					var shoot = new Audio('assets/sounds/shoot'+supportedFormat);
 					shoot.volume = 0.50;
 					shoot.load();
-					shoot.addEventListener('canplaythrough', onAssetsLoad, false);
+					//shoot.addEventListener('canplaythrough', onAssetsLoad, false);
 					pool[i] = shoot;
 				}
 			}
