@@ -425,6 +425,8 @@ function canvasApp(){
 		gameStartHolder.setAttribute('style', 'display: block');
 		startButton.addEventListener('click', onStartClick, false);
 		
+		console.log(userAgent);
+		
 		appState = STATE_START_ANIMATION;
 	}
 	
