@@ -432,18 +432,17 @@ function canvasApp(){
 	
 	function introAnimation(){
 		background.draw();
-		mainContext.drawImage(earthSprite, 0, 0);
+		mainContext.drawImage(earthSprite, (mainCanvas.width/2-(earthSprite.width/2)), 0);
 		enemyOne.follow(mouse);
 		enemyTwo.follow(mouse);
 		enemyThree.follow(mouse);
 		enemyOne.draw();
 		enemyTwo.draw();
 		enemyThree.draw();
-		
-		
 	}
 	
 	function onMouseMove(event){
+		
 		if ( event.layerX ||  event.layerX == 0) { // Firefox
    			mouse.x = event.layerX ;
     		mouse.y = event.layerY;
@@ -451,6 +450,9 @@ function canvasApp(){
     		mouse.x = event.offsetX;
     		mouse.y = event.offsetY;
   		}
+		
+		mainContext.fillStyle = '#FF0000';
+		mainContext.fillRect(mouse.x, mouse.y, 10, 10);
 	}
 	
 	function onStartClick(e){
@@ -493,7 +495,7 @@ function canvasApp(){
 		if(userAgent.platform != "Win32" && userAgent.platform != "MacIntel"){
 			userAgent.mobile = true;
 			window.addEventListener('resize', onOrientationChange, false);
-			document.addEventListener('touchstart', onTouchStart, false);
+			document.addEventListener('touchmove', onTouchMove, false);
 			if(window.innerHeight>= window.innerWidth){
 				orientationMessageHolder.setAttribute('style', 'display:block;');
 				canvasHolder.setAttribute('style', 'display:none;');
@@ -512,6 +514,8 @@ function canvasApp(){
 			mainCanvas.width = 600;
 			mainCanvas.height = 480;
 			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
+		}else{
+			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 50px auto;');
 		}
 		
 		loopOn = true;
@@ -534,17 +538,8 @@ function canvasApp(){
 		
 	}
 	
-	function onTouchStart(e){
-		//e.preventDefault();
-	}
-	
-	function startPlaying(){
-		console.log('Start playing function is running');
-		mainContext.fillStyle = "#000";
-		mainContext.fillRect(0,0,mainCanvas.width, mainCanvas.height);
-		mainContext.strokeStyle = '#00FF00';
-		mainContext.lineWidth = 5;
-		mainContext.strokeRect(0,0,mainCanvas.width, mainCanvas.height);
+	function onTouchMove(e){
+		e.preventDefault();
 	}
 	
 	function runState(){
