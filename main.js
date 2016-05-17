@@ -507,13 +507,16 @@ function canvasApp(){
 	
 	function setAspectRatio(){
 		
+		/*
 		if(userAgent.mobile){
-			mainCanvas.width = window.screen.availHeight;
+			
 
 		}else{
 			mainCanvas.width = 600;
 			mainCanvas.height = 480;
 		}
+		*/
+		
 		
 		loopOn = true;
 		appState = STATE_INIT;
@@ -533,7 +536,7 @@ function canvasApp(){
 			orientationMessageHolder.setAttribute('style', 'display: block;');
 			canvasHolder.setAttribute('style', 'display:none;');
 		}else if(window.innerHeight<=window.innerWidth && appState == STATE_LOADING && loadCount == itemsToLoad){
-			mainCanvas.width = window.innerWidth;
+			//mainCanvas.width = window.innerWidth;
 			orientationMessageHolder.setAttribute('style', '');
 			canvasHolder.setAttribute('style', '');
 			userAgent.portrait = false;

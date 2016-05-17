@@ -2,7 +2,7 @@ html, body{
 	margin: 0;
 	padding: 0;
 	overflow: hidden;
-	width: 100%;
+	height: 100%;
 }
 
 :webkit-full-screen{
@@ -11,15 +11,12 @@ html, body{
  }
 
 canvas{
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	background: transparent;
     overflow: hidden;
     image-rendering: optimizeSpeed;
     -ms-interpolation-mode: nearest-neighbor;
     -webkit-optimize-contrast;
-     height:480px;
+     height:100%;
+	 width: 100%;
 }
 
 span{
