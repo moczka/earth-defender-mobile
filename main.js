@@ -363,13 +363,15 @@ function canvasApp(){
 		
 	}
 	function onAssetsLoad(e){
+		
+		/*
 		var target = e.target;
 		
 		if(target.tagName == "AUDIO"){
 			target.removeEventListener('canplaythrough', onAssetsLoad, false);
 		}else if(target.tagName == "IMG"){
 			target.removeEventListener('load', onAssetsLoad, false);
-		}
+		}*/
 	
 		loadCount++;
 		background.drawProgress(loadCount, itemsToLoad);
