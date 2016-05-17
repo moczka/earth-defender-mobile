@@ -515,13 +515,17 @@ function canvasApp(){
 	}
 	
 	function onOrientationChange(e){
-		appState = STATE_LOADING;
-		
-		if(window.innerHeight>= window.innerWidth){
+
+		if(window.innerHeight>= window.innerWidth && appState == STATE_PLAYING){
+			appState = STATE_LOADING;
 			userAgent.portrait = true;
 			orientationMessageHolder.setAttribute('style', 'display: block;');
 			canvasHolder.setAttribute('style', 'display:none;');
-		}else{
+		}else if(window.innerHeight>=window.innerWidth && appState != STATE_PLAYING){
+			userAgent.portrait = true;
+			orientationMessageHolder.setAttribute('style', 'display: block;');
+			canvasHolder.setAttribute('style', 'display:none;');
+		}else if(window.innerHeight<=window.innerWidth && appState == STATE_LOADING){
 			mainCanvas.width = window.innerWidth;
 			orientationMessageHolder.setAttribute('style', '');
 			canvasHolder.setAttribute('style', '');
