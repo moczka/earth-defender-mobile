@@ -507,16 +507,12 @@ function canvasApp(){
 	
 	function setAspectRatio(){
 		
-		/*
-		if(userAgent.mobile){
-			
-
-		}else{
+		
+		if(!userAgent.mobile){
 			mainCanvas.width = 600;
 			mainCanvas.height = 480;
+			mainCanvas.setAttribute('style', 'width: 600; height: 480;');
 		}
-		*/
-		
 		
 		loopOn = true;
 		appState = STATE_INIT;
@@ -546,7 +542,7 @@ function canvasApp(){
 	}
 	
 	function onTouchStart(e){
-		//e.preventDefault();
+		e.preventDefault();
 	}
 	
 	function startPlaying(){
