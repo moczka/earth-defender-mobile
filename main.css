@@ -52,6 +52,7 @@ button{
 }
 
 .orientationMessage{
+	margin: 100px auto;
 	text-align: center;
 	display: none;
 }

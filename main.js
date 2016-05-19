@@ -345,7 +345,7 @@ function canvasApp(){
 		
 		futureVel = Math.sqrt(futureVelX*futureVelX+futureVelY*futureVelY);
 		
-		if(futureVel >= 10){
+		if(futureVel >= 5){
 			futureVelX = playerOne.velX;
 		    futureVelY = playerOne.velY;
 		}
