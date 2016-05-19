@@ -80,6 +80,10 @@ function canvasApp(){
 	var currentScore = 0;
 	var currentLevel = 1;
 	
+	//mobile acceleration
+	var ax, ay;
+	var friction = 0.005;
+	
 	
 	var soundTrack;
 	
@@ -142,6 +146,9 @@ function canvasApp(){
 		frameRate.countFrames();
 		
 		frameRateCounter.innerHTML = "Frames: "+frameRate.lastFrameCount;
+		
+		playerOne.velX -= playerOne.velX*friction;
+		playerOne.velY -= playerOne.velY*friction;
 		
 		checkBoundary(playerOne);
 		playerOne.draw();
@@ -316,6 +323,50 @@ function canvasApp(){
 		
 	}
 	
+	function devMotionHandler(e){
+		
+		if(playerOne.src == ""){
+			return;
+		}
+		
+		var futureVelX, futureVelY, futureVel;
+		
+		ax = (e.accelerationIncludingGravity.x)/5;
+		ay = (e.accelerationIncludingGravity.y)/5;
+		
+		var landscapeOrientation = window.innerWidth/window.innerHeight > 1;
+		if (landscapeOrientation) {
+			futureVelX = playerOne.velX-ay;
+			futureVelY = playerOne.velY-ax;
+		} else {
+			futureVelX = playerOne.velX+ax;
+			futureVelY = playerOne.velY-ay;
+		}
+		
+		futureVel = Math.sqrt(futureVelX*futureVelX+futureVelY*futureVelY);
+		
+		if(futureVel >= 10){
+			futureVelX = playerOne.velX;
+		    futureVelY = playerOne.velY;
+		}
+		
+		playerOne.velX = futureVelX;
+		playerOne.velY = futureVelY;	
+		playerOne.angle = Math.atan2(playerOne.velY, playerOne.velX);
+		
+	}
+	
+	function onTouchEndHandler(e){
+		//handles the touch end event
+		if(playerOne.src == ""){
+			return;
+		}
+		
+		
+		playerOne.shoot();
+		shootSoundPool.get();
+		
+	}
 	
 	function onKeyUp(e){
 		e.preventDefault();
@@ -457,8 +508,6 @@ function canvasApp(){
 	
 	function onStartClick(e){
 		var target = e.target;
-		document.addEventListener('keyup', onKeyUp, false);
-		document.addEventListener('keydown', onKeyDown, false);
 		
 		mainCanvas.removeEventListener('mousemove', onMouseMove, false);
 		target.removeEventListener('click', onStartClick, false);
@@ -514,8 +563,12 @@ function canvasApp(){
 			mainCanvas.width = 600;
 			mainCanvas.height = 480;
 			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
+			document.addEventListener('keyup', onKeyUp, false);
+			document.addEventListener('keydown', onKeyDown, false);
 		}else{
-			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 50px auto;');
+			window.addEventListener('touchend', onTouchEndHandler, false);
+			window.addEventListener('devicemotion', devMotionHandler, false);
+			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 25px auto;');
 		}
 		
 		loopOn = true;
@@ -713,9 +766,9 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			this.context.fillStyle = '#000000';
 			this.context.fillRect(0,0, this.canvasWidth, this.canvasHeight);
 			this.context.strokeStyle = '#FFFFFF';
-			this.context.strokeRect(100, this.canvasHeight/2-40, progressBarWidth, progressBarHeight);
+			this.context.strokeRect(225, this.canvasHeight/2-40, progressBarWidth, progressBarHeight);
 			this.context.fillStyle = '#FFFFFF';
-			this.context.fillRect(100, this.canvasHeight/2-40, (progressBarWidth*(loaded/toLoad)), progressBarHeight);
+			this.context.fillRect(225, this.canvasHeight/2-40, (progressBarWidth*(loaded/toLoad)), progressBarHeight);
 			this.context.font = '20px Ariel';
 			this.context.textAlign = 'center';
 			this.context.fillText('Loading...', this.canvasWidth/2, this.canvasHeight/2+40);
