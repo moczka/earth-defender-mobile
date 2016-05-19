@@ -52,10 +52,12 @@ button{
 }
 
 .orientationMessage{
-	width: 250px;
-	margin: 100px auto;
 	text-align: center;
 	display: none;
+}
+
+.orientationMessage img{
+	width: 100%;
 }
 
 .gamePlay{

@@ -766,9 +766,9 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			this.context.fillStyle = '#000000';
 			this.context.fillRect(0,0, this.canvasWidth, this.canvasHeight);
 			this.context.strokeStyle = '#FFFFFF';
-			this.context.strokeRect(225, this.canvasHeight/2-40, progressBarWidth, progressBarHeight);
+			this.context.strokeRect((this.canvasWidth-400)/2, this.canvasHeight/2-40, progressBarWidth, progressBarHeight);
 			this.context.fillStyle = '#FFFFFF';
-			this.context.fillRect(225, this.canvasHeight/2-40, (progressBarWidth*(loaded/toLoad)), progressBarHeight);
+			this.context.fillRect((this.canvasWidth-400)/2, this.canvasHeight/2-40, (progressBarWidth*(loaded/toLoad)), progressBarHeight);
 			this.context.font = '20px Ariel';
 			this.context.textAlign = 'center';
 			this.context.fillText('Loading...', this.canvasWidth/2, this.canvasHeight/2+40);
