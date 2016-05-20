@@ -356,7 +356,10 @@ function canvasApp(){
 	}
 	
 	function onTouchStart(e){
-		playerOne.shieldActive = true;
+		if(e.targetTouches.length >= 1){
+			//if more than one finger on screen. activate shield
+			playerOne.shieldActive = true;
+		}
 	}
 	function onTouchEndHandler(e){
 		//handles the touch end event
@@ -451,33 +454,18 @@ function canvasApp(){
 		
 		enemyOne.setCanvas(mainCanvas);
 		enemyOne.init(500, 340, enemySprite, 1);
-		//enemyOne.alive = true;
-		//enemyOne.x = 500;
-		//enemyOne.y = 320;
-		
-		
+	
 		enemyTwo.setCanvas(mainCanvas);
 		enemyTwo.init(300,400, enemySprite,1);
-		//enemyTwo.alive = true;
-		//enemyTwo.x = 230;
-		//enemyTwo.y = 150;
+
 		
 		console.log(enemyOne);
 		console.log(enemyTwo);
 		console.log(enemyThree);
-		
-		
-		
+			
 		enemyThree.setCanvas(mainCanvas);
 		enemyThree.init(560, 380, enemySprite,1);
-		//enemyThree.alive = true;
-		//enemyThree.x = 314;
-		//enemyThree.y = 80;
-		
-		
-		
-		
-		
+
 		playerOne.thrustAccel = 0.10;
 		
 		mainCanvas.addEventListener('mousemove', onMouseMove, false);
