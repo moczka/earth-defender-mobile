@@ -399,6 +399,7 @@ function canvasApp(){
 		
 		
 		microSound.src = 'assets/sounds/microSound'+supportedFormat;
+		microSound.load();
 		microSound.addEventListener('canplaythrough', onAssetsLoad, false);
 		earthSprite.src = 'assets/sprites/earth.png';
 		earthSprite.addEventListener('load', onAssetsLoad, false);
