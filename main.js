@@ -47,7 +47,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 7;
+	var itemsToLoad = 8;
 	var loadCount = 0;
 	var loopOn = false;
 	var shipSprite; 
@@ -84,6 +84,8 @@ function canvasApp(){
 	var ax, ay;
 	var friction = 0.005;
 	
+	//adds the micro sound for chrome
+	var microSound;
 	
 	var soundTrack;
 	
@@ -346,8 +348,8 @@ function canvasApp(){
 		futureVel = Math.sqrt(futureVelX*futureVelX+futureVelY*futureVelY);
 		
 		if(futureVel >= 5){
-			futureVelX = playerOne.velX;
-		    futureVelY = playerOne.velY;
+			futureVelX = playerOne.velX;   
+		    futureVelY = playerOne.velY; 
 		}
 		
 		playerOne.velX = futureVelX;
@@ -356,15 +358,18 @@ function canvasApp(){
 		
 	}
 	
+	function onTouchStart(e){
+		playerOne.shieldActive = true;
+	}
 	function onTouchEndHandler(e){
 		//handles the touch end event
-		if(playerOne.src == ""){
+		if(appState != STATE_PLAYING){
 			return;
 		}
 		
-		
 		playerOne.shoot();
 		shootSoundPool.get();
+		playerOne.shieldActive = false;
 		
 	}
 	
@@ -393,7 +398,11 @@ function canvasApp(){
 		backgroundSprite = new Image();
 		soundTrack = new Audio();
 		earthSprite = new Image();
+		microSound = new Audio();
 		
+		
+		microSound.src = 'assets/sounds/microSound'+supportedFormat;
+		microSound.addEventListener('canplaythrough', onAssetsLoad, false);
 		earthSprite.src = 'assets/sprites/earth.png';
 		earthSprite.addEventListener('load', onAssetsLoad, false);
 		soundTrack.src = 'assets/sounds/soundtrack.mp3';
@@ -418,14 +427,14 @@ function canvasApp(){
 	}
 	function onAssetsLoad(e){
 		
-		/*
+		//removes event listeners of loaded items
 		var target = e.target;
 		
 		if(target.tagName == "AUDIO"){
 			target.removeEventListener('canplaythrough', onAssetsLoad, false);
 		}else if(target.tagName == "IMG"){
 			target.removeEventListener('load', onAssetsLoad, false);
-		}*/
+		}
 	
 		loadCount++;
 		background.drawProgress(loadCount, itemsToLoad);
@@ -509,6 +518,9 @@ function canvasApp(){
 	function onStartClick(e){
 		var target = e.target;
 		
+		microSound.volume = 0.0;
+		microSound.play();
+		
 		mainCanvas.removeEventListener('mousemove', onMouseMove, false);
 		target.removeEventListener('click', onStartClick, false);
 		gameStartHolder.setAttribute('style', 'display: none;');
@@ -517,6 +529,20 @@ function canvasApp(){
 		
 		soundTrack.play();
 		soundTrack.loop = true;
+		
+		if(userAgent.mobile){
+			//add game controls for mobile devices based on motion
+			window.addEventListener('touchend', onTouchEndHandler, false);
+			window.addEventListener('devicemotion', devMotionHandler, false);
+			//adds listener for touch move to remove the default behavior
+			document.addEventListener('touchmove', onTouchMove, false);
+			window.addEventListener('touchstart', onTouchStart, false);
+			
+		}else{
+			//add game control for desktop based on keyboard events
+		 	document.addEventListener('keyup', onKeyUp, false);
+			document.addEventListener('keydown', onKeyDown, false);
+		}
 		
 		appState = STATE_PLAYING;
 	}
@@ -544,7 +570,6 @@ function canvasApp(){
 		if(userAgent.platform != "Win32" && userAgent.platform != "MacIntel"){
 			userAgent.mobile = true;
 			window.addEventListener('resize', onOrientationChange, false);
-			document.addEventListener('touchmove', onTouchMove, false);
 			if(window.innerHeight>= window.innerWidth){
 				orientationMessageHolder.setAttribute('style', 'display:block;');
 				canvasHolder.setAttribute('style', 'display:none;');
@@ -563,11 +588,7 @@ function canvasApp(){
 			mainCanvas.width = 600;
 			mainCanvas.height = 480;
 			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
-			document.addEventListener('keyup', onKeyUp, false);
-			document.addEventListener('keydown', onKeyDown, false);
 		}else{
-			window.addEventListener('touchend', onTouchEndHandler, false);
-			window.addEventListener('devicemotion', devMotionHandler, false);
 			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 25px auto;');
 		}
 		
