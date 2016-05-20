@@ -43,6 +43,7 @@ function canvasApp(){
 	const STATE_GAME_RESET = 50;
 	const STATE_GAME_OVER = 60;
 		var appState;
+		var previousAppState;
 	
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
@@ -177,9 +178,11 @@ function canvasApp(){
 		
 		
 		
-		
+		if(!userAgent.mobile){
 		keyControl(playerOne);
-		
+		}
+			
+			
 		for(var i=0; i<enemyOne.missiles.length; i++){
 			var currentEnemyMissle = enemyOne.missiles[i];
 			if(currentEnemyMissle.alive){
@@ -266,14 +269,8 @@ function canvasApp(){
 		gameLoop();
 	}
 	if(keyPressList[DOWN_ARROW]){
-		if(shieldSound.ended){
-			object.shieldDisabled = false;
-			object.shieldActive = false;
-			return;
-		}
-		object.shieldActive = (object.shieldDisabled)? false: true;
-		shieldSound.play();
-	}else{
+		object.shieldActive = true;
+	}else if(keyPressList[DOWN_ARROW] == false){
 		object.shieldActive = false;
 	}
 
@@ -364,7 +361,7 @@ function canvasApp(){
 	function onTouchEndHandler(e){
 		//handles the touch end event
 		if(appState != STATE_PLAYING){
-			return;
+			return; 
 		}
 		
 		playerOne.shoot();
@@ -429,14 +426,15 @@ function canvasApp(){
 		
 		//removes event listeners of loaded items
 		var target = e.target;
+	
+		loadCount++;
 		
 		if(target.tagName == "AUDIO"){
 			target.removeEventListener('canplaythrough', onAssetsLoad, false);
 		}else if(target.tagName == "IMG"){
 			target.removeEventListener('load', onAssetsLoad, false);
 		}
-	
-		loadCount++;
+		
 		background.drawProgress(loadCount, itemsToLoad);
 		if(loadCount === itemsToLoad){
 			background.clear();
@@ -535,7 +533,6 @@ function canvasApp(){
 			window.addEventListener('touchend', onTouchEndHandler, false);
 			window.addEventListener('devicemotion', devMotionHandler, false);
 			//adds listener for touch move to remove the default behavior
-			document.addEventListener('touchmove', onTouchMove, false);
 			window.addEventListener('touchstart', onTouchStart, false);
 			
 		}else{
@@ -589,6 +586,7 @@ function canvasApp(){
 			mainCanvas.height = 480;
 			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
 		}else{
+			document.addEventListener('touchmove', onTouchMove, false);
 			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 25px auto;');
 		}
 		
