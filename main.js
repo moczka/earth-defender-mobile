@@ -5,17 +5,6 @@ function onWindowLoad(){
 }
 
 function canvasApp(){
-	
-	window.requestAnimFrame = (function(){
-	return  window.requestAnimationFrame   ||
-			window.webkitRequestAnimationFrame ||
-			window.mozRequestAnimationFrame    ||
-			window.oRequestAnimationFrame      ||
-			window.msRequestAnimationFrame     ||
-			function(/* function */ callback, /* DOMElement */ element){
-				window.setTimeout(callback, FRAME_RATE);
-			};
-})();
 	//inis canvas app
 	const UP_ARROW = 38;
 	const LEFT_ARROW = 37;
@@ -356,6 +345,10 @@ function canvasApp(){
 	}
 	
 	function onTouchStart(e){
+		
+		//create the touch list
+		e.createTouchList();
+		
 		if(e.targetTouches.length >= 1){
 			//if more than one finger on screen. activate shield
 			playerOne.shieldActive = true;
@@ -368,7 +361,7 @@ function canvasApp(){
 		}
 		
 		playerOne.shoot();
-		shootSoundPool.get();
+		//shootSoundPool.get();
 		playerOne.shieldActive = false;
 		
 	}
@@ -498,6 +491,7 @@ function canvasApp(){
     		mouse.y = event.offsetY;
   		}
 		
+		//marks a red square for debugging purposes.
 		mainContext.fillStyle = '#FF0000';
 		mainContext.fillRect(mouse.x, mouse.y, 10, 10);
 	}
@@ -623,7 +617,6 @@ function canvasApp(){
 		case STATE_LOADING:
 			//wait for calls backs of load events
 			break;
-			
 		case STATE_START_ANIMATION:
 			introAnimation();
 			break;
@@ -654,6 +647,8 @@ function canvasApp(){
 	
 	
 	function gameOver(){
+		
+		appState = STATE_LOADING;
 		soundTrack.pause();
 		playerOne.x = 320;
 		playerOne.y = 240;
@@ -661,7 +656,6 @@ function canvasApp(){
 		playerOne.colliding = false;
 		gameOverHolder.setAttribute('style', 'display:block');
 		restartButton.addEventListener('click', onStartClick, false);
-		appState = STATE_LOADING;
 	}
 	
 	
@@ -759,10 +753,8 @@ FrameRateCounter.prototype.countFrames=function() {
 			this.x += this.velX;
 			this.y += this.velY;
 			
-			
 this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x-this.canvasWidth, this.y,this.canvasWidth,this.canvasHeight);	
 this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x,this.y,this.canvasWidth,this.canvasHeight);
-			
 		//this.context.drawImage(backgroundSprite, this.x-this.width, this.y);
 		//this.context.drawImage(backgroundSprite, this.x, this.y);
 			
@@ -784,8 +776,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		this.clear = function(){
 			this.context.fillStyle = '#000000';
 			this.context.fillRect(0,0,this.canvasWidth, this.canvasHeight);
-		};
-		
+		};	
 	}
 	
 	function Ship(){
@@ -799,8 +790,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	this.thrust = false;
 	var missilePool = new Pool(10);
 		missilePool.init('missile');
-	this.missiles = missilePool.pool;
-		
+	this.missiles = missilePool.pool;	
 	var allowSound = false;
 	var explosion = new Explosion(20);
 	explosion.setCanvas(mainCanvas);
@@ -841,7 +831,6 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			explosion.create(this.x, this.y);
 			explosion.draw();
 			
-			
 			if(!explosion.running){
 			//appState = STATE_GAME_OVER;
 				this.alive = true;
@@ -857,11 +846,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			shield.x = this.x+10;
 			shield.y = this.y+10;
 			shield.draw();
-			
-			
 		}
-		
-		
 		this.context.save();
 		this.context.translate(this.x+10, this.y+10);	
 		this.context.rotate(this.angle);
@@ -995,9 +980,6 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 				}
 			}	
 		};
-		
-		
-		
 	}
 	
 	function Explosion(numParticles){
@@ -1011,7 +993,6 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		this.deadParticleCounter = 0;
 		var size = numParticles;
 		var self = this;
-		
 		for(var i = 0; i<size; i++){
 			this.particles.push({x:0,y:0,alive:false,maxLife:0,velX:0,velY:0, width:2, height:2, life:0});
 		}
@@ -1155,10 +1136,16 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	
 	
 	
-	
-	
-	
-	
+		window.requestAnimFrame = (function(){
+	return  window.requestAnimationFrame   ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame    ||
+			window.oRequestAnimationFrame      ||
+			window.msRequestAnimationFrame     ||
+			function(/* function */ callback, /* DOMElement */ element){
+				window.setTimeout(callback, FRAME_RATE);
+			};
+})();
 	//end of canvasApp function
 }
 
