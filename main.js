@@ -1,6 +1,19 @@
 window.addEventListener('load', onWindowLoad, false);
 
 function onWindowLoad(){
+	
+		//sets up game engine
+		window.requestAnimFrame = (function(){
+	return  window.requestAnimationFrame   ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame    ||
+			window.oRequestAnimationFrame      ||
+			window.msRequestAnimationFrame     ||
+			function(/* function */ callback, /* DOMElement */ element){
+				window.setTimeout(callback, FRAME_RATE);
+			};
+})();
+	
 	canvasApp();
 }
 
@@ -110,18 +123,6 @@ function canvasApp(){
 	
 	appState = STATE_USER_AGENT;
 	runState();
-	
-	//sets up game engine
-		window.requestAnimFrame = (function(){
-	return  window.requestAnimationFrame   ||
-			window.webkitRequestAnimationFrame ||
-			window.mozRequestAnimationFrame    ||
-			window.oRequestAnimationFrame      ||
-			window.msRequestAnimationFrame     ||
-			function(/* function */ callback, /* DOMElement */ element){
-				window.setTimeout(callback, FRAME_RATE);
-			};
-})();
 	
 	function runState(){
 		
