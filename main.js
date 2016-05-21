@@ -219,7 +219,7 @@ function canvasApp(){
 		soundTrack.src = 'assets/sounds/soundtrack.mp3';
 		soundTrack.load();
 		soundTrack.addEventListener('canplaythrough', onAssetsLoad, false);
-		shieldSound.src = 'assets/sounds/shieldSound'+supportedFormat;
+		shieldSound.src = 'assets/sounds/shield'+supportedFormat;
 		shieldSound.load();
 		shieldSound.addEventListener('canplaythrough', onAssetsLoad, false);
 		
