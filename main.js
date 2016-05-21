@@ -4,24 +4,16 @@ function onWindowLoad(){
 	canvasApp();
 }
 
+//inis canvas app
 function canvasApp(){
-	//inis canvas app
+	
+	//keyboard keycode constants
 	const UP_ARROW = 38;
 	const LEFT_ARROW = 37;
 	const RIGHT_ARROW = 39;
 	const DOWN_ARROW = 40;
 	const SPACE_BAR = 32;
 	const LETTER_P = 80;
-	
-	//orientation and mobile device states
-	const STATE_ASPECT_RATIO = 0;
-	const STATE_ORIENTATION_CHANGE = 1;
-	const STATE_USER_AGENT = 4;
-	
-	var userAgent = {mobile:false,platform:"", portrait:false};
-	var canvasHolder = $('#canvasHolder');
-	var orientationMessageHolder = $('#orientationMessage');
-	
 	
 	//pc normal states
 	const STATE_LOADING = 10;
@@ -34,21 +26,34 @@ function canvasApp(){
 		var appState;
 		var previousAppState;
 	
+	//orientation and mobile device states
+	const STATE_ASPECT_RATIO = 0;
+	const STATE_ORIENTATION_CHANGE = 1;
+	const STATE_USER_AGENT = 4;
+	
+	//userAgent info and canvas control
+	var userAgent = {mobile:false,platform:"", portrait:false};
+	var canvasHolder = $('#canvasHolder');
+	var orientationMessageHolder = $('#orientationMessage');
+	
+	//frame, assets counter and audio support
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 8;
+	var itemsToLoad = 21;
 	var loadCount = 0;
+	var FRAME_RATE = 1000/60;
 	var loopOn = false;
-	var shipSprite; 
-	var backgroundSprite;
-	var earthSprite;
-	var enemySprite;
-	var shieldSound;
-	var shootSound;
-	var explosionSound;
 	
-	
+	//set up sprites & sounds
+	var shipSprite = new Image(); 
+	var backgroundSprite = new Image();
+	var earthSprite = new Image();
+	var enemySprite = new Image();
+	var shieldSound = new Audio();
+	//adds the micro sound for chrome issue
+	var microSound = new Audio();
+	var soundTrack = new Audio();
 	
 	//mouse
 	var mouse = {x:0,y:0, alive:true};
@@ -59,77 +64,270 @@ function canvasApp(){
 	var livesCounter = $('#livesCounter');
 	var frameRateCounter = $('#frameRate');
 	
+	//start button and restart button
 	var startButton = $('#startGame');
 	var restartButton = $('#restart');
 	
+	//game text div holders and controls
 	var gameStartHolder = $('#gameStart');
 	var gamePlayHolder = $('#gamePlay');
 	var gameOverHolder = $('#gameOver');
 	
-	//score variables
+	//score  & level variables
 	var currentScore = 0;
 	var currentLevel = 1;
+	var shipLives = 4;
 	
 	//mobile acceleration
 	var ax, ay;
 	var friction = 0.005;
 	
-	//adds the micro sound for chrome
-	var microSound;
-	
-	var soundTrack;
-	
-	var shootSoundPool = new SoundPool(8);
-	shootSoundPool.init("shoot");
-	var explosionSoundPool = new SoundPool(8);
-	explosionSoundPool.init("explosion");
-	
-	var shipLives = 4;
-	
+	//make custom classes inherit display class
 	Ship.prototype = new Display(); 
 	Missile.prototype = new Display();
 	Enemey.prototype = new Display();
 	Shield.prototype = new Display();
 	Background.prototype = new Display();
+
+	//create sound pool for explosion and shoot sound
+	var shootSoundPool = new SoundPool(8);
+	var explosionSoundPool = new SoundPool(8);
 	
+	//gets canvas and its context and creates center x and y variables
 	var mainCanvas = $('#bgCanvas');
 	var mainContext = mainCanvas.getContext('2d');
 	var centerX = bgCanvas.width/2;
 	var centerY = bgCanvas.height/2;
-	
-
-	//var pauseButton = $('#pauseButton');
-	//pauseButton.addEventListener('click', onPauseButton, false);
-	
-	/*
-	things to do:
-	
-	fix the explosion simulation using a pool so that you can play and replay at any time using the same particles
-	fix the explosion sound so that it onnly plays once and you can play it again when the player or monster has been killed.
-	
-	*/
-	
-
+	//array holding key presses
 	var keyPressList = [];
-	
-	var FRAME_RATE = 1000/60;
-	var loopOn = true;
 
-
+	//TEMP: player instance and enemies
 	var enemyOne = new Enemey();
 	var enemyTwo = new Enemey();
 	var enemyThree = new Enemey();
-	
-	
 	var playerOne = new Ship();
-	
 	var background = new Background();
-	
 	
 	appState = STATE_USER_AGENT;
 	runState();
 	
+	//sets up game engine
+		window.requestAnimFrame = (function(){
+	return  window.requestAnimationFrame   ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame    ||
+			window.oRequestAnimationFrame      ||
+			window.msRequestAnimationFrame     ||
+			function(/* function */ callback, /* DOMElement */ element){
+				window.setTimeout(callback, FRAME_RATE);
+			};
+})();
 	
+	function runState(){
+		
+	switch(appState){
+			
+		case STATE_USER_AGENT:
+				getUserAgentInfo();
+			break;
+			
+		case STATE_ASPECT_RATIO:
+				setAspectRatio();
+			break;
+		case STATE_ORIENTATION_CHANGE:
+				onOrientationChange();
+			break;
+		//normal states
+		case STATE_INIT: 
+			loadAssets();
+			break;
+		case STATE_LOADING:
+			//wait for calls backs of load events
+			break;
+		case STATE_START_ANIMATION:
+			introAnimation();
+			break;
+		case STATE_PLAYING:
+			drawCanvas();
+			break;
+		case STATE_NEXT_LEVEL:
+			break;
+		case STATE_GAME_RESET:
+			break;
+		case STATE_GAME_OVER:
+			gameOver();
+			break;
+		}
+	}
+	
+	function gameLoop(){
+		if(loopOn){
+			requestAnimFrame(gameLoop);
+			runState();
+		}
+	}
+	
+	function getUserAgentInfo(){
+		
+		userAgent.platform = navigator.platform;
+		
+		if(userAgent.platform != "Win32" && userAgent.platform != "MacIntel"){
+			userAgent.mobile = true;
+			window.addEventListener('resize', onOrientationChange, false);
+			if(window.innerHeight>= window.innerWidth){
+				orientationMessageHolder.setAttribute('style', 'display:block;');
+				canvasHolder.setAttribute('style', 'display:none;');
+				userAgent.portrait = true;
+			}
+		}
+		appState = STATE_ASPECT_RATIO;
+		runState();
+	}
+	
+	function setAspectRatio(){
+		
+		//if not on mobile, set the canvas ratio to 600 by 480
+		if(!userAgent.mobile){
+			mainCanvas.width = 600;
+			mainCanvas.height = 480;
+			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
+		}else{
+			document.addEventListener('touchmove', onTouchMove, false);
+			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 25px auto;');
+		}
+		
+		loopOn = true;
+		appState = STATE_INIT;
+		gameLoop();
+		
+	}
+	
+	function loadAssets(){
+		appState = STATE_LOADING;
+		
+		background.setCanvas(mainCanvas);
+		
+		//init and load sound pool sounds
+		explosionSoundPool.init("explosion");
+		shootSoundPool.init("shoot");
+		
+		//sounds
+		microSound.src = 'assets/sounds/microSound'+supportedFormat;
+		microSound.load();
+		microSound.addEventListener('canplaythrough', onAssetsLoad, false);
+		soundTrack.src = 'assets/sounds/soundtrack.mp3';
+		soundTrack.load();
+		soundTrack.addEventListener('canplaythrough', onAssetsLoad, false);
+		shieldSound.src = 'assets/sounds/shieldSound'+supportedFormat;
+		shieldSound.load();
+		shieldSound.addEventListener('canplaythrough', onAssetsLoad, false);
+		
+		//sprites | images
+		earthSprite.src = 'assets/sprites/earth.png';
+		earthSprite.addEventListener('load', onAssetsLoad, false);
+		backgroundSprite.src = 'assets/sprites/background.png';
+		backgroundSprite.addEventListener('load', onAssetsLoad, false);
+		enemySprite.src = 'assets/sprites/enemy1.png';
+		enemySprite.addEventListener('load', onAssetsLoad, false);
+		shipSprite.src = 'assets/sprites/playerShip.png';
+		shipSprite.addEventListener('load', onAssetsLoad, false);
+	}
+	
+	function onAssetsLoad(e){
+		
+		var target = e.target;
+		loadCount++;
+		
+		//removes event listeners of loaded items
+		if(target.tagName == "AUDIO"){
+			target.removeEventListener('canplaythrough', onAssetsLoad, false);
+		}else if(target.tagName == "IMG"){
+			target.removeEventListener('load', onAssetsLoad, false);
+		}
+		//draws loading progress
+		background.drawProgress(loadCount, itemsToLoad);
+		if(loadCount === itemsToLoad){
+			background.clear();
+			initAssets();
+		}
+	}
+	
+	function initAssets(){
+		playerOne.setCanvas(mainCanvas);
+		playerOne.init(centerX,centerY,shipSprite, 2);
+		background.init(0,0,backgroundSprite, 1);
+		background.velX = 1;
+		
+		enemyOne.setCanvas(mainCanvas);
+		enemyOne.init(500, 340, enemySprite, 1);
+	
+		enemyTwo.setCanvas(mainCanvas);
+		enemyTwo.init(300,400, enemySprite,1);
+
+		
+		console.log(enemyOne);
+		console.log(enemyTwo);
+		console.log(enemyThree);
+			
+		enemyThree.setCanvas(mainCanvas);
+		enemyThree.init(560, 380, enemySprite,1);
+
+		playerOne.thrustAccel = 0.10;
+		
+		mainCanvas.addEventListener('mousemove', onMouseMove, false);
+		gameStartHolder.setAttribute('style', 'display: block');
+		startButton.addEventListener('click', onStartClick, false);
+		
+		console.log(userAgent);
+		appState = STATE_START_ANIMATION;
+		
+	}
+	
+	function introAnimation(){
+		background.draw();
+		mainContext.drawImage(earthSprite, (mainCanvas.width/2-(earthSprite.width/2)), 0);
+		enemyOne.follow(mouse);
+		enemyTwo.follow(mouse);
+		enemyThree.follow(mouse);
+		enemyOne.draw();
+		enemyTwo.draw();
+		enemyThree.draw();
+	}
+	
+	//handles the start button click
+	
+	function onStartClick(e){
+		var target = e.target;
+		
+		microSound.volume = 0.0;
+		microSound.play();
+		
+		mainCanvas.removeEventListener('mousemove', onMouseMove, false);
+		target.removeEventListener('click', onStartClick, false);
+		gameStartHolder.setAttribute('style', 'display: none;');
+		gamePlayHolder.setAttribute('style', 'display: block;');
+		gameOverHolder.setAttribute('style', 'display:none;');
+		
+		soundTrack.play();
+		soundTrack.loop = true;
+		
+		if(userAgent.mobile){
+			//add game controls for mobile devices based on motion
+			window.addEventListener('touchend', onTouchEndHandler, false);
+			window.addEventListener('devicemotion', devMotionHandler, false);
+			//adds listener for touch move to remove the default behavior
+			window.addEventListener('touchstart', onTouchStart, false);
+			
+		}else{
+			//add game control for desktop based on keyboard events
+		 	document.addEventListener('keyup', onKeyUp, false);
+			document.addEventListener('keydown', onKeyDown, false);
+		}
+		
+		appState = STATE_PLAYING;
+	}
+	
+	//once the user has clicked the start button, this function draws the game
 	function drawCanvas(){
 		
 		//draw background
@@ -145,7 +343,6 @@ function canvasApp(){
 		checkBoundary(playerOne);
 		playerOne.draw();
 		
-		
 		checkBoundary(enemyOne);
 		enemyOne.draw();
 		enemyOne.follow(playerOne);
@@ -157,14 +354,10 @@ function canvasApp(){
 		enemyTwo.follow(playerOne);
 		enemyTwo.attack(playerOne);
 		
-		
 		checkBoundary(enemyThree);
 		enemyThree.follow(playerOne);
 		enemyThree.draw();
 		enemyThree.attack(playerOne);
-		
-		
-		
 		
 		
 		if(!userAgent.mobile){
@@ -215,6 +408,95 @@ function canvasApp(){
 	}
 	
 	
+	//function in charged of ending the game
+	function gameOver(){
+		appState = STATE_LOADING;
+		soundTrack.pause();
+		playerOne.x = 320;
+		playerOne.y = 240;
+		playerOne.alive = true;
+		playerOne.colliding = false;
+		gameOverHolder.setAttribute('style', 'display:block');
+		restartButton.addEventListener('click', onStartClick, false);
+	}
+	
+	
+	//checks if an object has left the canvas bouding box
+	function checkBoundary(object){
+
+		if(object.x >= object.canvasWidth+object.width){
+			object.x = 0;
+		}else if(object.x <= -object.width){
+			object.x = object.canvasWidth-object.width;
+		}else if(object.y >= object.canvasHeight+object.height){
+			object.y = 0;
+		}else if(object.y <= -object.height){
+			object.y = object.canvasHeight-object.height;
+		}	
+	}
+	
+	//collision detection.
+	function hitTest(object1, object2){
+   		var left1 = object1.x;
+   		var left2 = object2.x;
+   		var right1 = object1.x + object1.width;
+   		var right2 = object2.x + object2.width;
+   		var top1 = object1.y;
+   		var top2 = object2.y;
+   		var bottom1 = object1.y + object1.height;
+   		var bottom2 = object2.y + object2.height;
+
+   		if (bottom1 < top2) return(false);
+   		if (top1 > bottom2) return(false);
+   		if (right1 < left2) return(false);
+   		if (left1 > right2) return(false);
+   		return(true);
+	}
+	
+	//checks if the shield has been hit
+	function hitTestShield(object1, object2){
+		var dx = object2.x - object1.x;
+		var dy = object2.y - object1.y;
+		var distance = Math.sqrt(dx*dx + dy*dy);
+		
+		if(distance<40){
+			return (true);
+		}else{
+		
+		return (false);
+		}
+		
+	}
+	
+	//updates game board, scores, level etc..
+	function updateCounter(object){
+		switch(object){
+			case "life":
+				livesCounter.innerHTML = "Lives: "+shipLives;
+				break;
+			case "score":
+				scoreCounter.innerHTML = "Score: "+currentScore;
+				break;
+			case "level":
+				levelCounter.innerHTML = "Level: "+currentLevel;
+				break;
+		}
+	}
+	
+	//PC CONTROLS 
+	//handles the key presses on desktop
+	function onKeyUp(e){
+		e.preventDefault();
+		keyPressList[e.keyCode] = false;
+		
+	}
+	
+	function onKeyDown(e){
+		e.preventDefault();
+		keyPressList[e.keyCode] = true; 
+	}
+
+	//key control if user is playing on desktop
 	function keyControl(object){
 	
 	if(keyPressList[LEFT_ARROW]){
@@ -265,58 +547,27 @@ function canvasApp(){
 
 	}
 	
-	function checkBoundary(object){
-
-		if(object.x >= object.canvasWidth+object.width){
-			object.x = 0;
-		}else if(object.x <= -object.width){
-			object.x = object.canvasWidth-object.width;
-		}else if(object.y >= object.canvasHeight+object.height){
-			object.y = 0;
-		}else if(object.y <= -object.height){
-			object.y = object.canvasHeight-object.height;
-		}	
+	//handles the mousemove interaction at title screen.
+	function onMouseMove(event){
+		
+		if ( event.layerX ||  event.layerX == 0) { // Firefox
+   			mouse.x = event.layerX ;
+    		mouse.y = event.layerY;
+  		} else if (event.offsetX || event.offsetX == 0) { // Opera
+    		mouse.x = event.offsetX;
+    		mouse.y = event.offsetY;
+  		}
+		
+		//marks a red square for debugging purposes.
+		mainContext.fillStyle = '#FF0000';
+		mainContext.fillRect(mouse.x, mouse.y, 10, 10);
 	}
 	
-	function hitTest(object1, object2){
-   		var left1 = object1.x;
-   		var left2 = object2.x;
-   		var right1 = object1.x + object1.width;
-   		var right2 = object2.x + object2.width;
-   		var top1 = object1.y;
-   		var top2 = object2.y;
-   		var bottom1 = object1.y + object1.height;
-   		var bottom2 = object2.y + object2.height;
-
-   		if (bottom1 < top2) return(false);
-   		if (top1 > bottom2) return(false);
-   		if (right1 < left2) return(false);
-   		if (left1 > right2) return(false);
-   		return(true);
-	}
-	
-	function hitTestShield(object1, object2){
-		var dx = object2.x - object1.x;
-		var dy = object2.y - object1.y;
-		var distance = Math.sqrt(dx*dx + dy*dy);
-		
-		//console.log('The distance is '+ distance);
-		
-		if(distance<40){
-			return (true);
-		}else{
-		
-		return (false);
-		}
-		
-	}
+	//MOBILE CONTROLS
+	//function that handles mobile controls of the game
 	
 	function devMotionHandler(e){
-		
-		if(playerOne.src == ""){
-			return;
-		}
-		
+
 		var futureVelX, futureVelY, futureVel;
 		
 		ax = (e.accelerationIncludingGravity.x)/5;
@@ -345,7 +596,6 @@ function canvasApp(){
 	}
 	
 	function onTouchStart(e){
-		
 		//create the touch list
 		e.createTouchList();
 		
@@ -354,231 +604,16 @@ function canvasApp(){
 			playerOne.shieldActive = true;
 		}
 	}
+	
 	function onTouchEndHandler(e){
-		//handles the touch end event
-		if(appState != STATE_PLAYING){
-			return; 
-		}
-		
+	
 		playerOne.shoot();
-		//shootSoundPool.get();
+		shootSoundPool.get();
 		playerOne.shieldActive = false;
 		
 	}
 	
-	function onKeyUp(e){
-		e.preventDefault();
-		keyPressList[e.keyCode] = false;
-		
-	}
-	
-	function onKeyDown(e){
-		e.preventDefault();
-		keyPressList[e.keyCode] = true; 
-	}
-	
-	function loadAssets(){
-		appState = STATE_LOADING;
-		
-		background.setCanvas(mainCanvas);
-		
-		shipSprite = new Image();
-		shieldSound = new Audio();
-		shieldSound.volume = 1.0;
-		shootSound = new Audio();
-		explosionSound = new Audio();
-		enemySprite = new Image();
-		backgroundSprite = new Image();
-		soundTrack = new Audio();
-		earthSprite = new Image();
-		microSound = new Audio();
-		
-		
-		microSound.src = 'assets/sounds/microSound'+supportedFormat;
-		microSound.load();
-		microSound.addEventListener('canplaythrough', onAssetsLoad, false);
-		earthSprite.src = 'assets/sprites/earth.png';
-		earthSprite.addEventListener('load', onAssetsLoad, false);
-		soundTrack.src = 'assets/sounds/soundtrack.mp3';
-		soundTrack.load();
-		soundTrack.addEventListener('canplaythrough', onAssetsLoad, false);
-		backgroundSprite.src = 'assets/sprites/background.png';
-		backgroundSprite.addEventListener('load', onAssetsLoad, false);
-		enemySprite.src = 'assets/sprites/enemy1.png';
-		enemySprite.addEventListener('load', onAssetsLoad, false);
-		explosionSound.src = 'assets/sounds/explosion'+supportedFormat;
-		explosionSound.load();
-		explosionSound.addEventListener('canplaythrough', onAssetsLoad, false);
-		shootSound.src = 'assets/sounds/shoot'+supportedFormat;
-		shootSound.addEventListener('canplaythrough', onAssetsLoad, false);
-		shieldSound.src = 'assets/sounds/shield'+supportedFormat;
-		shieldSound.load();
-		shieldSound.addEventListener('canplaythrough', onAssetsLoad, false);
-		shipSprite.src = 'assets/sprites/playerShip.png';
-		shipSprite.addEventListener('load', onAssetsLoad, false);
-		
-		
-	}
-	function onAssetsLoad(e){
-		
-		//removes event listeners of loaded items
-		var target = e.target;
-	
-		loadCount++;
-		
-		if(target.tagName == "AUDIO"){
-			target.removeEventListener('canplaythrough', onAssetsLoad, false);
-		}else if(target.tagName == "IMG"){
-			target.removeEventListener('load', onAssetsLoad, false);
-		}
-		
-		background.drawProgress(loadCount, itemsToLoad);
-		if(loadCount === itemsToLoad){
-			background.clear();
-			initAssets();
-		}
-	}
-	
-	function initAssets(){
-		playerOne.setCanvas(mainCanvas);
-		playerOne.init(centerX,centerY,shipSprite, 2);
-		background.init(0,0,backgroundSprite, 1);
-		background.velX = 1;
-		
-		enemyOne.setCanvas(mainCanvas);
-		enemyOne.init(500, 340, enemySprite, 1);
-	
-		enemyTwo.setCanvas(mainCanvas);
-		enemyTwo.init(300,400, enemySprite,1);
-
-		
-		console.log(enemyOne);
-		console.log(enemyTwo);
-		console.log(enemyThree);
-			
-		enemyThree.setCanvas(mainCanvas);
-		enemyThree.init(560, 380, enemySprite,1);
-
-		playerOne.thrustAccel = 0.10;
-		
-		mainCanvas.addEventListener('mousemove', onMouseMove, false);
-		gameStartHolder.setAttribute('style', 'display: block');
-		startButton.addEventListener('click', onStartClick, false);
-		
-		console.log(userAgent);
-		
-		appState = STATE_START_ANIMATION;
-	}
-	
-	function introAnimation(){
-		background.draw();
-		mainContext.drawImage(earthSprite, (mainCanvas.width/2-(earthSprite.width/2)), 0);
-		enemyOne.follow(mouse);
-		enemyTwo.follow(mouse);
-		enemyThree.follow(mouse);
-		enemyOne.draw();
-		enemyTwo.draw();
-		enemyThree.draw();
-	}
-	
-	function onMouseMove(event){
-		
-		if ( event.layerX ||  event.layerX == 0) { // Firefox
-   			mouse.x = event.layerX ;
-    		mouse.y = event.layerY;
-  		} else if (event.offsetX || event.offsetX == 0) { // Opera
-    		mouse.x = event.offsetX;
-    		mouse.y = event.offsetY;
-  		}
-		
-		//marks a red square for debugging purposes.
-		mainContext.fillStyle = '#FF0000';
-		mainContext.fillRect(mouse.x, mouse.y, 10, 10);
-	}
-	
-	function onStartClick(e){
-		var target = e.target;
-		
-		microSound.volume = 0.0;
-		microSound.play();
-		
-		mainCanvas.removeEventListener('mousemove', onMouseMove, false);
-		target.removeEventListener('click', onStartClick, false);
-		gameStartHolder.setAttribute('style', 'display: none;');
-		gamePlayHolder.setAttribute('style', 'display: block;');
-		gameOverHolder.setAttribute('style', 'display:none;');
-		
-		soundTrack.play();
-		soundTrack.loop = true;
-		
-		if(userAgent.mobile){
-			//add game controls for mobile devices based on motion
-			window.addEventListener('touchend', onTouchEndHandler, false);
-			window.addEventListener('devicemotion', devMotionHandler, false);
-			//adds listener for touch move to remove the default behavior
-			window.addEventListener('touchstart', onTouchStart, false);
-			
-		}else{
-			//add game control for desktop based on keyboard events
-		 	document.addEventListener('keyup', onKeyUp, false);
-			document.addEventListener('keydown', onKeyDown, false);
-		}
-		
-		appState = STATE_PLAYING;
-	}
-	
-	function updateCounter(object){
-		switch(object){
-			case "life":
-				livesCounter.innerHTML = "Lives: "+shipLives;
-				break;
-			case "score":
-				scoreCounter.innerHTML = "Score: "+currentScore;
-				break;
-			case "level":
-				levelCounter.innerHTML = "Level: "+currentLevel;
-				break;
-		}
-	}
-	
 	//Checks for device orientation
-	
-	function getUserAgentInfo(){
-		
-		userAgent.platform = navigator.platform;
-		
-		if(userAgent.platform != "Win32" && userAgent.platform != "MacIntel"){
-			userAgent.mobile = true;
-			window.addEventListener('resize', onOrientationChange, false);
-			if(window.innerHeight>= window.innerWidth){
-				orientationMessageHolder.setAttribute('style', 'display:block;');
-				canvasHolder.setAttribute('style', 'display:none;');
-				userAgent.portrait = true;
-			}
-		}
-	
-		appState = STATE_ASPECT_RATIO;
-		runState();
-	}
-	
-	function setAspectRatio(){
-		
-		
-		if(!userAgent.mobile){
-			mainCanvas.width = 600;
-			mainCanvas.height = 480;
-			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
-		}else{
-			document.addEventListener('touchmove', onTouchMove, false);
-			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 25px auto;');
-		}
-		
-		loopOn = true;
-		appState = STATE_INIT;
-		gameLoop();
-		
-	}
-	
 	function onOrientationChange(e){
 
 		if(window.innerHeight>= window.innerWidth){
@@ -593,72 +628,21 @@ function canvasApp(){
 		
 	}
 	
+	//removes the default behavior of pinching zoom on Mobile
 	function onTouchMove(e){
 		e.preventDefault();
 	}
 	
-	function runState(){
-		
-	switch(appState){
-			
-		case STATE_ASPECT_RATIO:
-				setAspectRatio();
-			break;
-		case STATE_ORIENTATION_CHANGE:
-				onOrientationChange();
-			break;
-		case STATE_USER_AGENT:
-				getUserAgentInfo();
-			break;	
-		//normal states
-		case STATE_INIT: 
-			loadAssets();
-			break;
-		case STATE_LOADING:
-			//wait for calls backs of load events
-			break;
-		case STATE_START_ANIMATION:
-			introAnimation();
-			break;
-		case STATE_PLAYING:
-			drawCanvas();
-			break;
-		case STATE_NEXT_LEVEL:
-			break;
-		case STATE_GAME_RESET:
-			break;
-		case STATE_GAME_OVER:
-			gameOver();
-			break;
-		}
-	}
 	
-	function gameLoop(){
-		if(loopOn){
-			requestAnimFrame(gameLoop);
-			runState();
-		}
-	}
 	
+	
+	//pauses the game via the pause button
 	function onPauseButton(e){
 		loopOn = !loopOn;
 		gameLoop();
 	}
 	
-	
-	function gameOver(){
-		
-		appState = STATE_LOADING;
-		soundTrack.pause();
-		playerOne.x = 320;
-		playerOne.y = 240;
-		playerOne.alive = true;
-		playerOne.colliding = false;
-		gameOverHolder.setAttribute('style', 'display:block');
-		restartButton.addEventListener('click', onStartClick, false);
-	}
-	
-	
+
 	function getSoundFormat(){
 		var sound = new Audio();
 		var format;
@@ -669,9 +653,6 @@ function canvasApp(){
 		}
 		return format;
 	}
-	
-	
-	//classes
 	
 	//FramRate Class
 	
@@ -698,6 +679,8 @@ FrameRateCounter.prototype.countFrames=function() {
    delete dateTemp;
 }
 	
+	//custom classes
+
 		function Display(){
 		this.context;
 		this.canvasWidth;
@@ -1077,7 +1060,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 					var explosion = new Audio('assets/sounds/explosion'+supportedFormat);
 					explosion.volume = 0.50;
 					explosion.load();
-					//explosion.addEventListener('canplaythrough', onAssetsLoad, false);
+					explosion.addEventListener('canplaythrough', onAssetsLoad, false);
 					pool[i] = explosion;
 				}
 			}else if(object == "shoot"){
@@ -1085,7 +1068,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 					var shoot = new Audio('assets/sounds/shoot'+supportedFormat);
 					shoot.volume = 0.50;
 					shoot.load();
-					//shoot.addEventListener('canplaythrough', onAssetsLoad, false);
+					shoot.addEventListener('canplaythrough', onAssetsLoad, false);
 					pool[i] = shoot;
 				}
 			}
@@ -1134,18 +1117,6 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	return document.querySelector(selector);
 }
 	
-	
-	
-		window.requestAnimFrame = (function(){
-	return  window.requestAnimationFrame   ||
-			window.webkitRequestAnimationFrame ||
-			window.mozRequestAnimationFrame    ||
-			window.oRequestAnimationFrame      ||
-			window.msRequestAnimationFrame     ||
-			function(/* function */ callback, /* DOMElement */ element){
-				window.setTimeout(callback, FRAME_RATE);
-			};
-})();
 	//end of canvasApp function
 }
 
