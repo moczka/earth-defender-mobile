@@ -302,6 +302,9 @@ function canvasApp(){
 	function onStartClick(e){
 		var target = e.target;
 		
+		shootSoundPool.get(0);
+		explosionSoundPool.get(0);
+		
 		microSound.volume = 0.0;
 		microSound.play();
 		
@@ -409,7 +412,6 @@ function canvasApp(){
 		}
 		
 	}
-	
 	
 	//function in charged of ending the game
 	function gameOver(){
@@ -1073,8 +1075,10 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 				}
 			}
 			};
-		this.get = function(){
+		this.get = function(volume){
+			volume = (volume == undefined)? 1: volume;
 			if(pool[currentSound].currentTime == 0 || pool[currentSound].ended){
+				pool[currentSound].volume = volume;
 				pool[currentSound].play();
 			}	
 			currentSound = (currentSound+1) % size;
