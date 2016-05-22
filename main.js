@@ -248,6 +248,8 @@ function canvasApp(){
 		//draws loading progress
 		background.drawProgress(loadCount, itemsToLoad);
 		if(loadCount === itemsToLoad){
+			console.log('The number of items that have loaded is '+ loadCount);
+			console.log('The number of items that should  have loaded are '+ itemsToLoad);
 			background.clear();
 			initAssets();
 		}
@@ -609,7 +611,7 @@ function canvasApp(){
 	function onTouchEndHandler(e){
 	
 		playerOne.shoot();
-		shootSoundPool.get();
+		//shootSoundPool.get();
 		playerOne.shieldActive = false;
 		
 	}
@@ -633,9 +635,6 @@ function canvasApp(){
 	function onTouchMove(e){
 		e.preventDefault();
 	}
-	
-	
-	
 	
 	//pauses the game via the pause button
 	function onPauseButton(e){
