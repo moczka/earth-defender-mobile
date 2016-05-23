@@ -618,7 +618,7 @@ function canvasApp(){
 	function onTouchEndHandler(e){
 	
 		playerOne.shoot();
-		shootSoundPool.get();
+		//shootSoundPool.get();
 		playerOne.shieldActive = false;
 		
 	}
