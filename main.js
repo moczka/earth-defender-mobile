@@ -193,6 +193,7 @@ function canvasApp(){
 			mainCanvas.height = 480;
 			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
 		}else{
+			mainCanvas.setAttribute('style', 'width: 100%; height: 100%');
 			document.addEventListener('touchmove', onTouchMove, false);
 			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 25px auto;');
 		}
