@@ -53,7 +53,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 21;
+	var itemsToLoad = 23;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
@@ -245,13 +245,16 @@ function canvasApp(){
 		}else if(target.tagName == "IMG"){
 			target.removeEventListener('load', onAssetsLoad, false);
 		}
+		
+		console.log('The number of items that have loaded is '+ loadCount);
+		
 		//draws loading progress
 		background.drawProgress(loadCount, itemsToLoad);
 		if(loadCount === itemsToLoad){
-			console.log('The number of items that have loaded is '+ loadCount);
 			console.log('The number of items that should  have loaded are '+ itemsToLoad);
 			background.clear();
 			initAssets();
+			console.log(soundTrack);
 		}
 	}
 	
