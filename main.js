@@ -2,7 +2,14 @@ window.addEventListener('load', onWindowLoad, false);
 
 function onWindowLoad(){
 	
-		//sets up game engine
+		canvasApp();
+	
+}
+	
+//inis canvas app
+function canvasApp(){
+	
+			//sets up game engine
 		window.requestAnimFrame = (function(){
 	return  window.requestAnimationFrame   ||
 			window.webkitRequestAnimationFrame ||
@@ -13,12 +20,6 @@ function onWindowLoad(){
 				window.setTimeout(callback, FRAME_RATE);
 			};
 })();
-	
-	canvasApp();
-}
-
-//inis canvas app
-function canvasApp(){
 	
 	//keyboard keycode constants
 	const UP_ARROW = 38;
@@ -163,7 +164,7 @@ function canvasApp(){
 	
 	function gameLoop(){
 		if(loopOn){
-			requestAnimFrame(gameLoop);
+			requestAnimFrame(gameLoop, FRAME_RATE);
 			runState();
 		}
 	}
@@ -617,7 +618,7 @@ function canvasApp(){
 	function onTouchEndHandler(e){
 	
 		playerOne.shoot();
-		//shootSoundPool.get();
+		shootSoundPool.get();
 		playerOne.shieldActive = false;
 		
 	}

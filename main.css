@@ -45,6 +45,11 @@ button{
 	clear:both;
 }
 
+#canvasHolder{
+	height: 100%;
+	width: 100%;
+}
+
 #bgCanvas{
 	background: '#000000';
 	z-index: -1;
