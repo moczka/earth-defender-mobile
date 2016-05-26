@@ -35,6 +35,7 @@ function canvasApp(){
 	STATE_START_ANIMATION = 70,
     STATE_HOW_TO_PLAY = 80,
 	STATE_PLAYING = 30,
+    STATE_WAITING = 31,
     STATE_NEXT_LEVEL = 40,
 	STATE_GAME_RESET = 50,
 	STATE_GAME_OVER = 60;
@@ -160,6 +161,9 @@ function canvasApp(){
 		case STATE_PLAYING:
 			drawCanvas();
 			break;
+        case STATE_WAITING:
+            //loop does nothing, waits for a change in state.
+            break;
 		case STATE_NEXT_LEVEL:
 			break;
 		case STATE_GAME_RESET:
@@ -519,6 +523,19 @@ function canvasApp(){
 	function onKeyUp(e){
 		e.preventDefault();
 		keyPressList[e.keyCode] = false;
+        
+        //pauses the game
+        if(keyPressList[LETTER_P] == false){
+		keyPressList[LETTER_P] = true;
+		if(appState == STATE_PLAYING){
+            appState = STATE_WAITING;
+            console.log('STATE CHANGED');
+        }else{
+            appState = STATE_PLAYING;
+            runState();
+            console.log(appState);
+        }
+	}
 		
 	}
 	
@@ -561,14 +578,8 @@ function canvasApp(){
 		keyPressList[SPACE_BAR] = true;
 		object.shoot();
 		shootSoundPool.get();
-		//enemyOne.attack(object);
 		console.log(playerOne.missiles.length);
 		console.log(enemyOne.missiles.length);
-	}
-	if(keyPressList[LETTER_P] == false){
-		keyPressList[LETTER_P] = true;
-		loopOn = !loopOn;
-		gameLoop();
 	}
 	if(keyPressList[DOWN_ARROW]){
 		object.shieldActive = true;
