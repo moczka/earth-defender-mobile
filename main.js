@@ -22,32 +22,34 @@ function canvasApp(){
 })();
 	
 	//keyboard keycode constants
-	const UP_ARROW = 38;
-	const LEFT_ARROW = 37;
-	const RIGHT_ARROW = 39;
-	const DOWN_ARROW = 40;
-	const SPACE_BAR = 32;
-	const LETTER_P = 80;
+	const UP_ARROW = 38,
+	LEFT_ARROW = 37,
+	RIGHT_ARROW = 39,
+	DOWN_ARROW = 40,
+	SPACE_BAR = 32,
+	LETTER_P = 80;
 	
 	//pc normal states
-	const STATE_LOADING = 10;
-	const STATE_INIT = 20;
-	const STATE_START_ANIMATION = 70;
-	const STATE_PLAYING = 30;
-	const STATE_NEXT_LEVEL = 40;
-	const STATE_GAME_RESET = 50;
-	const STATE_GAME_OVER = 60;
+	const STATE_LOADING = 10,
+    STATE_INIT = 20,
+	STATE_START_ANIMATION = 70,
+    STATE_HOW_TO_PLAY = 80,
+	STATE_PLAYING = 30,
+    STATE_NEXT_LEVEL = 40,
+	STATE_GAME_RESET = 50,
+	STATE_GAME_OVER = 60;
 		var appState;
 		var previousAppState;
 	
 	//orientation and mobile device states
-	const STATE_ASPECT_RATIO = 0;
-	const STATE_ORIENTATION_CHANGE = 1;
-	const STATE_USER_AGENT = 4;
+	const STATE_ASPECT_RATIO = 0,
+	STATE_ORIENTATION_CHANGE = 1,
+	STATE_USER_AGENT = 4;
 	
 	//userAgent info and canvas control
 	var userAgent = {mobile:false,platform:"", portrait:false};
 	var canvasHolder = $('#canvasHolder');
+    var interfaceWrapper = $('#interfaceWrapper');
 	var orientationMessageHolder = $('#orientationMessage');
 	
 	//frame, assets counter and audio support
@@ -86,7 +88,10 @@ function canvasApp(){
 	var gameStartHolder = $('#gameStart');
 	var gamePlayHolder = $('#gamePlay');
 	var gameOverHolder = $('#gameOver');
-	
+    var howToPlayHolder = $('#howToPlayHolder');
+    var howToPlayButton = $('#howToPlay');
+	var howToBackButton = $('#howToBack');
+    
 	//score  & level variables
 	var currentScore = 0;
 	var currentLevel = 1;
@@ -149,6 +154,9 @@ function canvasApp(){
 		case STATE_START_ANIMATION:
 			introAnimation();
 			break;
+        case STATE_HOW_TO_PLAY:
+            howToPlay();
+            break;
 		case STATE_PLAYING:
 			drawCanvas();
 			break;
@@ -196,7 +204,7 @@ function canvasApp(){
 		}else{
 			mainCanvas.setAttribute('style', 'width: 100%; height: 100%');
 			document.addEventListener('touchmove', onTouchMove, false);
-			gameStartHolder.setAttribute('style', 'position: relative; width 150px; margin: 25px auto;');
+			interfaceWrapper.setAttribute('style', 'margin: auto;');
 		}
 		
 		loopOn = true;
@@ -282,9 +290,13 @@ function canvasApp(){
 
 		playerOne.thrustAccel = 0.10;
 		
-		mainCanvas.addEventListener('mousemove', onMouseMove, false);
+		window.addEventListener('mousemove', onMouseMove, false);
 		gameStartHolder.setAttribute('style', 'display: block');
 		startButton.addEventListener('click', onStartClick, false);
+        howToPlayButton.addEventListener('click', function(e){
+            appState = STATE_HOW_TO_PLAY;
+            gameStartHolder.setAttribute('style', '');
+        }, false);
 		
 		console.log(userAgent);
 		appState = STATE_START_ANIMATION;
@@ -301,9 +313,18 @@ function canvasApp(){
 		enemyTwo.draw();
 		enemyThree.draw();
 	}
-	
+    
+    function howToPlay(){
+        appState = STATE_LOADING;
+        howToPlayHolder.setAttribute('style', 'display: block');
+        howToBackButton.addEventListener('click', function(e){
+            appState = STATE_START_ANIMATION;
+            gameStartHolder.setAttribute('style', 'display: block');
+            howToPlayHolder.setAttribute('style', '');
+        }, false);
+    }
+            
 	//handles the start button click
-	
 	function onStartClick(e){
 		var target = e.target;
 		

@@ -18,20 +18,20 @@ canvas{
 	 width: 100%;
 }
 
-span{
+
+span, p, a{
 	font-family: Helvetica, Ariel, sans-serif;
 	color: #00FF00;
 	cursor: default;
+    text-decoration: none;
 }
-a{
-	color: #00FF00;
-	cursor: pointer;
+
+.generalHover:hover{
+    color: aqua; 
+    cursor: pointer;
 	text-decoration: none;
 }
 
-a:hover{
-	color: aqua;
-}
 
 h1{
 	font-family: Helvetica, Ariel, sans-serif;
@@ -39,20 +39,54 @@ h1{
 	letter-spacing: -1px;
 	font-size: 35px;
 	cursor: default;
+    display: inline;
 }
 
 button{
 	clear:both;
 }
-
-#canvasHolder{
-	height: 100%;
-	width: 100%;
+.buttonControl{
+    border: 1px solid #00FF00;
+    padding: 8px;
+    
+}
+.appPage{
+    display: none;
+    width: 600px;
+    height: 480px; 
 }
 
-#bgCanvas{
-	background: '#000000';
-	z-index: -1;
+
+
+.buttonControl:hover{
+   border-color: #0000FF;
+   color: #0000FF;
+}
+
+.blockAd{
+    width: 320px;
+    height: 320px;
+    margin: auto;
+    visibility: hidden;
+}
+
+
+.blockAd:after{
+    position: relative;
+    left: 100px;
+    content: "ADVERTISEMENT";
+    font-size: 12px;
+    color: #CCC; 
+}
+
+
+#canvasHolder{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    z-index: -1;
 }
 
 .orientationMessage{
@@ -65,32 +99,81 @@ button{
 	width: 100%;
 }
 
-.gamePlay{
-	position: absolute;
-	top: 0px;
-	left: 0px;
+#interfaceWrapper{
+    text-align: center;
+    height: 480px;
+	width: 600px;
 }
-.gamePlay span{
-	font-size: 18px;
-	margin-left: 55px;
+
+#howToPlayHolder{
+    background-image: url(assets/mobile/how-to-play.png);
+    background-repeat: no-repeat;
 }
-.gameStart{
-	position: absolute;
-	top: 140px;
-	left: 140px;
-	text-align: center;
+#howToPlayHolder h2{
+    font-size: 25px;
+    position: relative;
+    margin-top: 0px;
+    top: 12px;
+    color: #00FF00;
+    
 }
-.gameStart{
-	font-size: 18px;
+#howToPlayHolder p{
+ font-size: 16px;
+ width: 295px;
+ float: right;
+ clear: both;
+ margin-right: 10px;
+    text-align: left;
+    
 }
-.gameStart span:hover{
-	color: aqua;
-	cursor: pointer;
+#howToPlayHolder a{
+    text-align: left;
+    position: relative;
+    top: 390px;
+    left: 410px;   
 }
-.gameStart span{
-	display: block;
-	margin-bottom: 20px;
+
+#gameStart span{
+    width: 120px;
+    display: block;
+    clear: both;
+    margin: auto;
+    margin-bottom: 10px;
 }
+
+#gameStart h1{
+    display: inline-block;
+    font-size: 30px;
+    color: white;
+}
+
+#levelTransition{
+    background-color: #000;
+    text-align: left;
+}
+
+#levelTransition span{
+    width: 250px;
+    margin: 5px auto;
+    margin-bottom: 8px;
+    display: block;
+}
+
+#levelTransition h2{
+    width: 200px;
+    margin: 10px auto;
+    color: #00FF00;
+    display: inline-block;
+    position: relative;
+    left: 200px;
+}
+
+#nextLevel{
+    position: relative;
+    left: 520px;
+    bottom: 10px;
+}
+
 
 
 .gameOver{

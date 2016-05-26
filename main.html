@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html>
 	<head>
-<!--<meta charset="UTF-8">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="viewport" content="height=550"/>
-<link href='assets/mobile/apple-touch-icon-57x57.png' rel='apple-touch-icon' sizes='57x57'/>
-<link href='assets/mobile/apple-touch-icon-72x72.png' rel='apple-touch-icon' sizes='72x72'/>
-<link href='assets/mobile/apple-touch-icon-114x114.png' rel='apple-touch-icon' sizes='114x114'/>
-
--->	
 <link rel="apple-touch-icon" sizes="144x144" href="assets/mobile/apple-touch-icon-144x144.png" />		
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -29,21 +21,55 @@
 	<canvas id="bgCanvas" width="850" height="480">
 		Your browser does not support HTML5 Canvas, download the latest version of Google Chrome.
 	</canvas>
-<div class="gameStart" id="gameStart" style="display: none;">
-		<h1>EARTH DEFENDER!</h2>
-		<span id="startGame">Start Game</span>
-		<span><a href="https://www.google.com/" target="_blank">Add To Chrome</a></span>
-</div>
-<div class="gamePlay" id="gamePlay" style="display: none;">
+        </div>
+        
+        
+    <div id="interfaceWrapper">
+      <div class="appPage" id="gameStart">
+          <h1>EARTH DEFENDER!</h1>
+		<span id="startGame" class="generalHover">Start Game</span>
+          <span id="storyLine" class="generalHover">Story Line</span>
+          <span id="howToPlay" class="generalHover">How To Play</span>
+		      <span><a class="generalHover" href="https://www.google.com/" target="_blank" >Add To Chrome</a></span>
+        </div>
+        
+        <div class="appPage" id="howToPlayHolder">
+            <h2>How To Play</h2>
+            <p>MOBILE: To play on your mobile device, all you need to do is use your device gyroscope sensors to move your ship around space. Tap on the screen to launch missiles and tap and hold with two fingers to activate your ship's protective shield.</p>
+            <p>DESKTOP: move the ship around with the arrow keys on your keyboard. Use the down arrow to activate your ship's protective shield and press "Space Bar" to launch a missile. You can pause the game by pressing "P"</p>
+        
+        <a class="buttonControl" id="howToBack">BACK</a>
+        </div>
+        
+        
+        
+<div class="appPage" id="gamePlay" style="">
 	<span id="levelCounter">Level: 1</span>
 	<span id="scoreCounter">Score: 0</span>
 	<span id="livesCounter">Lives: 3</span>
 	<span id="frameRate">Frames: 0</span>
 </div>
-<div class="gameOver" id="gameOver" style="display: none;">
+        
+<div class="appPage" id="levelTransition" style="">
+    <h2>Carnage Report:</h2>
+    <span>Score: 32352</span>
+    <span>Enemies Killed: 42</span>
+    <span>Colony Protected: Chromos</span>
+    <div class="blockAd">
+       <img src="assets/mobile/ad-holder.png"/>
+    
+    </div> 
+    <a class="buttonControl" id="nextLevel" >NEXT</a>
+</div>        
+        
+        
+<div class="appPage" id="gameOver" style="">
 	<span>Game Over!</span>	
 	<span id="restart">Restart Game</span>	
-</div>
-		</div>
+</div>  
+        </div>
+        
+        
+        
 	</body>
 </html>
