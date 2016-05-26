@@ -67,7 +67,6 @@ button{
     width: 320px;
     height: 320px;
     margin: auto;
-    visibility: hidden;
 }
 
 
@@ -123,7 +122,7 @@ button{
  float: right;
  clear: both;
  margin-right: 10px;
-    text-align: left;
+ text-align: left;
     
 }
 #howToPlayHolder a{
@@ -134,18 +133,32 @@ button{
 }
 
 #gameStart span{
-    width: 120px;
+    width: 150px;
     display: block;
     clear: both;
     margin: auto;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+#gameStart a:hover{
+ color: #0000FF;   
 }
 
 #gameStart h1{
     display: inline-block;
-    font-size: 30px;
+    font-size: 35px;
     color: white;
 }
+
+#gamePlay{
+    font-size: 1.2em;
+}
+
+#gamePlay span{
+    margin-left: 10px;  
+}
+
 
 #levelTransition{
     background-color: #000;

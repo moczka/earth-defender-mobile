@@ -36,6 +36,7 @@ function canvasApp(){
     STATE_HOW_TO_PLAY = 80,
 	STATE_PLAYING = 30,
     STATE_WAITING = 31,
+    STATE_LEVEL_TRANSITION = 33,
     STATE_NEXT_LEVEL = 40,
 	STATE_GAME_RESET = 50,
 	STATE_GAME_OVER = 60;
@@ -81,16 +82,22 @@ function canvasApp(){
 	var livesCounter = $('#livesCounter');
 	var frameRateCounter = $('#frameRate');
 	
-	//start button and restart button
+	//title screen buttons 
 	var startButton = $('#startGame');
+    var howToPlayButton = $('#howToPlay');
 	var restartButton = $('#restart');
+    var storyLineButton = $('#storyLine');
+    
 	
 	//game text div holders and controls
 	var gameStartHolder = $('#gameStart');
 	var gamePlayHolder = $('#gamePlay');
 	var gameOverHolder = $('#gameOver');
     var howToPlayHolder = $('#howToPlayHolder');
-    var howToPlayButton = $('#howToPlay');
+    var storyLineHolder = $('#storyLineHolder');
+    var levelTransitionHolder = $('#levelTransition');
+    
+    var nextLevelButton = $('#nextLevel');
 	var howToBackButton = $('#howToBack');
     
 	//score  & level variables
@@ -161,6 +168,10 @@ function canvasApp(){
 		case STATE_PLAYING:
 			drawCanvas();
 			break;
+        case STATE_LEVEL_TRANSITION:
+            //the transition between one level and the other.
+            transLevel();
+            break;
         case STATE_WAITING:
             //loop does nothing, waits for a change in state.
             break;
@@ -301,6 +312,11 @@ function canvasApp(){
             appState = STATE_HOW_TO_PLAY;
             gameStartHolder.setAttribute('style', '');
         }, false);
+        
+        storyLineButton.addEventListener('click', function(e){
+            appState = STATE_LEVEL_TRANSITION;
+            gameStartHolder.setAttribute('style', '');
+        }, false);
 		
 		console.log(userAgent);
 		appState = STATE_START_ANIMATION;
@@ -319,7 +335,7 @@ function canvasApp(){
 	}
     
     function howToPlay(){
-        appState = STATE_LOADING;
+        appState = STATE_WAITING;
         howToPlayHolder.setAttribute('style', 'display: block');
         howToBackButton.addEventListener('click', function(e){
             appState = STATE_START_ANIMATION;
@@ -442,6 +458,18 @@ function canvasApp(){
 		}
 		
 	}
+    
+    //function in charged of transition level
+    function transLevel(){
+        appState = STATE_WAITING;
+        levelTransitionHolder.setAttribute('style', 'display: block;');
+        nextLevelButton.addEventListener('click', function(e){
+            appState = STATE_START_ANIMATION;
+            gameStartHolder.setAttribute('style', 'display: block');
+            levelTransitionHolder.setAttribute('style', '');
+        }, false);
+        
+    }
 	
 	//function in charged of ending the game
 	function gameOver(){
