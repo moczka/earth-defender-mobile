@@ -312,7 +312,7 @@ function canvasApp(){
 		
 		window.addEventListener('mousemove', onMouseMove, false);
 		storyLineHolder.setAttribute('style', 'display: block');
-        storyLineSkipButton.addEventListener('click', function(e){
+        storyLineSkipButton.addEventListener('mouseup', function(e){
                 appState = STATE_TITLE_SCREEN;
                 gameStartHolder.setAttribute('style','display: block;');
                 storyLineHolder.setAttribute('style', '');
