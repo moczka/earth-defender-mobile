@@ -132,9 +132,9 @@ button{
  -webkit-transform:translateY(100%);	
  transform:translateY(100%);
  /* Apply animation to this element */	
- -moz-animation: scrollBox 60s linear infinite;
- -webkit-animation: scrollBox 60s linear infinite;
- animation: scrollBox 60s linear infinite;
+ -moz-animation: scrollBox 210s linear infinite;
+ -webkit-animation: scrollBox 210s linear infinite;
+ animation: scrollBox 210s linear infinite;
 }
 /* Move it (define the animation) */
 @-moz-keyframes scrollBox {
