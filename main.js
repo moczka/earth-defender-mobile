@@ -647,9 +647,6 @@ function canvasApp(){
     		mouse.y = event.offsetY;
   		}
 		
-		//marks a red square for debugging purposes.
-		mainContext.fillStyle = '#FF0000';
-		mainContext.fillRect(mouse.x, mouse.y, 10, 10);
 	}
 	
 	//MOBILE CONTROLS
