@@ -104,6 +104,86 @@ button{
 	width: 600px;
 }
 
+
+#storyLineHolder{
+    overflow: hidden;
+    text-align: left;
+}
+#storyLineHolder p{
+    text-indent: 25px; 
+}
+
+#skipStoryLine{
+  font-size: 20px;
+  position: relative;
+  top: 430px;
+  left: 535px;
+}
+
+.scrollBox{
+    width: 400px;
+    margin: auto;  
+}
+
+.scrollBox{
+ margin-bottom: 10px;
+ /* Starting position */
+ -moz-transform:translateY(100%);
+ -webkit-transform:translateY(100%);	
+ transform:translateY(100%);
+ /* Apply animation to this element */	
+ -moz-animation: scrollBox 25s linear infinite;
+ -webkit-animation: scrollBox 25s linear infinite;
+ animation: scrollBox 25s linear infinite;
+}
+/* Move it (define the animation) */
+@-moz-keyframes scrollBox {
+ 0%   { -moz-transform: translateY(20%); }
+ 100% { -moz-transform: translateY(-100%); }
+}
+@-webkit-keyframes scrollBox {
+ 0%   { -webkit-transform: translateY(20%); }
+ 100% { -webkit-transform: translateY(-100%); }
+}
+@keyframes scrollBox {
+ 0%   { 
+ -moz-transform: translateY(20%); /* Firefox bug fix */
+ -webkit-transform: translateY(20%); /* Firefox bug fix */
+ transform: translateY(20%); 		
+ }
+ 100% { 
+ -moz-transform: translateY(-100%); /* Firefox bug fix */
+ -webkit-transform: translateY(-100%); /* Firefox bug fix */
+ transform: translateY(-100%); 
+ }
+}
+
+
+
+#gameStart{
+    
+    
+}
+
+#gameStart span{
+    width: 150px;
+    display: block;
+    clear: both;
+    margin: auto;
+    margin-bottom: 15px;
+    font-size: 1.3em;
+}
+
+#gameStart a:hover{
+ color: #0000FF;   
+}
+
+#gameStart h1{
+    display: inline-block;
+    font-size: 35px;
+    color: white;
+}
+
 #howToPlayHolder{
     background-image: url(assets/mobile/how-to-play.png);
     background-repeat: no-repeat;
@@ -128,31 +208,13 @@ button{
 #howToPlayHolder a{
     text-align: left;
     position: relative;
+    font-size: 20px;
     top: 390px;
     left: 410px;   
 }
 
-#gameStart span{
-    width: 150px;
-    display: block;
-    clear: both;
-    margin: auto;
-    margin-bottom: 15px;
-    font-size: 1.3em;
-}
-
-#gameStart a:hover{
- color: #0000FF;   
-}
-
-#gameStart h1{
-    display: inline-block;
-    font-size: 35px;
-    color: white;
-}
-
 #gamePlay{
-    font-size: 1.2em;
+    font-size: 22px;
 }
 
 #gamePlay span{
