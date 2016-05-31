@@ -312,19 +312,19 @@ function canvasApp(){
 		
 		window.addEventListener('mousemove', onMouseMove, false);
 		storyLineHolder.setAttribute('style', 'display: block');
-        storyLineSkipButton.addEventListener('mouseup', function(e){
+        storyLineSkipButton.addEventListener('mousedown', function(e){
                 appState = STATE_TITLE_SCREEN;
                 gameStartHolder.setAttribute('style','display: block;');
                 storyLineHolder.setAttribute('style', '');
             }, false);
         
-		startButton.addEventListener('click', onStartClick, false);
-        howToPlayButton.addEventListener('click', function(e){
+		startButton.addEventListener('mousedown', onStartClick, false);
+        howToPlayButton.addEventListener('mousedown', function(e){
             appState = STATE_HOW_TO_PLAY;
             gameStartHolder.setAttribute('style', '');
         }, false);
         
-        storyLineButton.addEventListener('click', function(e){
+        storyLineButton.addEventListener('mousedown', function(e){
             appState = STATE_STORY_LINE;
             storyLineHolder.setAttribute('style', 'display: block');
             gameStartHolder.setAttribute('style', '');
@@ -356,7 +356,7 @@ function canvasApp(){
     function howToPlay(){
         appState = STATE_WAITING;
         howToPlayHolder.setAttribute('style', 'display: block');
-        howToBackButton.addEventListener('click', function(e){
+        howToBackButton.addEventListener('mousedown', function(e){
             appState = STATE_TITLE_SCREEN;
             gameStartHolder.setAttribute('style', 'display: block');
             howToPlayHolder.setAttribute('style', '');
@@ -374,7 +374,7 @@ function canvasApp(){
 		microSound.play();
 		
 		mainCanvas.removeEventListener('mousemove', onMouseMove, false);
-		target.removeEventListener('click', onStartClick, false);
+		target.removeEventListener('mousedown', onStartClick, false);
 		gameStartHolder.setAttribute('style', 'display: none;');
 		gamePlayHolder.setAttribute('style', 'display: block;');
 		gameOverHolder.setAttribute('style', 'display:none;');
@@ -482,7 +482,7 @@ function canvasApp(){
     function transLevel(){
         appState = STATE_WAITING;
         levelTransitionHolder.setAttribute('style', 'display: block;');
-        nextLevelButton.addEventListener('click', function(e){
+        nextLevelButton.addEventListener('mousedown', function(e){
             appState = STATE_TITLE_SCREEN;
             gameStartHolder.setAttribute('style', 'display: block');
             levelTransitionHolder.setAttribute('style', '');
@@ -499,7 +499,7 @@ function canvasApp(){
 		playerOne.alive = true;
 		playerOne.colliding = false;
 		gameOverHolder.setAttribute('style', 'display:block');
-		restartButton.addEventListener('click', onStartClick, false);
+		restartButton.addEventListener('mousedown', onStartClick, false);
 	}
 	
 	

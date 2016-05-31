@@ -165,17 +165,13 @@ button{
     
 }
 
-#gameStart span{
+#gameStart span, #gameStart a{
     width: 150px;
     display: block;
     clear: both;
     margin: auto;
     margin-bottom: 15px;
     font-size: 1.3em;
-}
-
-#gameStart a:hover{
- color: #0000FF;   
 }
 
 #gameStart h1{
