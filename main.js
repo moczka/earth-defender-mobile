@@ -682,10 +682,11 @@ function canvasApp(){
 	}
 	
 	function onTouchStart(e){
-		//create the touch list
-		e.createTouchList();
 		
-		if(e.targetTouches.length >= 1){
+        if(appState != STATE_PLAYING){
+         return;   
+        }
+		if(e.touches.length >= 1){
 			//if more than one finger on screen. activate shield
 			playerOne.shieldActive = true;
 		}
@@ -694,7 +695,7 @@ function canvasApp(){
 	function onTouchEndHandler(e){
 	
 		playerOne.shoot();
-		//shootSoundPool.get();
+		shootSoundPool.get();
 		playerOne.shieldActive = false;
 		
 	}
