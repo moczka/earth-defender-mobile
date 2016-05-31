@@ -686,7 +686,7 @@ function canvasApp(){
         if(appState != STATE_PLAYING){
          return;   
         }
-		if(e.touches.length >= 1){
+		if(e.touches.length >= 2){
 			//if more than one finger on screen. activate shield
 			playerOne.shieldActive = true;
 		}
