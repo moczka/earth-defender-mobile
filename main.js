@@ -59,7 +59,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 23;
+	var itemsToLoad = 24;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
@@ -67,6 +67,7 @@ function canvasApp(){
 	//set up sprites & sounds
 	var shipSprite = new Image(); 
 	var backgroundSprite = new Image();
+    var meteorSprite = new SpriteSheet();
 	var earthSprite = new Image();
 	var enemySprite = new Image();
 	var shieldSound = new Audio();
@@ -106,6 +107,13 @@ function canvasApp(){
 	var currentScore = 0;
 	var currentLevel = 1;
 	var shipLives = 4;
+    
+    
+    //DEBUGGING
+    
+    var meteor = {canvasWidth:600, canvasHeight:480, width:56, height:55, velX : Math.random()*5+1, velY: Math.random()*5+1, x : 200, y : 400};
+    
+    
 	
 	//mobile acceleration
 	var ax, ay;
@@ -114,10 +122,10 @@ function canvasApp(){
 	//make custom classes inherit display class
 	Ship.prototype = new Display(); 
 	Missile.prototype = new Display();
-	Enemey.prototype = new Display();
+	Enemy.prototype = new Display();
 	Shield.prototype = new Display();
 	Background.prototype = new Display();
-
+    
 	//create sound pool for explosion and shoot sound
 	var shootSoundPool = new SoundPool(8);
 	var explosionSoundPool = new SoundPool(8);
@@ -131,9 +139,9 @@ function canvasApp(){
 	var keyPressList = [];
 
 	//TEMP: player instance and enemies
-	var enemyOne = new Enemey();
-	var enemyTwo = new Enemey();
-	var enemyThree = new Enemey();
+	var enemyOne = new Enemy();
+	var enemyTwo = new Enemy();
+	var enemyThree = new Enemy();
 	var playerOne = new Ship();
 	var background = new Background();
 	
@@ -241,6 +249,8 @@ function canvasApp(){
 		//init and load sound pool sounds
 		explosionSoundPool.init("explosion");
 		shootSoundPool.init("shoot");
+        meteorSprite.setCanvas(mainCanvas);
+        meteorSprite.init('assets/sprites/meteor.png', {width:56, height:55, numCol:2, numRow:9,speed:0.2,from:0, to:8});
 		
 		//sounds
 		microSound.src = 'assets/sounds/microSound'+supportedFormat;
@@ -285,6 +295,7 @@ function canvasApp(){
 			background.clear();
 			initAssets();
 			console.log(soundTrack);
+            console.log(meteorSprite);
 		}
 	}
 	
@@ -418,7 +429,14 @@ function canvasApp(){
 		enemyOne.draw();
 		enemyOne.follow(playerOne);
 		enemyOne.attack(playerOne);
-		
+        
+        meteor.x += meteor.velX;
+        meteor.y += meteor.velY;
+        
+        checkBoundary(meteor);
+        meteorSprite.play(meteor.x, meteor.y);
+        
+	
 		
 		checkBoundary(enemyTwo);
 		enemyTwo.draw();
@@ -686,6 +704,8 @@ function canvasApp(){
         if(appState != STATE_PLAYING){
          return;   
         }
+        
+        //comparings the global touches active if more than one shield is activated.
 		if(e.touches.length >= 2){
 			//if more than one finger on screen. activate shield
 			playerOne.shieldActive = true;
@@ -693,11 +713,9 @@ function canvasApp(){
 	}
 	
 	function onTouchEndHandler(e){
-	
 		playerOne.shoot();
 		shootSoundPool.get();
 		playerOne.shieldActive = false;
-		
 	}
 	
 	//Checks for device orientation
@@ -764,14 +782,10 @@ FrameRateCounter.prototype.countFrames=function() {
 }
 	
 	//custom classes
-
-		function Display(){
+   function Display(){
 		this.context;
 		this.canvasWidth;
 		this.canvasHeight;
-		this.velX = 0;
-		this.velY = 0;
-		this.angle = 0;
 		this.centerX;
 		this.centerY;
 		this.sprite = false;
@@ -779,17 +793,19 @@ FrameRateCounter.prototype.countFrames=function() {
 		this.width = 0;
 		this.x = 0;
 		this.y = 0;
-		this.colliding = false;
-		this.alive = false;
 		this.color = "#00FF00";
 		this.alpha = 1;
+        this.velX = 0;
+		this.velY = 0;
+		this.angle = 0;  
+        this.alive = false;  
+        this.colliding = false;
 		var self = this;
 		this.setCanvas = function(canvas){
 			self.context = canvas.getContext('2d');
 			self.canvasWidth = canvas.width;
 			self.canvasHeight = canvas.height;
 		};
-			
 			//this init function is for all inanimate objects not.
 		this.init = function(x,y, sprite, numSprite){
 			self.sprite = (sprite != false)? true: false;
@@ -801,7 +817,7 @@ FrameRateCounter.prototype.countFrames=function() {
 			self.centerY = self.height/2;
 			self.alive = true;
 		};
-		this.reset = function(){
+        this.reset = function(){
 			self.x = 0;
 			self.y = 0;
 			self.angle = 0;
@@ -809,8 +825,95 @@ FrameRateCounter.prototype.countFrames=function() {
 			self.velY = 0;
 			self.alive = false;
 			self.colliding = false;
-		};	
+		};
+
 	}
+    
+    function SpriteSheet(){
+        this.width;
+        this.height;
+        this.x;
+        this.y;
+        this.context;
+        this.canvasHeight;
+        this.canvasWidth;
+        this.speed;
+        this.numCol;
+        this.numRow;
+        this.src;
+        this.currentFrame;
+        this.finalFrame;
+        this.startFrame;
+        this.totalFrames;
+        
+        var frames = [];
+
+        
+        var sprite;
+
+        var frameIndex = 0;
+        
+        var self = this;
+        this.setCanvas = function(canvas){
+            self.context = canvas.getContext('2d');
+            self.canvasHeight = canvas.height;
+            self.canvasWidth = canvas.width;
+        };
+        this.init = function(source, spriteObject){
+            //sets up the source of the spriteSheet and adds a load listener
+            sprite = new Image();
+            sprite.src = source;
+            sprite.addEventListener('load', onAssetsLoad, false);
+            
+            //sets up sprite properties from the spritesheet info object being passed in.
+            self.width = spriteObject.width || 32;
+            self.height = spriteObject.height || 32;
+            self.numCol = spriteObject.numCol || 1;
+            self.numRow = spriteObject.numRow || 1;
+            self.startFrame = spriteObject.from || 0;
+            self.finalFrame = spriteObject.to || 0;
+            self.speed = spriteObject.speed || 1;
+            self.totalFrames = spriteObject.numCol * spriteObject.numRow;
+            
+            
+            
+            for(var i = 0; i < self.totalFrames; i++){
+                var frame = {regX:0, regY:0};
+                
+                //indexes the regX and regY points of each sprite frame into the array.
+                if(i>=self.numCol){
+                    frame.regX = (i - Math.floor(i/self.numCol)*self.numCol)*self.width;
+                    frame.regY = Math.floor(i/self.numCol)*self.height;
+                }else{
+                    frame.regX = i * self.width;
+                    frame.regY = 0;
+                }
+
+                frames.push(frame);
+                
+            }
+              
+        };
+        this.play = function(x, y){
+            self.x = x;
+            self.y = y;
+
+            if(self.startFrame === self.finalFrame){
+                self.currentFrame = frames[self.startFrame];
+                self.context.drawImage(sprite, self.currentFrame.regX, self.currentFrame.regY, self.width, self.height, self.x, self.y, self.width, self.height);
+                
+            }else{
+                frameIndex += 0.3;
+                frameIndex = (frameIndex >= self.totalFrames)? 0: frameIndex;
+                
+                self.currentFrame = frames[Math.floor(frameIndex)];
+                console.log(frames[Math.floor(frameIndex)]);
+                self.context.drawImage(sprite, self.currentFrame.regX, self.currentFrame.regY, self.width, self.height, self.x, self.y, self.width, self.height); 
+            } 
+        };
+        
+                                       
+    }
 	
 	function Background(){
 		var self = this;
@@ -900,10 +1003,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			
 			if(!explosion.running){
 			//appState = STATE_GAME_OVER;
-				this.alive = true;
-				this.colliding = false;
-				this.x = 200;
-				this.y = 200;				
+                self.spawn(200,200);
 			}
 
 			return;
@@ -927,6 +1027,13 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		this.context.restore();
 		
 		};
+    this.spawn = function(x, y){
+        this.alive = true;
+        this.colliding = false;
+        this.x = x;
+        this.y = y;
+    };
+        
 	}
 	
 	function Missile(){
@@ -963,7 +1070,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		};
 	}
 	
-	function Enemey(){
+	function Enemy(){
 		
 		this.thrust = 0.15;
 		var explosion = new Explosion(20);
@@ -1003,10 +1110,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 				
 			if(!explosion.running){
 			//appState = STATE_GAME_OVER;
-				this.alive = true;
-				this.colliding = false;
-				this.x = 200;
-				this.y = 200;				
+                self.spawn(200, 200);
 			}	
 				
 			return;
@@ -1023,6 +1127,14 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			//this.context.strokeRect(this.x, this.y, this.width, this.height);
 			
 		};
+        
+        this.spawn = function(x, y){
+            this.alive = true;
+            this.colliding = false;
+            this.x = x;
+            this.y = y;
+        };
+        
 		this.follow = function(object){
 			if(!object.alive){
 				return;
