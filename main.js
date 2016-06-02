@@ -230,7 +230,7 @@ function canvasApp(){
 		if(!userAgent.mobile){
 			mainCanvas.width = 600;
 			mainCanvas.height = 480;
-			mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
+			//mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
 		}else{
 			mainCanvas.setAttribute('style', 'width: 100%; height: 100%');
 			document.addEventListener('touchmove', onTouchMove, false);
