@@ -384,8 +384,8 @@ function canvasApp(){
 	function onStartClick(e){
 		var target = e.target;
 		
-		shootSoundPool.get(0);
-		explosionSoundPool.get(0);
+		shootSoundPool.get(0.1);
+		//explosionSoundPool.get();
 		
 		microSound.volume = 0.0;
 		microSound.play();
@@ -397,7 +397,10 @@ function canvasApp(){
 		gameOverHolder.setAttribute('style', 'display:none;');
 		
 		soundTrack.play();
+        soundTrack.volume = 0.1;
 		soundTrack.loop = true;
+        
+        console.log(soundTrack.volume);
 		
 		if(userAgent.mobile){
 			//add game controls for mobile devices based on motion
@@ -913,7 +916,6 @@ FrameRateCounter.prototype.countFrames=function() {
                 frameIndex = (frameIndex >= self.totalFrames)? 0: frameIndex;
                 
                 self.currentFrame = frames[Math.floor(frameIndex)];
-                console.log(frames[Math.floor(frameIndex)]);
                 self.context.drawImage(sprite, self.currentFrame.regX, self.currentFrame.regY, self.width, self.height, self.x, self.y, self.width, self.height); 
             } 
         };
@@ -1260,17 +1262,21 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			if(object == "explosion"){
 				for(var i=0; i<size; i++){
 					var explosion = new Audio('assets/sounds/explosion'+supportedFormat);
-					explosion.volume = 0.50;
+					explosion.volume = 1.0;
 					explosion.load();
 					explosion.addEventListener('canplaythrough', onAssetsLoad, false);
+                    //explosion.setAttribute('controls', '');
+                    document.body.appendChild(explosion);
 					pool[i] = explosion;
 				}
 			}else if(object == "shoot"){
 				for(var i=0; i<size; i++){
 					var shoot = new Audio('assets/sounds/shoot'+supportedFormat);
-					shoot.volume = 0.50;
+					shoot.volume = 1.0;
 					shoot.load();
 					shoot.addEventListener('canplaythrough', onAssetsLoad, false);
+                    //shoot.setAttribute('controls', '');
+                    document.body.appendChild(shoot);
 					pool[i] = shoot;
 				}
 			}
@@ -1278,8 +1284,8 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		this.get = function(volume){
 			volume = (volume == undefined)? 1: volume;
 			if(pool[currentSound].currentTime == 0 || pool[currentSound].ended){
-				pool[currentSound].volume = volume;
 				pool[currentSound].play();
+                pool[currentSound].volume = volume;
 			}	
 			currentSound = (currentSound+1) % size;
 		};
