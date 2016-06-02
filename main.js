@@ -201,7 +201,8 @@ function canvasApp(){
 	
 	function gameLoop(){
 		if(loopOn){
-			requestAnimFrame(gameLoop, FRAME_RATE);
+			//requestAnimFrame(gameLoop, FRAME_RATE);
+            window.setTimeout(gameLoop, FRAME_RATE);
 			runState();
 		}
 	}
