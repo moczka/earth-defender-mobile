@@ -52,6 +52,7 @@ function canvasApp(){
 	//userAgent info and canvas control
 	var userAgent = {mobile:false,platform:"", portrait:false};
 	var canvasHolder = $('#canvasHolder');
+    var preloadImage = $('#preload');
     var interfaceWrapper = $('#interfaceWrapper');
 	var orientationMessageHolder = $('#orientationMessage');
 	
@@ -242,7 +243,11 @@ function canvasApp(){
 	}
 	
 	function loadAssets(){
+        
+        //change app state
 		appState = STATE_LOADING;
+        //hides preload image
+        preloadImage.setAttribute('style', 'display:none;');
 		
 		background.setCanvas(mainCanvas);
 		
