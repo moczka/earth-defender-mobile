@@ -261,7 +261,7 @@ function canvasApp(){
 		microSound.src = 'assets/sounds/microSound'+supportedFormat;
 		microSound.load();
 		microSound.addEventListener('canplaythrough', onAssetsLoad, false);
-		soundTrack.src = 'assets/sounds/soundtrack.mp3';
+		soundTrack.src = 'assets/sounds/soundtrack'+supportedFormat;
 		soundTrack.load();
 		soundTrack.addEventListener('canplaythrough', onAssetsLoad, false);
 		shieldSound.src = 'assets/sounds/shield'+supportedFormat;
