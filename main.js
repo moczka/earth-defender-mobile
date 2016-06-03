@@ -60,22 +60,19 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 24;
+	var itemsToLoad = 21;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
 	
-	//set up sprites & sounds
-	var shipSprite = new Image(); 
-	var backgroundSprite = new Image();
-    var meteorSprite = new SpriteSheet();
-	var earthSprite = new Image();
-	var enemySprite = new Image();
-	var shieldSound = new Audio();
-	//adds the micro sound for chrome issue
-	var microSound = new Audio();
-	var soundTrack = new Audio();
-	
+	//set up sprites sheets & sounds
+	var backgroundSprite = new Image(),
+	    earthSprite = new Image(),
+	    soundTrack = new Audio(),
+        enemySpriteSheet = new Image(),
+	    playerSpriteSheet = new Image();
+    
+    
 	//mouse
 	var mouse = {x:0,y:0, alive:true};
 	
@@ -105,16 +102,10 @@ function canvasApp(){
     var storyLineSkipButton = $('#skipStoryLine');
     
 	//score  & level variables
-	var currentScore = 0;
-	var currentLevel = 1;
-	var shipLives = 4;
-    
-    
-    //DEBUGGING
-    
-    var meteor = {canvasWidth:600, canvasHeight:480, width:56, height:55, velX : Math.random()*5+1, velY: Math.random()*5+1, x : 200, y : 400};
-    
-    
+	var currentScore = 0,
+	   currentLevel = 1,
+        enemyShipWorth = 10,
+	   shipLives = 4;
 	
 	//mobile acceleration
 	var ax, ay;
@@ -126,6 +117,7 @@ function canvasApp(){
 	Enemy.prototype = new Display();
 	Shield.prototype = new Display();
 	Background.prototype = new Display();
+    Rock.prototype = new Display();
     
 	//create sound pool for explosion and shoot sound
 	var shootSoundPool = new SoundPool(8);
@@ -136,6 +128,7 @@ function canvasApp(){
 	var mainContext = mainCanvas.getContext('2d');
 	var centerX = bgCanvas.width/2;
 	var centerY = bgCanvas.height/2;
+    
 	//array holding key presses
 	var keyPressList = [];
 
@@ -143,8 +136,17 @@ function canvasApp(){
 	var enemyOne = new Enemy();
 	var enemyTwo = new Enemy();
 	var enemyThree = new Enemy();
-	var playerOne = new Ship();
+	var playerShip = new Ship();
 	var background = new Background();
+    
+    //pools holding enemies and rocks
+    var enemyShipsPool = new Pool(10),
+        rocks = new Pool(5);
+        
+    var totalEnemies = 10,
+        totalRocks = 5,
+        levelEnemies = 5;
+    
 	
 	appState = STATE_USER_AGENT;
 	runState();
@@ -201,8 +203,8 @@ function canvasApp(){
 	
 	function gameLoop(){
 		if(loopOn){
-			//requestAnimFrame(gameLoop, FRAME_RATE);
-            window.setTimeout(gameLoop, FRAME_RATE);
+			requestAnimFrame(gameLoop, FRAME_RATE);
+            //window.setTimeout(gameLoop, FRAME_RATE);
 			runState();
 		}
 	}
@@ -247,37 +249,32 @@ function canvasApp(){
         
         //change app state
 		appState = STATE_LOADING;
-        //hides preload image
-        preloadImage.setAttribute('style', 'display:none;');
 		
 		background.setCanvas(mainCanvas);
 		
 		//init and load sound pool sounds
 		explosionSoundPool.init("explosion");
 		shootSoundPool.init("shoot");
-        meteorSprite.setCanvas(mainCanvas);
-        meteorSprite.init('assets/sprites/meteor.png', {width:56, height:55, numCol:2, numRow:9,speed:0.2,from:0, to:8});
+        
 		
-		//sounds
-		microSound.src = 'assets/sounds/microSound'+supportedFormat;
-		microSound.load();
-		microSound.addEventListener('canplaythrough', onAssetsLoad, false);
+		//sounds 1 sounds
 		soundTrack.src = 'assets/sounds/soundtrack'+supportedFormat;
 		soundTrack.load();
 		soundTrack.addEventListener('canplaythrough', onAssetsLoad, false);
-		shieldSound.src = 'assets/sounds/shield'+supportedFormat;
-		shieldSound.load();
-		shieldSound.addEventListener('canplaythrough', onAssetsLoad, false);
 		
-		//sprites | images
+		//sprites | images 4 images
 		earthSprite.src = 'assets/sprites/earth.png';
 		earthSprite.addEventListener('load', onAssetsLoad, false);
+        playerSpriteSheet.src = 'assets/sprites/playerShip.png';
+        playerSpriteSheet.addEventListener('load', onAssetsLoad, false);
+        enemySpriteSheet.src = 'assets/sprites/enemyShips.png';
+        enemySpriteSheet.addEventListener('load', onAssetsLoad, false);
 		backgroundSprite.src = 'assets/sprites/background.png';
 		backgroundSprite.addEventListener('load', onAssetsLoad, false);
-		enemySprite.src = 'assets/sprites/enemy1.png';
-		enemySprite.addEventListener('load', onAssetsLoad, false);
-		shipSprite.src = 'assets/sprites/playerShip.png';
-		shipSprite.addEventListener('load', onAssetsLoad, false);
+
+        //hides preload image
+        preloadImage.setAttribute('style', 'display:none;');
+        
 	}
 	
 	function onAssetsLoad(e){
@@ -301,31 +298,19 @@ function canvasApp(){
 			background.clear();
 			initAssets();
 			console.log(soundTrack);
-            console.log(meteorSprite);
 		}
 	}
 	
 	function initAssets(){
-		playerOne.setCanvas(mainCanvas);
-		playerOne.init(centerX,centerY,shipSprite, 2);
+		playerShip.setCanvas(mainCanvas);
+		playerShip.init(centerX,centerY,23,23);
 		background.init(0,0,backgroundSprite, 1);
 		background.velX = 1;
+        playerShip.thrustAccel = 0.10;
 		
-		enemyOne.setCanvas(mainCanvas);
-		enemyOne.init(500, 340, enemySprite, 1);
-	
-		enemyTwo.setCanvas(mainCanvas);
-		enemyTwo.init(300,400, enemySprite,1);
-
+        //init enemy pool
+        enemyShipsPool.init('enemy');
 		
-		console.log(enemyOne);
-		console.log(enemyTwo);
-		console.log(enemyThree);
-			
-		enemyThree.setCanvas(mainCanvas);
-		enemyThree.init(560, 380, enemySprite,1);
-
-		playerOne.thrustAccel = 0.10;
 		
 		window.addEventListener('mousemove', onMouseMove, false);
 		storyLineHolder.setAttribute('style', 'display: block');
@@ -349,6 +334,7 @@ function canvasApp(){
         }, false);
 		
 		console.log(userAgent);
+        
 		appState = STATE_STORY_LINE;
 		
 	}
@@ -362,12 +348,10 @@ function canvasApp(){
 	function introAnimation(){
 		background.draw();
 		mainContext.drawImage(earthSprite, (mainCanvas.width/2-(earthSprite.width/2)), 0);
-		enemyOne.follow(mouse);
-		enemyTwo.follow(mouse);
-		enemyThree.follow(mouse);
-		enemyOne.draw();
-		enemyTwo.draw();
-		enemyThree.draw();
+
+        
+        
+        
 	}
     
     function howToPlay(){
@@ -384,23 +368,17 @@ function canvasApp(){
 	function onStartClick(e){
 		var target = e.target;
 		
-		shootSoundPool.get(0.1);
-		//explosionSoundPool.get();
-		
-		microSound.volume = 0.0;
-		microSound.play();
-		
 		mainCanvas.removeEventListener('mousemove', onMouseMove, false);
 		target.removeEventListener('mousedown', onStartClick, false);
 		gameStartHolder.setAttribute('style', 'display: none;');
 		gamePlayHolder.setAttribute('style', 'display: block;');
 		gameOverHolder.setAttribute('style', 'display:none;');
 		
+        soundTrack.loop = true;
 		soundTrack.play();
-        soundTrack.volume = 0.1;
-		soundTrack.loop = true;
-        
-        console.log(soundTrack.volume);
+        soundTrack.volume = 0.7;
+		
+        console.log("Volume of the sound track " + soundTrack.volume);
 		
 		if(userAgent.mobile){
 			//add game controls for mobile devices based on motion
@@ -414,6 +392,17 @@ function canvasApp(){
 		 	document.addEventListener('keyup', onKeyUp, false);
 			document.addEventListener('keydown', onKeyDown, false);
 		}
+        
+        
+        for(var i = 0; i<levelEnemies; i++){
+            var randomX = Math.floor(Math.random()*mainCanvas.width),
+                randomY = Math.floor(Math.random()*mainCanvas.height);
+                enemyShipsPool.pool[i].x = randomX;
+                enemyShipsPool.pool[i].y = randomY;
+                enemyShipsPool.pool[i].alive = true;
+                enemyShipsPool.pool[i].colliding = false;
+        }
+        
 		
 		appState = STATE_PLAYING;
 	}
@@ -424,61 +413,76 @@ function canvasApp(){
 		//draw background
 		background.draw();
 		
+        //counts actual frames
 		frameRate.countFrames();
-		
 		frameRateCounter.innerHTML = "Frames: "+frameRate.lastFrameCount;
 		
-		playerOne.velX -= playerOne.velX*friction;
-		playerOne.velY -= playerOne.velY*friction;
-		
-		checkBoundary(playerOne);
-		playerOne.draw();
-		
-		checkBoundary(enemyOne);
-		enemyOne.draw();
-		enemyOne.follow(playerOne);
-		enemyOne.attack(playerOne);
+        //adds friction to player ship motion
+		playerShip.velX -= playerShip.velX*friction;
+		playerShip.velY -= playerShip.velY*friction;
+        //draws player ship
+		checkBoundary(playerShip);
+		playerShip.draw();
         
-        meteor.x += meteor.velX;
-        meteor.y += meteor.velY;
-        
-        checkBoundary(meteor);
-        meteorSprite.play(meteor.x, meteor.y);
-        
-	
-		
-		checkBoundary(enemyTwo);
-		enemyTwo.draw();
-		enemyTwo.follow(playerOne);
-		enemyTwo.attack(playerOne);
-		
-		checkBoundary(enemyThree);
-		enemyThree.follow(playerOne);
-		enemyThree.draw();
-		enemyThree.attack(playerOne);
-		
-		
-		if(!userAgent.mobile){
-		keyControl(playerOne);
+        if(!userAgent.mobile){
+		keyControl(playerShip);
 		}
+        
+        
+        for(var i=0; i<levelEnemies; i++){
+            var currentEnemy = enemyShipsPool.pool[i];
+            
+            if(currentEnemy.alive){
+                checkBoundary(currentEnemy);
+                currentEnemy.follow(playerShip);
+                currentEnemy.attack(playerShip);
+                currentEnemy.draw();
+                
+                if(!currentEnemy.colliding && hitTest(currentEnemy, playerShip)){
+                    if(!playerShip.shieldActive){
+                        playerShip.alive = false;
+                        currentScore += enemyShipWorth;
+                        playerShip.colliding = true;
+                        currentEnemy.colliding = true;
+                        explosionSoundPool.get(0.3);
+                    }else{
+                        explosionSoundPool.get(0.3);
+                        //currentEnemy.alive = false;
+                        currentEnemy.colliding = true;
+                    }
+                }
+        
+                for(var h=0; h<playerShip.missiles.length; h++){
+                    var currentPlayerMissile = playerShip.missiles[h];
+                    if(!currentEnemy.colliding && hitTest(currentPlayerMissile, currentEnemy)){
+                       currentScore += enemyShipWorth;
+                       explosionSoundPool.get(0.3);
+                       currentEnemy.colliding = true;
+                    }
+                }
+                for(var j=0; j<currentEnemy.missiles.length; j++){
+                    var currentEnemyMissile = currentEnemy.missiles[j];
+                    if(!currentEnemyMissile.colliding && playerShip.alive && hitTest(currentEnemyMissile, playerShip) && !playerShip.shieldActive){
+                        currentEnemyMissile.colliding = true;
+                        playerShip.alive = false;
+                        playerShip.colliding = true;
+                        shipLives--;
+                        explosionSoundPool.get(0.3);
+                    }
+                }
+            }
+        }
 			
-			
-		for(var i=0; i<enemyOne.missiles.length; i++){
-			var currentEnemyMissle = enemyOne.missiles[i];
-			if(currentEnemyMissle.alive){
-			if(hitTest(currentEnemyMissle,playerOne) && !playerOne.shieldActive){
-				playerOne.alive = false;
-				explosionSoundPool.get();
-				enemyOne.missiles[i].alive = false;
-				shipLives--;
-				updateCounter('life');
-			}else if(hitTestShield(currentEnemyMissle, playerOne) && playerOne.shieldActive){
-				enemyOne.missiles[i].alive = false;
-			}
-			}
-		}
+        
+        
+        updateCounter('score');
+        updateCounter('life');
 		
-		for(var j=0; j<playerOne.missiles.length; j++){
+		
+/*
+
+		//checks the player missiles collisions
+		for(var j=0; j<playerShip.missiles.length; j++){
 			var currentPlayerMissle = playerOne.missiles[j];
 			if(currentPlayerMissle.alive){
 			if(hitTest(currentPlayerMissle, enemyOne) && enemyOne.alive){
@@ -490,7 +494,7 @@ function canvasApp(){
 			}else if(hitTest(currentPlayerMissle, enemyTwo) && enemyTwo.alive){
 				currentScore += 10;
 				updateCounter('score');
-				playerOne.missiles[j].alive = false;
+				playerShip.missiles[j].alive = false;
 				enemyTwo.alive = false;
 				explosionSoundPool.get();
 			}else if(hitTest(currentPlayerMissle, enemyThree) && enemyThree.alive){
@@ -501,7 +505,7 @@ function canvasApp(){
 				enemyThree.alive = false;
 			}
 			}
-		}
+		}*/
 		
 	}
     
@@ -650,10 +654,11 @@ function canvasApp(){
 	}
 	if(keyPressList[SPACE_BAR] == false){
 		keyPressList[SPACE_BAR] = true;
+        if(!object.shieldActive){
 		object.shoot();
 		shootSoundPool.get();
-		console.log(playerOne.missiles.length);
-		console.log(enemyOne.missiles.length);
+        }
+		console.log(object.missiles.length);
 	}
 	if(keyPressList[DOWN_ARROW]){
 		object.shieldActive = true;
@@ -797,7 +802,6 @@ FrameRateCounter.prototype.countFrames=function() {
 		this.canvasHeight;
 		this.centerX;
 		this.centerY;
-		this.sprite = false;
 		this.height = 0;
 		this.width = 0;
 		this.x = 0;
@@ -816,14 +820,13 @@ FrameRateCounter.prototype.countFrames=function() {
 			self.canvasHeight = canvas.height;
 		};
 			//this init function is for all inanimate objects not.
-		this.init = function(x,y, sprite, numSprite){
-			self.sprite = (sprite != false)? true: false;
+		this.init = function(x,y, width, height){
 			self.x = x;
 			self.y = y;
-			self.width = sprite.width/numSprite || 20;
-			self.height = sprite.height || 20;
-			self.centerX = self.width/2;
-			self.centerY = self.height/2;
+			self.width = width || 20;
+			self.height = height || 20;
+			self.centerX = width/2;
+			self.centerY = height/2;
 			self.alive = true;
 		};
         this.reset = function(){
@@ -838,7 +841,7 @@ FrameRateCounter.prototype.countFrames=function() {
 
 	}
     
-    function SpriteSheet(){
+       function SpriteAnimation(){
         this.width;
         this.height;
         this.x;
@@ -849,18 +852,16 @@ FrameRateCounter.prototype.countFrames=function() {
         this.speed;
         this.numCol;
         this.numRow;
-        this.src;
         this.currentFrame;
         this.finalFrame;
         this.startFrame;
         this.totalFrames;
+        this.appFPS;
+        this.loop = true;
         
         var frames = [];
-
-        
-        var sprite;
-
-        var frameIndex = 0;
+        var frameIncrement;
+        var frameIndex;
         
         var self = this;
         this.setCanvas = function(canvas){
@@ -868,11 +869,7 @@ FrameRateCounter.prototype.countFrames=function() {
             self.canvasHeight = canvas.height;
             self.canvasWidth = canvas.width;
         };
-        this.init = function(source, spriteObject){
-            //sets up the source of the spriteSheet and adds a load listener
-            sprite = new Image();
-            sprite.src = source;
-            sprite.addEventListener('load', onAssetsLoad, false);
+        this.init = function(spriteObject){
             
             //sets up sprite properties from the spritesheet info object being passed in.
             self.width = spriteObject.width || 32;
@@ -881,12 +878,19 @@ FrameRateCounter.prototype.countFrames=function() {
             self.numRow = spriteObject.numRow || 1;
             self.startFrame = spriteObject.from || 0;
             self.finalFrame = spriteObject.to || 0;
-            self.speed = spriteObject.speed || 1;
-            self.totalFrames = spriteObject.numCol * spriteObject.numRow;
+            self.speed = spriteObject.speed || 15;
+            self.totalFrames = spriteObject.numCol * spriteObject.numRow - 1;
+            self.loop = (spriteObject.loop != undefined)? spriteObject.loop: true;
+            self.appFPS = spriteObject.fps;
             
+            //creates the decimal of increment for each second
+            frameIncrement = self.speed/spriteObject.fps;
+            frameIndex = self.startFrame;        
             
+            //creates a variable holding the length of the array holding the frames
+            var totalFramesLength = spriteObject.numCol * spriteObject.numRow;
             
-            for(var i = 0; i < self.totalFrames; i++){
+            for(var i = 0; i < totalFramesLength; i++){
                 var frame = {regX:0, regY:0};
                 
                 //indexes the regX and regY points of each sprite frame into the array.
@@ -897,32 +901,61 @@ FrameRateCounter.prototype.countFrames=function() {
                     frame.regX = i * self.width;
                     frame.regY = 0;
                 }
-
+                //pushes the objects with the regX and regY for each frame into a frame array.
                 frames.push(frame);
                 
             }
               
         };
-        this.play = function(x, y){
+        //use this method to locate or move the sprite sheet to a cordinate
+        this.play = function(x, y, sprite){
             self.x = x;
             self.y = y;
 
+            //no animation will be playeed if the starting frame is equal to the final frame.
             if(self.startFrame === self.finalFrame){
+               
                 self.currentFrame = frames[self.startFrame];
                 self.context.drawImage(sprite, self.currentFrame.regX, self.currentFrame.regY, self.width, self.height, self.x, self.y, self.width, self.height);
                 
             }else{
-                frameIndex += 0.3;
-                frameIndex = (frameIndex >= self.totalFrames)? 0: frameIndex;
+                //increments the frameIndex by a decimal, this will be floored because it is used to find an item in the frame array.
+                frameIndex += frameIncrement;
                 
+                if(frameIndex >= self.finalFrame + 1){
+                    frameIndex = (self.loop)? self.startFrame: self.finalFrame;
+                }
+                //floors the current index to a whole number so to find an object in the frame array
                 self.currentFrame = frames[Math.floor(frameIndex)];
+                //surrounds the sprite into a white block for debugging purposes, you can remove this in your final app
+                //self.context.strokeStyle = '#FFFFFF';
+                //self.context.strokeRect(self.x, self.y, self.width, self.height);
+                //draws the section of the image given the regX and regY as well as the width and height
                 self.context.drawImage(sprite, self.currentFrame.regX, self.currentFrame.regY, self.width, self.height, self.x, self.y, self.width, self.height); 
             } 
         };
+        //use this method to change the fps speed of your sprite sheet animation
+        this.setSpeed = function(speed){
+            //reason why a method for this is needed is because there is  math to be done when speed is changed.
+          self.speed = speed || self.speed;
+            frameIncrement = self.speed / self.appFPS;
+            frameIndex = self.startFrame;   
+        };   
+        this.getFrame = function(frameIndex){
+            frameIndex = (frameIndex == undefined)? 0: frameIndex;
+            return frames[frameIndex];
+        };
+           
+    }  
+    //class for the rocks floating
+    
+    function Rock(){
         
-                                       
+        
+        
+        
     }
-	
+    
 	function Background(){
 		var self = this;
 		var progressBarWidth = 400;
@@ -930,11 +963,9 @@ FrameRateCounter.prototype.countFrames=function() {
 		this.draw = function(){
 			this.x += this.velX;
 			this.y += this.velY;
-			
+            
 this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x-this.canvasWidth, this.y,this.canvasWidth,this.canvasHeight);	
 this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x,this.y,this.canvasWidth,this.canvasHeight);
-		//this.context.drawImage(backgroundSprite, this.x-this.width, this.y);
-		//this.context.drawImage(backgroundSprite, this.x, this.y);
 			
 			if(this.x>this.canvasWidth){
 				this.x = 0;
@@ -978,15 +1009,20 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	shield.width = shield.radius*2;
 	shield.height = shield.radius*2;
 	this.shield = shield;
+        
+    this.spriteAnimation = new SpriteAnimation();
+    this.spriteAnimation.setCanvas(mainCanvas);
+    var shipSpriteInfo = {width:21,height:22, numCol:1, numRow:2,fps:60,speed:30,loop:false,from:0,to:0};
+    this.spriteAnimation.init(shipSpriteInfo);    
+        
 	var self = this;
-	this.init = function(x,y, sprite, numSprite){
-			this.sprite = (sprite != false)? true: false;
+	this.init = function(x,y, width, height){
 			this.x = x;
 			this.y = y;
-			this.width = sprite.width/numSprite || 20;
-			this.height = sprite.height || 20;
-			this.centerX = self.width/2;
-			this.centerY = self.height/2;
+			this.width = width || 20;
+			this.height = height || 20;
+			this.centerX = width/2 || 10;
+			this.centerY = height/2 || 10;
 			this.alive = true;
 		};
 	this.shoot = function(){
@@ -1028,12 +1064,16 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		this.x += this.velX;
 		this.y += this.velY;
 		if(self.thrust){
-			this.context.drawImage(shipSprite, 20, 0, this.width, this.height, -10,-10, this.width, this.height);
+            self.spriteAnimation.startFrame = 1;
+            self.spriteAnimation.finalFrame = 1;
+			self.spriteAnimation.play(-this.centerX, -this.centerY, playerSpriteSheet);
 		}else{
-			this.context.drawImage(shipSprite, 0, 0, this.width, this.height, -10,-10, this.width, this.height);
+			//this.context.drawImage(shipSprite, 0, 0, this.width, this.height, -10,-10, this.width, this.height);
+            self.spriteAnimation.startFrame = 0;
+            self.spriteAnimation.finalFrame = 0;
+			self.spriteAnimation.play(-this.centerX, -this.centerY, playerSpriteSheet);
 		}
 		this.context.restore();
-		
 		};
     this.spawn = function(x, y){
         this.alive = true;
@@ -1045,7 +1085,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	}
 	
 	function Missile(){
-		this.speed = 9;
+		this.speed = 5;
 		this.life = 0;
 		var maxLife = 100;
 		var self = this;
@@ -1060,14 +1100,13 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			this.context.fillStyle = this.color;
 			this.context.fillRect(this.x, this.y, this.width, this.height);
 		};
-		this.init = function(x,y, sprite, numSprite){
-			this.sprite = (sprite != false)? true: false;
+		this.init = function(x,y, width, height){
 			this.x = x;
 			this.y = y;
-			this.width = sprite.width/numSprite || 20;
-			this.height = sprite.height || 20;
-			this.centerX = self.width/2;
-			this.centerY = self.height/2;
+			this.width = width|| 20;
+			this.height = height || 20;
+			this.centerX = width/2;
+			this.centerY = height/2;
 			this.alive = true;
 		};
 		this.spawn = function(x, y){
@@ -1079,22 +1118,28 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	}
 	
 	function Enemy(){
-		
+		this.speed = 0;
 		this.thrust = 0.15;
 		var explosion = new Explosion(20);
 		explosion.setCanvas(mainCanvas);
 		var missilePool = new Pool(10);
 		missilePool.init('missile');
 		this.missiles = missilePool.pool;
-		var self = this;
-		this.init = function(x,y, sprite, numSprite){
-			this.sprite = (sprite != false)? true: false;
+        var spriteRandomIndex = Math.floor(Math.random()*4);
+        this.spriteAnimation = new SpriteAnimation();
+        this.spriteAnimation.setCanvas(mainCanvas);
+        var enemySpriteInfo = {width:23,height:21, numCol:1, numRow:4,fps:60,speed:30,loop:false,from:spriteRandomIndex,to:spriteRandomIndex};
+        this.spriteAnimation.init(enemySpriteInfo);
+        
+        var self = this;
+        
+		this.init = function(x,y, width, height){
 			this.x = x;
 			this.y = y;
-			this.width = sprite.width/numSprite || 20;
-			this.height = sprite.height || 20;
-			this.centerX = self.width/2;
-			this.centerY = self.height/2;
+			this.width = width || 20;
+			this.height = height || 20;
+			this.centerX = width/2 || 10;
+			this.centerY = height/2 || 10;
 			this.alive = true;
 		};
 		this.attack = function(object){
@@ -1104,6 +1149,9 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			missilePool.get(this.x+10, this.y+10, this.angle);
 		};
 		this.draw = function(){
+            
+            
+            //console.log(spriteInfo);
 
 			for(var i=0; i<self.missiles.length; i++){
 				currentMissle = self.missiles[i];
@@ -1112,16 +1160,20 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 				}
 			}
 			
-			if(!this.alive || this.colliding){
+			if(this.colliding){
 			explosion.create(this.x, this.y);
 			explosion.draw();
+                //console.log('Enemy explosion running');
 				
-			if(!explosion.running){
-			//appState = STATE_GAME_OVER;
-                self.spawn(200, 200);
-			}	
-				
-			return;
+			     if(!explosion.running){
+			     //appState = STATE_GAME_OVER;
+                    this.colliding = false;
+                    this.alive = false;
+                    self.spawn(200, 400);
+                     
+                     
+                    }
+			     return;
 			}
 			
 			this.x += this.velX;
@@ -1129,10 +1181,8 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			this.context.save();
 			this.context.translate(this.x+this.centerX, this.y+this.centerY);
 			this.context.rotate(this.angle);
-			
-			this.context.drawImage(enemySprite, -this.centerX, -this.centerY);
+            self.spriteAnimation.play(-this.centerX, -this.centerX, enemySpriteSheet);
 			this.context.restore();
-			//this.context.strokeRect(this.x, this.y, this.width, this.height);
 			
 		};
         
@@ -1301,12 +1351,20 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 				for(var i=0; i<size; i++){
 					var missile = new Missile();
 					missile.setCanvas(mainCanvas);
-					missile.init(0,0,false,1);
+					missile.init(0,0,2,2);
 					missile.alive = false;
-					missile.width = missile.height = 2;
 					pool[i] = missile;
 				}
-			}
+			}else if(object == "enemy"){
+                for(var j=0; j<size; j++){
+                    var enemy = new Enemy();
+                    enemy.setCanvas(mainCanvas);
+                    enemy.init(0, 0, 23, 21);
+                    enemy.alive = false;
+                    enemy.colliding = false;
+                    pool[j] = enemy;
+                }
+            }
 		};
 		this.get = function(x, y, angle){
 
