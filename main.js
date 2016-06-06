@@ -145,7 +145,7 @@ function canvasApp(){
         
     var totalEnemies = 10,
         totalRocks = 5,
-        levelEnemies = 5;
+        levelEnemies = 3;
     
 	
 	appState = STATE_USER_AGENT;
@@ -468,7 +468,9 @@ function canvasApp(){
                         playerShip.colliding = true;
                         shipLives--;
                         explosionSoundPool.get(0.3);
-                    }
+                    }else if(hitTest(currentEnemyMissile, playerShip.shield) && playerShip.shieldActive){
+                            currentEnemyMissile.alive = false;
+                             }
                 }
             }
         }
@@ -525,10 +527,10 @@ function canvasApp(){
 	function gameOver(){
 		appState = STATE_LOADING;
 		soundTrack.pause();
-		playerOne.x = 320;
-		playerOne.y = 240;
-		playerOne.alive = true;
-		playerOne.colliding = false;
+		playerShip.x = 320;
+		playerShip.y = 240;
+		playerShip.alive = true;
+		playerShip.colliding = false;
 		gameOverHolder.setAttribute('style', 'display:block');
 		restartButton.addEventListener('mousedown', onStartClick, false);
 	}
@@ -693,23 +695,23 @@ function canvasApp(){
 		
 		var landscapeOrientation = window.innerWidth/window.innerHeight > 1;
 		if (landscapeOrientation) {
-			futureVelX = playerOne.velX-ay;
-			futureVelY = playerOne.velY-ax;
+			futureVelX = playerShip.velX-ay;
+			futureVelY = playerShip.velY-ax;
 		} else {
-			futureVelX = playerOne.velX+ax;
-			futureVelY = playerOne.velY-ay;
+			futureVelX = playerShip.velX+ax;
+			futureVelY = playerShip.velY-ay;
 		}
 		
 		futureVel = Math.sqrt(futureVelX*futureVelX+futureVelY*futureVelY);
 		
 		if(futureVel >= 5){
-			futureVelX = playerOne.velX;   
-		    futureVelY = playerOne.velY; 
+			futureVelX = playerShip.velX;   
+		    futureVelY = playerShip.velY; 
 		}
 		
-		playerOne.velX = futureVelX;
-		playerOne.velY = futureVelY;	
-		playerOne.angle = Math.atan2(playerOne.velY, playerOne.velX);
+		playerShip.velX = futureVelX;
+		playerShip.velY = futureVelY;	
+		playerShip.angle = Math.atan2(playerShip.velY, playerShip.velX);
 		
 	}
 	
@@ -722,14 +724,14 @@ function canvasApp(){
         //comparings the global touches active if more than one shield is activated.
 		if(e.touches.length >= 2){
 			//if more than one finger on screen. activate shield
-			playerOne.shieldActive = true;
+			playerShip.shieldActive = true;
 		}
 	}
 	
 	function onTouchEndHandler(e){
-		playerOne.shoot();
+		playerShip.shoot();
 		shootSoundPool.get();
-		playerOne.shieldActive = false;
+		playerShip.shieldActive = false;
 	}
 	
 	//Checks for device orientation
@@ -1005,7 +1007,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	explosion.setCanvas(mainCanvas);
 	var shield = new Shield();
 	shield.setCanvas(mainCanvas);
-	shield.init(0,0, false, 1);
+	shield.init(0,0, 80, 80);
 	shield.width = shield.radius*2;
 	shield.height = shield.radius*2;
 	this.shield = shield;
@@ -1054,8 +1056,8 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		}
 		
 		if(self.shieldActive){
-			shield.x = this.x+10;
-			shield.y = this.y+10;
+			shield.x = this.x-shield.centerX+this.centerX;
+			shield.y = this.y-shield.centerY+this.centerY;
 			shield.draw();
 		}
 		this.context.save();
@@ -1291,9 +1293,13 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		this.maxRadius = 45;
 		var self = this;
 		this.draw = function(){
+            
+            //this.context.strokeStyle = '#FFFFFF';
+            //this.context.strokeRect(this.x, this.y, this.width, this.height);
+            
 			this.context.strokeStyle = '#0000FF';
 			this.context.beginPath(); 
-			this.context.arc(this.x, this.y, self.radius, 0, Math.PI*2, true);
+			this.context.arc(this.x+this.centerX, this.y+this.centerY, self.radius, 0, Math.PI*2, true);
 			this.context.closePath();
 			this.context.stroke(); 
 			
