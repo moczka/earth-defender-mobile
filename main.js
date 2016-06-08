@@ -488,7 +488,10 @@ function canvasApp(){
 		
         //counts actual frames
 		frameRate.countFrames();
-		frameRateCounter.innerHTML = "Frames: "+frameRate.lastFrameCount;
+        
+        //hide debugging frame counter on final versions
+		//frameRateCounter.innerHTML = "Frames: "+frameRate.lastFrameCount;
+        frameRateCounter.innerHTML = "";
 		
         //adds friction to player ship motion
 		playerShip.velX -= playerShip.velX*friction;
@@ -1429,7 +1432,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		if(!this.alive || this.colliding){
 			return;
 		}
-		missilePool.get(this.x+this.centerX, this.y+this.centerY, this.angle);
+		missilePool.get(this.x+this.centerX, this.y+this.centerY, this.angle, 5);
 		
 	};
 	this.draw = function(){
@@ -2026,11 +2029,14 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
             }
             
 		};
-		this.get = function(x, y, angle){
+		this.get = function(x, y, angle, speed){
+            speed = (speed == undefined)? 3: speed;
+            
 			if(!pool[size-1].alive){
 				pool[size-1].spawn(x,y);
 				pool[size-1].alive = true;
 				pool[size-1].life=0;
+                pool[size-1].speed = speed;
 				pool[size-1].velX = Math.cos(angle)*pool[size-1].speed;
 				pool[size-1].velY = Math.sin(angle)*pool[size-1].speed;
 				pool.unshift(pool.pop());
