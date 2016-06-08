@@ -115,7 +115,7 @@ function canvasApp(){
 	//score  & level variables
 	var currentScore = 0,
 	    currentLevel = 0,
-        lastLevel = 8,
+        lastLevel = 5,
         userBeatGame = false,
         enemyShipWorth = 10,
         rockWorth = 5,
@@ -352,7 +352,6 @@ function canvasApp(){
 		background.velX = 1;
         playerShip.thrustAccel = 0.06;
         alienMothership.setCanvas(mainCanvas);
-        alienMothership.init(0, 0, "alien");
         
         window.addEventListener('mousemove', onMouseMove, false);
         gameInterface.addButtonListeners();
@@ -454,6 +453,7 @@ function canvasApp(){
             meteorPool.getMeteor(randomX, randomY, "large");
         }
         
+        alienMothership.init(0, 0, "alien");
         alienMothership.spawn(randomX, randomY);
         alienMothership.setRelease(levelEnemies, 8);
         
@@ -462,17 +462,23 @@ function canvasApp(){
 	//once the user has clicked the start button, this function draws the game
 	function drawCanvas(){
         
+        //console.log('The draw screen function is being called');
         
-        if(enemiesKilled == levelEnemies){
-            finalLevelSound.pause();
-            soundTrack.pause();
+        if(enemiesKilled == levelEnemies && !playerShip.colliding){
+            if(currentLevel<lastLevel){
+                soundTrack.currentTime = 0;
+                soundTrack.pause();
+            }else{
+                finalLevelSound.currentTime = 0;
+                finalLevelSound.pause();
+            }
             gameInterface.hide('gamePlay');
             playerShip.angle = 0;
             playerShip.velY = 0;
             playerShip.velX = 0.2;
             appState = STATE_LEVEL_TRANSITION;
             return;
-        }else if(shipLives < 0){
+        }else if(shipLives < 0 && !playerShip.colliding){
             appState = STATE_GAME_OVER;
             return;
         }
@@ -522,6 +528,7 @@ function canvasApp(){
                         explosionSoundPool.get(0.3);
                         currentEnemy.colliding = true;
                         currentScore += enemyShipWorth;
+                        playerShip.shield.life -= 20;
                         enemiesKilled++;
                     }
                 }
@@ -543,9 +550,11 @@ function canvasApp(){
                         playerShip.colliding = true;
                         shipLives--;
                         explosionSoundPool.get(0.3);
-                    }else if(hitTest(currentEnemyMissile, playerShip.shield) && playerShip.shieldActive){
+                    }else if(hitTest(currentEnemyMissile, playerShip.shield) && playerShip.shieldActive && currentEnemyMissile.alive){
                             currentEnemyMissile.alive = false;
-                             }
+                            playerShip.shield.life -= 10;
+                            console.log('enemy missiled attacked sheld!!');
+                            }
                 }
             }
         }
@@ -627,6 +636,7 @@ function canvasApp(){
     function beatGame(){
         appState = STATE_WAITING;
         
+        //outputs the final score to the winner gamer :)
         finalLevelSound.currentTime = 0;
         finalLevelSound.pause();        
         beatGameScore.innerHTML = "Your Score: "+currentScore;
@@ -634,6 +644,7 @@ function canvasApp(){
         gameInterface.hide('gamePlay');
         gameInterface.display('beatGame'); 
         
+        //resets that score
         currentScore = 0;
         currentLevel = 0;
         
@@ -642,20 +653,24 @@ function canvasApp(){
 	//function in charged of ending the game
 	function gameOver(){
         
+        //changes the state to call code only once.
 		appState = STATE_WAITING;
         
-        currentLevel = 0;
-        currentScore = 0;
-        
-        if(currentLevel<lastLevel){
+        //checks to see which sound to stop playing given the level the user was before dying.
+        if(currentLevel == lastLevel){
+            finalLevelSound.currentTime = 0;
+            finalLevelSound.pause();
+        }else{
             soundTrack.currentTime = 0;
             soundTrack.pause();
             
-        }else{
-            finalLevelSound.currentTime = 0;
-            finalLevelSound.pause();
         }
+        
+        //resets the score and level
+        currentLevel = 0;
+        currentScore = 0;
 
+        //displays the appropriate interface
         gameInterface.hide('gamePlay');
         gameInterface.display('gameOver');
         
@@ -665,7 +680,7 @@ function canvasApp(){
 	//checks if an object has left the canvas bouding box
 	function checkBoundary(object){
 
-		if(object.x >= object.canvasWidth+object.width){
+		if(object.x >= object.canvasWidth){
 			object.x = 0;
 		}else if(object.x <= -object.width){
 			object.x = object.canvasWidth-object.width;
@@ -880,6 +895,7 @@ function canvasApp(){
 			userAgent.portrait = true;
 			orientationMessageHolder.setAttribute('style', 'display: block;');
 			canvasHolder.setAttribute('style', 'display:none;');
+            interfaceWrapper.setAttribute('style', 'display: none;');
 		}else if(window.innerHeight<=window.innerWidth){
 			orientationMessageHolder.setAttribute('style', '');
 			canvasHolder.setAttribute('style', '');
@@ -1469,6 +1485,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
     this.spawn = function(x, y){
         missilePool.hideItems();
         self.shieldActive = false;
+        self.shield.reset();
         this.alive = true;
         this.colliding = false;
         this.x = x;
@@ -1623,7 +1640,6 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
         var spriteIndex;
         var spriteSheetInfo;
         
-        
         var shield = new Shield();
 	       shield.setCanvas(mainCanvas);
 	       shield.init(0,0, 80, 80);
@@ -1651,7 +1667,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                  this.centerY = this.height / 2;
                     break;
                 case "alien":
-                var spriteSheetInfo = {width:51,height:46, numCol:1, numRow:2,fps:60,speed:30,loop:false,from:1,to:1};
+                var spriteSheetInfo = {width:51,height:46, numCol:3, numRow:2,fps:60,speed:30,loop:false,from:0,to:3};
                 spriteIndex = Math.floor(Math.random()*spriteSheetInfo.to);
                 spriteSheetInfo.from = spriteSheetInfo.to = spriteIndex;
                 self.spriteAnimation.init(spriteSheetInfo);
@@ -1667,13 +1683,10 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
         };
         
         this.setRelease = function(numShip, time){
-            console.log('Set released on Mother ship was called');
             
             if(self.hasReleasedShips){
               return;   
             }
-            
-            console.log('Will begin to release ships');
             
             //assigns number of ships to release
             numShips = numShip;
@@ -1690,9 +1703,8 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
             
             function tick(){
                 
-                console.log('Tick function has been called');
             if(countDownRunning){
-                console.log('Timer ticking!');
+                
                 currentTime++;
                     if(currentTime >= finalTime){
                         self.releaseShips();
@@ -1720,8 +1732,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                     enemyShipsPool.pool[i].y = positionY;
                     enemyShipsPool.pool[i].alive = true;
                     enemyShipsPool.pool[i].colliding = false;  
-                        console.log('creating alien ships');
-                        console.log(enemyShipsPool.pool[i]);
+                        
                         } 
                     break;
                 case "human":
@@ -1852,11 +1863,16 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	function Shield(){
 		this.radius = 40;
 		this.maxRadius = 45;
+        this.life = 100;
+        this.disabled = false;
 		var self = this;
 		this.draw = function(){
             
-            //this.context.strokeStyle = '#FFFFFF';
-            //this.context.strokeRect(this.x, this.y, this.width, this.height);
+            if(self.life <= 0){
+              self.life = 0;
+              self.disabled = true;   
+                return;
+            }
             
 			this.context.strokeStyle = '#0000FF';
 			this.context.beginPath(); 
@@ -1867,6 +1883,10 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			self.radius += .25;
 			self.radius = (self.radius>self.maxRadius)? 40: self.radius;
 		};
+        this.reset = function(){
+            self.life = 100;
+            self.disabled = false;
+        };
 	}
     
     
