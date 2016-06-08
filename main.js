@@ -254,6 +254,8 @@ function canvasApp(){
 			centerX = mainCanvas.width/2;
 	        centerY = mainCanvas.height/2;
 		}else{
+            centerX = mainCanvas.width/2;
+	        centerY = mainCanvas.height/2;
 			mainCanvas.setAttribute('style', 'width: 100%; height: 100%');
 			document.addEventListener('touchmove', onTouchMove, false);
 			interfaceWrapper.setAttribute('style', 'margin: auto;');
