@@ -86,6 +86,10 @@ function canvasApp(){
 	var levelCounter = $('#levelCounter');
 	var livesCounter = $('#livesCounter');
 	var frameRateCounter = $('#frameRate');
+    var reportEnemiesKilled = $('#reportCarnage');
+    var reportRocksDestroyed = $('#reportAsteroids');
+    var reportScore = $('#reportScore');
+    var beatGameScore = $('#beatGameScore');
 	
 	//title screen buttons 
 	var startButton = $('#startGame');
@@ -115,7 +119,7 @@ function canvasApp(){
         userBeatGame = false,
         enemyShipWorth = 10,
         rockWorth = 5,
-	   shipLives = 4;
+	    shipLives = 4;
 	
 	//mobile acceleration
 	var ax, ay;
@@ -426,7 +430,7 @@ function canvasApp(){
         //resets enemy killed and rocks destroyed counter and ship lives
         enemiesKilled = 0;
         rocksDestroyed = 0;
-        shipLives = 3;
+        shipLives = 4;
         
         //sets up number of rocks and enemies that will be displayed
         levelEnemies = currentLevel+1;
@@ -467,8 +471,10 @@ function canvasApp(){
             playerShip.velY = 0;
             playerShip.velX = 0.2;
             appState = STATE_LEVEL_TRANSITION;
-        }else if(shipLives <= 0){
+            return;
+        }else if(shipLives < 0){
             appState = STATE_GAME_OVER;
+            return;
         }
         
 		//draw background
@@ -584,6 +590,10 @@ function canvasApp(){
     function nextLevelDialog(){
         appState = STATE_WAITING;
         
+        reportEnemiesKilled.innerHTML = "Enemies Killed: "+enemiesKilled;
+        reportRocksDestroyed.innerHTML = "Asteroids Destroyed: "+rocksDestroyed;
+        reportScore.innerHTML = "Score: "+currentScore;
+        
         gameInterface.hide('gamePlay');
         gameInterface.display('nextLevel');
         
@@ -618,14 +628,14 @@ function canvasApp(){
         appState = STATE_WAITING;
         
         finalLevelSound.currentTime = 0;
-        finalLevelSound.pause();
-        
-        currentScore = 0;
-        currentLevel = 0;
-        
+        finalLevelSound.pause();        
+        beatGameScore.innerHTML = "Your Score: "+currentScore;
         userBeatGame = false;
         gameInterface.hide('gamePlay');
         gameInterface.display('beatGame'); 
+        
+        currentScore = 0;
+        currentLevel = 0;
         
     }
 
@@ -1458,6 +1468,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		};
     this.spawn = function(x, y){
         missilePool.hideItems();
+        self.shieldActive = false;
         this.alive = true;
         this.colliding = false;
         this.x = x;
@@ -1570,6 +1581,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		};
         
         this.spawn = function(x, y){
+            missilePool.hideItems();
             this.alive = true;
             this.colliding = false;
             this.x = x;

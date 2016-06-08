@@ -232,14 +232,14 @@ button{
 #levelTransition span{
     width: 250px;
     margin: 5px auto;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     display: block;
 }
 
 #levelTransition h2{
     width: 200px;
     margin: auto;
-    padding: 30px;
+    padding: 10px;
     color: #00FF00;
     display: block;
 }
@@ -248,21 +248,25 @@ button{
     background-color: #000;
 }
 #beatGame h2{
-    width: 200px;
-    margin: auto;
-    padding: 20px;
     display: block;
     color: #fff;
 }
-
-
+#beatGame div{
+    width: 300px;
+    position: absolute;
+    top: 40%;
+    left: 30%;
+}
+#beatGame span{
+    display: block;
+}
 #gameOver{
   background-color: #000; 
 }
 #gameOver h1{
-    color: #FFF;
-    width: 100px;
-    margin: auto;
-    padding: 30px;
+    position: absolute;
+    top: 40%;
+    left: 40%;
     display: block;
+    color: #fff;
 }
