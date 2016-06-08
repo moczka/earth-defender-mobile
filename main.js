@@ -115,7 +115,7 @@ function canvasApp(){
 	//score  & level variables
 	var currentScore = 0,
 	    currentLevel = 0,
-        lastLevel = 5,
+        lastLevel = 8,
         userBeatGame = false,
         enemyShipWorth = 10,
         rockWorth = 5,
