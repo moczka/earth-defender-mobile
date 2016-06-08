@@ -39,7 +39,7 @@ function canvasApp(){
     STATE_WAITING = 31,
     STATE_LEVEL_TRANSITION = 33,
     STATE_NEXT_LEVEL = 40,
-	STATE_GAME_RESET = 50,
+	STATE_USER_BEAT_GAME = 50,
 	STATE_GAME_OVER = 60;
 		var appState;
 		var previousAppState;
@@ -60,7 +60,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 21;
+	var itemsToLoad = 29;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
@@ -69,8 +69,13 @@ function canvasApp(){
 	var backgroundSprite = new Image(),
 	    earthSprite = new Image(),
 	    soundTrack = new Audio(),
+        finalLevelSound = new Audio(),
         enemySpriteSheet = new Image(),
-	    playerSpriteSheet = new Image();
+        MothershipSpriteSheet = new Image(),
+	    playerSpriteSheet = new Image(),
+        meteorLargeSpriteSheet = new Image(),
+        meteorMediumSpriteSheet = new Image(),
+        meteorSmallSpriteSheet = new Image();
     
     
 	//mouse
@@ -96,15 +101,20 @@ function canvasApp(){
     var howToPlayHolder = $('#howToPlayHolder');
     var storyLineHolder = $('#storyLineHolder');
     var levelTransitionHolder = $('#levelTransition');
+    var beatGameHolder = $('#beatGame');
     
     var nextLevelButton = $('#nextLevel');
 	var howToBackButton = $('#howToBack');
     var storyLineSkipButton = $('#skipStoryLine');
+    var shareButton = $('#shareStart');
     
 	//score  & level variables
 	var currentScore = 0,
-	   currentLevel = 1,
+	    currentLevel = 0,
+        lastLevel = 8,
+        userBeatGame = false,
         enemyShipWorth = 10,
+        rockWorth = 5,
 	   shipLives = 4;
 	
 	//mobile acceleration
@@ -118,34 +128,40 @@ function canvasApp(){
 	Shield.prototype = new Display();
 	Background.prototype = new Display();
     Rock.prototype = new Display();
+    Mothership.prototype = new Display();
     
 	//create sound pool for explosion and shoot sound
 	var shootSoundPool = new SoundPool(8);
 	var explosionSoundPool = new SoundPool(8);
+    var meteorExplosionSoundPool = new SoundPool(3);
 	
 	//gets canvas and its context and creates center x and y variables
 	var mainCanvas = $('#bgCanvas');
 	var mainContext = mainCanvas.getContext('2d');
-	var centerX = bgCanvas.width/2;
-	var centerY = bgCanvas.height/2;
+	var centerX;
+	var centerY;
     
 	//array holding key presses
 	var keyPressList = [];
 
 	//TEMP: player instance and enemies
-	var enemyOne = new Enemy();
-	var enemyTwo = new Enemy();
-	var enemyThree = new Enemy();
-	var playerShip = new Ship();
+    var playerShip = new Ship();
+	var alienMothership = new Mothership();
+    var humanMothership = new Mothership();
 	var background = new Background();
+    var gameInterface = new Interface();
     
-    //pools holding enemies and rocks
-    var enemyShipsPool = new Pool(10),
-        rocks = new Pool(5);
-        
     var totalEnemies = 10,
-        totalRocks = 5,
-        levelEnemies = 3;
+        totalRocks = 8,
+        levelRocks = 5,
+        levelEnemies = 8,
+        enemiesKilled = 0,
+        rocksDestroyed = 0;
+
+     //pools holding enemies and rocks
+    var enemyShipsPool = new Pool(totalEnemies),
+        humanShipsPool = new Pool(10),
+        meteorPool = new MeteorPool(totalRocks);
     
 	
 	appState = STATE_USER_AGENT;
@@ -186,14 +202,16 @@ function canvasApp(){
 			break;
         case STATE_LEVEL_TRANSITION:
             //the transition between one level and the other.
-            transLevel();
+            transLevelAnimation();
             break;
+        case STATE_NEXT_LEVEL:
+            nextLevelDialog();
+			break;
         case STATE_WAITING:
             //loop does nothing, waits for a change in state.
             break;
-		case STATE_NEXT_LEVEL:
-			break;
-		case STATE_GAME_RESET:
+		case STATE_USER_BEAT_GAME:
+            beatGame();
 			break;
 		case STATE_GAME_OVER:
 			gameOver();
@@ -219,6 +237,7 @@ function canvasApp(){
 			if(window.innerHeight>= window.innerWidth){
 				orientationMessageHolder.setAttribute('style', 'display:block;');
 				canvasHolder.setAttribute('style', 'display:none;');
+                interfaceWrapper.setAttribute('style','display:none;');
 				userAgent.portrait = true;
 			}
 		}
@@ -232,7 +251,8 @@ function canvasApp(){
 		if(!userAgent.mobile){
 			mainCanvas.width = 600;
 			mainCanvas.height = 480;
-			//mainCanvas.setAttribute('style', 'width: 600px; height: 480px;');
+			centerX = mainCanvas.width/2;
+	        centerY = mainCanvas.height/2;
 		}else{
 			mainCanvas.setAttribute('style', 'width: 100%; height: 100%');
 			document.addEventListener('touchmove', onTouchMove, false);
@@ -255,12 +275,16 @@ function canvasApp(){
 		//init and load sound pool sounds
 		explosionSoundPool.init("explosion");
 		shootSoundPool.init("shoot");
+        meteorExplosionSoundPool.init("meteor");
         
 		
-		//sounds 1 sounds
+		//sounds 2 sounds
 		soundTrack.src = 'assets/sounds/soundtrack'+supportedFormat;
 		soundTrack.load();
 		soundTrack.addEventListener('canplaythrough', onAssetsLoad, false);
+        finalLevelSound.src = 'assets/sounds/finalLevelSound'+supportedFormat;
+        finalLevelSound.load();
+        finalLevelSound.addEventListener('canplaythrough', onAssetsLoad, false);
 		
 		//sprites | images 4 images
 		earthSprite.src = 'assets/sprites/earth.png';
@@ -269,8 +293,17 @@ function canvasApp(){
         playerSpriteSheet.addEventListener('load', onAssetsLoad, false);
         enemySpriteSheet.src = 'assets/sprites/enemyShips.png';
         enemySpriteSheet.addEventListener('load', onAssetsLoad, false);
+        MothershipSpriteSheet.src = 'assets/sprites/motherships.png';
+        MothershipSpriteSheet.addEventListener('load', onAssetsLoad, false);
 		backgroundSprite.src = 'assets/sprites/background.png';
 		backgroundSprite.addEventListener('load', onAssetsLoad, false);
+        meteorLargeSpriteSheet.src = 'assets/sprites/meteorLarge.png';
+        meteorLargeSpriteSheet.addEventListener('load', onAssetsLoad, false);
+        meteorMediumSpriteSheet.src = 'assets/sprites/meteorMedium.png';
+        meteorMediumSpriteSheet.addEventListener('load', onAssetsLoad, false);
+        meteorSmallSpriteSheet.src = 'assets/sprites/meteorSmall.png';
+        meteorSmallSpriteSheet.addEventListener('load', onAssetsLoad, false);
+        
 
         //hides preload image
         preloadImage.setAttribute('style', 'display:none;');
@@ -297,44 +330,42 @@ function canvasApp(){
 			console.log('The number of items that should  have loaded are '+ itemsToLoad);
 			background.clear();
 			initAssets();
-			console.log(soundTrack);
 		}
 	}
 	
 	function initAssets(){
+        
+        meteorPool.init();
+          //init enemy pool
+        
+        enemyShipsPool.init('enemy');
+        
 		playerShip.setCanvas(mainCanvas);
 		playerShip.init(centerX,centerY,23,23);
 		background.init(0,0,backgroundSprite, 1);
 		background.velX = 1;
-        playerShip.thrustAccel = 0.10;
-		
-        //init enemy pool
-        enemyShipsPool.init('enemy');
-		
-		
-		window.addEventListener('mousemove', onMouseMove, false);
-		storyLineHolder.setAttribute('style', 'display: block');
-        storyLineSkipButton.addEventListener('mousedown', function(e){
-                appState = STATE_TITLE_SCREEN;
-                gameStartHolder.setAttribute('style','display: block;');
-                storyLineHolder.setAttribute('style', '');
-            }, false);
+        playerShip.thrustAccel = 0.06;
+        alienMothership.setCanvas(mainCanvas);
+        alienMothership.init(0, 0, "alien");
         
-		startButton.addEventListener('mousedown', onStartClick, false);
-        howToPlayButton.addEventListener('mousedown', function(e){
-            appState = STATE_HOW_TO_PLAY;
-            gameStartHolder.setAttribute('style', '');
-        }, false);
+        window.addEventListener('mousemove', onMouseMove, false);
+        gameInterface.addButtonListeners();
         
-        storyLineButton.addEventListener('mousedown', function(e){
-            appState = STATE_STORY_LINE;
-            storyLineHolder.setAttribute('style', 'display: block');
-            gameStartHolder.setAttribute('style', '');
-            
-        }, false);
-		
-		console.log(userAgent);
         
+        if(userAgent.mobile){
+			//add game controls for mobile devices based on motion
+			window.addEventListener('touchend', onTouchEndHandler, false);
+			window.addEventListener('devicemotion', devMotionHandler, false);
+			//adds listener for touch move to remove the default behavior
+			window.addEventListener('touchstart', onTouchStart, false);
+			
+		}else{
+			//add game control for desktop based on keyboard events
+		 	document.addEventListener('keyup', onKeyUp, false);
+			document.addEventListener('keydown', onKeyDown, false);
+		}
+        
+        gameInterface.display('storyLine');
 		appState = STATE_STORY_LINE;
 		
 	}
@@ -348,68 +379,96 @@ function canvasApp(){
 	function introAnimation(){
 		background.draw();
 		mainContext.drawImage(earthSprite, (mainCanvas.width/2-(earthSprite.width/2)), 0);
-
-        
-        
-        
+        for(var i=0; i<7; i++){
+            var currentEnemy = enemyShipsPool.pool[i];
+            currentEnemy.draw();
+            currentEnemy.follow(mouse);
+            checkBoundary(currentEnemy);
+        }
 	}
     
     function howToPlay(){
-        appState = STATE_WAITING;
-        howToPlayHolder.setAttribute('style', 'display: block');
-        howToBackButton.addEventListener('mousedown', function(e){
-            appState = STATE_TITLE_SCREEN;
-            gameStartHolder.setAttribute('style', 'display: block');
-            howToPlayHolder.setAttribute('style', '');
-        }, false);
+        
     }
-            
-	//handles the start button click
-	function onStartClick(e){
-		var target = e.target;
-		
-		mainCanvas.removeEventListener('mousemove', onMouseMove, false);
-		target.removeEventListener('mousedown', onStartClick, false);
-		gameStartHolder.setAttribute('style', 'display: none;');
-		gamePlayHolder.setAttribute('style', 'display: block;');
-		gameOverHolder.setAttribute('style', 'display:none;');
-		
-        soundTrack.loop = true;
-		soundTrack.play();
-        soundTrack.volume = 0.7;
-		
-        console.log("Volume of the sound track " + soundTrack.volume);
-		
-		if(userAgent.mobile){
-			//add game controls for mobile devices based on motion
-			window.addEventListener('touchend', onTouchEndHandler, false);
-			window.addEventListener('devicemotion', devMotionHandler, false);
-			//adds listener for touch move to remove the default behavior
-			window.addEventListener('touchstart', onTouchStart, false);
-			
-		}else{
-			//add game control for desktop based on keyboard events
-		 	document.addEventListener('keyup', onKeyUp, false);
-			document.addEventListener('keydown', onKeyDown, false);
-		}
+    
+    //function in charged of setting up the enemies and rocks in the new level given the current level
+    function setUpLevel(){
+        
+        console.log('Set Up Level function CALLED');
         
         
-        for(var i = 0; i<levelEnemies; i++){
-            var randomX = Math.floor(Math.random()*mainCanvas.width),
-                randomY = Math.floor(Math.random()*mainCanvas.height);
-                enemyShipsPool.pool[i].x = randomX;
-                enemyShipsPool.pool[i].y = randomY;
-                enemyShipsPool.pool[i].alive = true;
-                enemyShipsPool.pool[i].colliding = false;
+        //sets up random location for rocks and mothership
+        var randomX;
+        var randomY;
+        
+        //increases level by 1
+        currentLevel += 1;
+        
+        //checks if game is over
+        if(currentLevel > lastLevel){
+            userBeatGame = true;
+            return;
+        }
+           
+        if(currentLevel == lastLevel){
+            finalLevelSound.loop = true;
+            finalLevelSound.play();
+        }else{
+            //begins normal soundtrack 
+            soundTrack.loop = true;
+		    soundTrack.play();
+            soundTrack.volume = 0.7;
+        }
+
+        
+        //resets enemy killed and rocks destroyed counter and ship lives
+        enemiesKilled = 0;
+        rocksDestroyed = 0;
+        shipLives = 3;
+        
+        //sets up number of rocks and enemies that will be displayed
+        levelEnemies = currentLevel+1;
+        levelRocks = currentLevel+2;
+        
+        //checks to see if the level rocks and enemies exceed total in pool.
+        levelEnemies = (levelEnemies>=totalEnemies)? totalEnemies : levelEnemies;
+        levelRocks = (levelRocks>=totalRocks)? totalRocks : levelRocks;
+        
+        //centers ship and hide all of its missiles
+        playerShip.spawn(centerX, centerY);
+        
+        //kill off any alive rocks and enemies
+        enemyShipsPool.hideItems();
+        meteorPool.hideItems();
+        
+        //inits the rocks
+        for(var i=0; i<levelRocks; i++){
+            randomX = Math.floor(Math.random()*(mainCanvas.width-50));
+            randomY = Math.floor(Math.random()*(mainCanvas.height-50));
+            meteorPool.getMeteor(randomX, randomY, "large");
         }
         
-		
-		appState = STATE_PLAYING;
-	}
-	
+        alienMothership.spawn(randomX, randomY);
+        alienMothership.setRelease(levelEnemies, 8);
+        
+    }
+
 	//once the user has clicked the start button, this function draws the game
 	function drawCanvas(){
-		
+        
+        
+        if(enemiesKilled == levelEnemies){
+            finalLevelSound.pause();
+            soundTrack.pause();
+            gameInterface.hide('gamePlay');
+            playerShip.angle = 0;
+            playerShip.velY = 0;
+            playerShip.velX = 0.2;
+            appState = STATE_LEVEL_TRANSITION;
+        }else if(shipLives <= 0){
+            appState = STATE_GAME_OVER;
+        }
+        
 		//draw background
 		background.draw();
 		
@@ -423,6 +482,11 @@ function canvasApp(){
         //draws player ship
 		checkBoundary(playerShip);
 		playerShip.draw();
+        
+        if(alienMothership.alive){
+            alienMothership.draw();
+        }
+        
         
         if(!userAgent.mobile){
 		keyControl(playerShip);
@@ -440,31 +504,34 @@ function canvasApp(){
                 
                 if(!currentEnemy.colliding && hitTest(currentEnemy, playerShip)){
                     if(!playerShip.shieldActive){
-                        playerShip.alive = false;
                         currentScore += enemyShipWorth;
+                        enemiesKilled++;
+                        shipLives--;
                         playerShip.colliding = true;
                         currentEnemy.colliding = true;
                         explosionSoundPool.get(0.3);
                     }else{
                         explosionSoundPool.get(0.3);
-                        //currentEnemy.alive = false;
                         currentEnemy.colliding = true;
+                        currentScore += enemyShipWorth;
+                        enemiesKilled++;
                     }
                 }
         
                 for(var h=0; h<playerShip.missiles.length; h++){
                     var currentPlayerMissile = playerShip.missiles[h];
-                    if(!currentEnemy.colliding && hitTest(currentPlayerMissile, currentEnemy)){
+                    if(!currentEnemy.colliding && hitTest(currentPlayerMissile, currentEnemy) && currentPlayerMissile.alive ){
                        currentScore += enemyShipWorth;
+                        enemiesKilled++;
                        explosionSoundPool.get(0.3);
                        currentEnemy.colliding = true;
+                       currentPlayerMissile.alive = false;
                     }
                 }
                 for(var j=0; j<currentEnemy.missiles.length; j++){
                     var currentEnemyMissile = currentEnemy.missiles[j];
-                    if(!currentEnemyMissile.colliding && playerShip.alive && hitTest(currentEnemyMissile, playerShip) && !playerShip.shieldActive){
-                        currentEnemyMissile.colliding = true;
-                        playerShip.alive = false;
+                    if(currentEnemyMissile.alive && !playerShip.colliding && hitTest(currentEnemyMissile, playerShip) && !playerShip.shieldActive){
+                        currentEnemyMissile.alive = false;
                         playerShip.colliding = true;
                         shipLives--;
                         explosionSoundPool.get(0.3);
@@ -474,65 +541,112 @@ function canvasApp(){
                 }
             }
         }
+        
+        for(var k=0; k<meteorPool.pool.length; k++){
+            var currentRock = meteorPool.pool[k];
+            
+            if(currentRock.alive){
+            
+            checkBoundary(currentRock);
+            currentRock.draw();
+            
+            if(hitTest(currentRock, playerShip) && !currentRock.colliding && !playerShip.colliding && !playerShip.shieldActive && playerShip.alpha == 1){
+                meteorExplosionSoundPool.get();
+                currentRock.colliding = true;
+                playerShip.colliding = true;
+                shipLives--;
+                rocksDestroyed++;
+                currentScore += rockWorth;
+            }
+            for(var l=0; l<playerShip.missiles.length; l++){
+                    var currentPlayerMissile2 = playerShip.missiles[l];
+                    if(hitTest(currentPlayerMissile2, currentRock) && !currentRock.colliding && currentPlayerMissile2.alive){
+                        currentPlayerMissile2.alive = false;
+                       meteorExplosionSoundPool.get();
+                       currentRock.colliding = true;
+                        currentScore += rockWorth;
+                        rocksDestroyed++;
+                    }
+                } 
+            }
+        }
+        
 			
-        
-        
         updateCounter('score');
         updateCounter('life');
-		
-		
-/*
-
-		//checks the player missiles collisions
-		for(var j=0; j<playerShip.missiles.length; j++){
-			var currentPlayerMissle = playerOne.missiles[j];
-			if(currentPlayerMissle.alive){
-			if(hitTest(currentPlayerMissle, enemyOne) && enemyOne.alive){
-				currentScore += 10;
-				updateCounter('score');
-				enemyOne.alive = false;
-				explosionSoundPool.get();
-				playerOne.missiles[j].alive = false;
-			}else if(hitTest(currentPlayerMissle, enemyTwo) && enemyTwo.alive){
-				currentScore += 10;
-				updateCounter('score');
-				playerShip.missiles[j].alive = false;
-				enemyTwo.alive = false;
-				explosionSoundPool.get();
-			}else if(hitTest(currentPlayerMissle, enemyThree) && enemyThree.alive){
-				currentScore += 10;
-				updateCounter('score');
-				explosionSoundPool.get();
-				playerOne.missiles[j].alive = false;
-				enemyThree.alive = false;
-			}
-			}
-		}*/
+        updateCounter('level');
 		
 	}
     
     //function in charged of transition level
-    function transLevel(){
+    function nextLevelDialog(){
         appState = STATE_WAITING;
-        levelTransitionHolder.setAttribute('style', 'display: block;');
-        nextLevelButton.addEventListener('mousedown', function(e){
-            appState = STATE_TITLE_SCREEN;
-            gameStartHolder.setAttribute('style', 'display: block');
-            levelTransitionHolder.setAttribute('style', '');
-        }, false);
+        
+        gameInterface.hide('gamePlay');
+        gameInterface.display('nextLevel');
         
     }
-	
+    
+    function transLevelAnimation(){
+        
+        //draw background
+        background.draw();
+        
+        //drawRemaining rocks
+        for(var k=0; k<meteorPool.pool.length; k++){
+            var currentRock = meteorPool.pool[k];
+            
+            //if rock alive draw it
+            if(currentRock.alive){
+            checkBoundary(currentRock);
+            currentRock.draw();
+            }
+        }
+        
+        playerShip.velX += playerShip.velX*playerShip.easeValue;
+        playerShip.draw();
+        
+        if(playerShip.x >= 1020-playerShip.width){
+            appState = STATE_NEXT_LEVEL;   
+        }
+        
+    }
+    
+    function beatGame(){
+        appState = STATE_WAITING;
+        
+        finalLevelSound.currentTime = 0;
+        finalLevelSound.pause();
+        
+        currentScore = 0;
+        currentLevel = 0;
+        
+        userBeatGame = false;
+        gameInterface.hide('gamePlay');
+        gameInterface.display('beatGame'); 
+        
+    }
+
 	//function in charged of ending the game
 	function gameOver(){
-		appState = STATE_LOADING;
-		soundTrack.pause();
-		playerShip.x = 320;
-		playerShip.y = 240;
-		playerShip.alive = true;
-		playerShip.colliding = false;
-		gameOverHolder.setAttribute('style', 'display:block');
-		restartButton.addEventListener('mousedown', onStartClick, false);
+        
+		appState = STATE_WAITING;
+        
+        currentLevel = 0;
+        currentScore = 0;
+        
+        if(currentLevel<lastLevel){
+            soundTrack.currentTime = 0;
+            soundTrack.pause();
+            
+        }else{
+            finalLevelSound.currentTime = 0;
+            finalLevelSound.pause();
+        }
+
+        gameInterface.hide('gamePlay');
+        gameInterface.display('gameOver');
+        
 	}
 	
 	
@@ -672,7 +786,11 @@ function canvasApp(){
 	
 	//handles the mousemove interaction at title screen.
 	function onMouseMove(event){
-		
+        
+		if(appState != STATE_TITLE_SCREEN){
+            return;
+        }
+        
 		if ( event.layerX ||  event.layerX == 0) { // Firefox
    			mouse.x = event.layerX ;
     		mouse.y = event.layerY;
@@ -687,7 +805,11 @@ function canvasApp(){
 	//function that handles mobile controls of the game
 	
 	function devMotionHandler(e){
-
+        
+        if(appState != STATE_PLAYING){
+            return;    
+        }
+        
 		var futureVelX, futureVelY, futureVel;
 		
 		ax = (e.accelerationIncludingGravity.x)/5;
@@ -718,7 +840,7 @@ function canvasApp(){
 	function onTouchStart(e){
 		
         if(appState != STATE_PLAYING){
-         return;   
+            return;   
         }
         
         //comparings the global touches active if more than one shield is activated.
@@ -729,6 +851,11 @@ function canvasApp(){
 	}
 	
 	function onTouchEndHandler(e){
+        
+        if(appState != STATE_PLAYING){
+            return;    
+        }
+        
 		playerShip.shoot();
 		shootSoundPool.get();
 		playerShip.shieldActive = false;
@@ -744,6 +871,7 @@ function canvasApp(){
 		}else if(window.innerHeight<=window.innerWidth){
 			orientationMessageHolder.setAttribute('style', '');
 			canvasHolder.setAttribute('style', '');
+            interfaceWrapper.setAttribute('style', '');
 			userAgent.portrait = false;
 		}
 		
@@ -953,8 +1081,122 @@ FrameRateCounter.prototype.countFrames=function() {
     
     function Rock(){
         
+        this.x = Math.floor(Math.random()*mainCanvas.width);
+        this.y = Math.floor(Math.random()*mainCanvas.height);
         
+        this.hasSplit = false;
+        this.size;
         
+        var maxSpeed = 3;
+        var rockSprite;
+        var spriteAnimation = new SpriteAnimation();
+            spriteAnimation.setCanvas(mainCanvas);
+        var spriteAnimationInfo;
+        var explosion = new Explosion(15);
+            explosion.setCanvas(mainCanvas);
+
+        var self = this;
+        this.init = function(size){
+            
+            size = (size === undefined)? "large": size;
+    
+            switch(size){
+                case "large":
+            spriteAnimationInfo = {width:56,height:55, numCol:2, numRow:9,fps:60,speed:8,loop:true,from:0,to:17};
+            spriteAnimation.init(spriteAnimationInfo);
+                this.width = 56;
+                this.height = 55;
+                this.centerX = this.width/2;
+                this.centerY = this.height/2;
+                this.velX = Math.random()*maxSpeed - 2;
+                this.velY = Math.random()*maxSpeed - 2;
+            rockSprite = meteorLargeSpriteSheet;
+                self.size = "large";
+                    break;
+                case "medium":
+            spriteAnimationInfo = {width:44,height:44, numCol:3, numRow:6,fps:60,speed:12,loop:true,from:0,to:17};   
+            spriteAnimation.init(spriteAnimationInfo);
+                this.width = 44;
+                this.height = 44;
+                this.centerX = this.width/2;
+                this.centerY = this.height/2;
+                this.velX = Math.random()*maxSpeed+1 - 3;
+                this.velY = Math.random()*maxSpeed+1 - 3;
+            rockSprite = meteorMediumSpriteSheet;
+                self.size = "medium";
+                    break;
+                case "small":
+            spriteAnimationInfo = {width:33,height:33, numCol:3, numRow:6,fps:60,speed:15,loop:true,from:0,to:17};
+            spriteAnimation.init(spriteAnimationInfo);
+                this.width = 33;
+                this.height = 33;
+                this.centerX = this.width/2;
+                this.centerY = this.height/2;
+                this.velX = Math.random()*maxSpeed+2 - 4;
+                this.velY = Math.random()*maxSpeed+2 - 4;
+            rockSprite = meteorSmallSpriteSheet;
+                self.size = "small";
+                    break;
+            }
+            
+            this.alive = false;
+            this.x = 0;
+            this.y = 0;
+            
+        };
+        this.spawn = function(x, y){
+            this.colliding = false;
+            this.alive = true;
+            self.hasSplit = false;
+            this.x = x;
+            this.y = y;
+        };
+        
+        this.split = function(){
+            if(self.hasSplit){
+                return;
+            }
+            
+            self.hasSplit = true;
+            
+            switch(self.size){
+                case "large":
+                meteorPool.getMeteor(this.x, this.y, "medium");
+                meteorPool.getMeteor(this.x, this.y, "medium");
+                    break;
+                case "medium":
+                meteorPool.getMeteor(this.x, this.y, "small");
+                meteorPool.getMeteor(this.x, this.y, "small");
+                    break;
+                case "small":
+                    //no rocks
+                    break;     
+            }  
+        };
+        
+        this.draw = function(){
+            
+			if(this.colliding){ 
+            //when object is colliding, creates and draws explosion
+			explosion.create(this.x, this.y);
+			explosion.draw();
+                self.split();
+
+			     if(!explosion.running){
+			     //once explosion is over, kills off object
+                    this.colliding = false;
+                    this.alive = false;
+                    }
+                // if the explosion is still running return to drawing the explosion
+			     return;
+			}
+            
+            this.x += this.velX;
+            this.y += this.velY;
+            
+            spriteAnimation.play(this.x, this.y, rockSprite);    
+            
+        };
         
     }
     
@@ -989,6 +1231,130 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			this.context.fillRect(0,0,this.canvasWidth, this.canvasHeight);
 		};	
 	}
+    
+    function Interface(){
+        
+        this.addButtonListeners = function(){
+            
+            storyLineSkipButton.addEventListener('mousedown', function(){
+                gameInterface.hide('storyLine');
+                gameInterface.display('titleScreen');
+                appState = STATE_TITLE_SCREEN;
+            }, false);
+            
+            //the only exception
+            startButton.addEventListener('mousedown', function(){
+                gameInterface.hide('titleScreen');
+                gameInterface.display('gamePlay');
+                setUpLevel();
+                appState = STATE_PLAYING;
+            }, false);
+            
+            storyLineButton.addEventListener('mousedown', function(){
+                gameInterface.hide('titleScreen');
+                gameInterface.display('storyLine');
+                appState = STATE_STORY_LINE;
+            }, false);
+            howToPlayButton.addEventListener('mousedown', function(){
+                gameInterface.hide('titleScreen');
+                gameInterface.display('howToPlay');
+                appState = STATE_HOW_TO_PLAY;
+            }, false);
+            howToBackButton.addEventListener('mousedown', function(){
+                gameInterface.hide('howToPlay');
+                gameInterface.display('titleScreen');
+                appState = STATE_TITLE_SCREEN;
+            }, false);    
+            nextLevelButton.addEventListener('mousedown', function(){
+                
+                    setUpLevel();
+                
+                if(!userBeatGame){
+                    gameInterface.hide('nextLevel');
+                    gameInterface.display('gamePlay');
+                    appState = STATE_PLAYING;
+                }else{
+                    gameInterface.hide('nextLevel');
+                    gameInterface.display('beatGame');
+                    appState = STATE_USER_BEAT_GAME;
+                }
+                
+            }, false);
+            shareButton.addEventListener('mousedown', function(){
+                userBeatGame = false;
+                currentLevel = 0;
+                window.open('https://www.facebook.com/sharer.php?u=http://www.noxtar.com/2016/06/play-earth-defender-game.html');
+                gameInterface.hide('beatGame');
+                gameInterface.display('titleScreen');
+                appState = STATE_TITLE_SCREEN;
+            }, false);
+            restartButton.addEventListener('mousedown', function(){
+                gameInterface.hide('gamePlay');
+                gameInterface.hide('gameOver');
+                gameInterface.display('titleScreen');
+                appState = STATE_TITLE_SCREEN;
+            }, false);
+        };
+        
+        this.display = function(page){
+            switch(page){
+                case "titleScreen":
+                    gameStartHolder.setAttribute('style', 'display: block;');
+                    break;
+                case "gamePlay":
+                    gamePlayHolder.setAttribute('style', 'display: block;'); 
+                    break;
+                case "storyLine":
+                    storyLineHolder.setAttribute('style', 'display: block;');
+                    break;
+                case "howToPlay":
+                    howToPlayHolder.setAttribute('style', 'display:block;');
+                    break;
+                case "nextLevel":
+                    levelTransitionHolder.setAttribute('style', 'display: block;');  
+                    break;
+                case "gameOver":
+                    gameOverHolder.setAttribute('style', 'display: block;');
+                    break;
+                case "beatGame":
+                    beatGameHolder.setAttribute('style', 'display: block;');
+                    break;
+                case "none":
+                    interfaceWrapper.setAttribute('style', '');
+                    break;        
+            } 
+        };
+        this.hide = function(page){
+            switch(page){
+                case "titleScreen":
+                    gameStartHolder.setAttribute('style', '');
+                    break;
+                case "gamePlay":
+                    gamePlayHolder.setAttribute('style', ''); 
+                    break;
+                case "storyLine":
+                    storyLineHolder.setAttribute('style', '');
+                    break;
+                case "howToPlay":
+                    howToPlayHolder.setAttribute('style', '');
+                    break;
+                case "nextLevel":
+                    levelTransitionHolder.setAttribute('style', '');  
+                    break;
+                case "gameOver":
+                    gameOverHolder.setAttribute('style', '');
+                    break;
+                case "beatGame":
+                    beatGameHolder.setAttribute('style', '');
+                    break;
+                case "none":
+                    interfaceWrapper.setAttribute('style', '');
+                    break;        
+            } 
+        };
+    }
+    
+    
 	
 	function Ship(){
 	this.shieldActive = false;
@@ -999,6 +1365,9 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	this.accelX = 0;
 	this.accelY = 0;
 	this.thrust = false;
+    this.easeValue = 0.03;
+        
+    var alphaSpeed = 0.03;
 	var missilePool = new Pool(10);
 		missilePool.init('missile');
 	this.missiles = missilePool.pool;	
@@ -1026,6 +1395,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			this.centerX = width/2 || 10;
 			this.centerY = height/2 || 10;
 			this.alive = true;
+            this.alpha = 0;
 		};
 	this.shoot = function(){
 		if(!this.alive || this.colliding){
@@ -1039,17 +1409,21 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			var currentMissile = missilePool.pool[i];
 			if(currentMissile.alive){
 				currentMissile.draw();
-				console.log('DRAWING');
+				//console.log('DRAWING');
 			}
 		}
 		
-		if(!this.alive || this.colliding){			
+		if(this.colliding){	
+            
+            //creates explosion when ship is colliding
 			explosion.create(this.x, this.y);
 			explosion.draw();
 			
 			if(!explosion.running){
-			//appState = STATE_GAME_OVER;
-                self.spawn(200,200);
+			     //when explosion ends set to dead
+                this.colliding = false;
+                this.alive = false;
+                self.spawn(centerX,centerY);
 			}
 
 			return;
@@ -1061,6 +1435,9 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			shield.draw();
 		}
 		this.context.save();
+        this.alpha += alphaSpeed;
+        this.alpha = (this.alpha >= 1)? 1: this.alpha;
+        this.context.globalAlpha = this.alpha;
 		this.context.translate(this.x+10, this.y+10);	
 		this.context.rotate(this.angle);
 		this.x += this.velX;
@@ -1078,16 +1455,20 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		this.context.restore();
 		};
     this.spawn = function(x, y){
+        missilePool.hideItems();
         this.alive = true;
         this.colliding = false;
         this.x = x;
         this.y = y;
+        this.alpha = 0;
+        this.velX = this.velY = 0;
+        this.angle = 0;
     };
         
 	}
 	
 	function Missile(){
-		this.speed = 5;
+		this.speed = 3;
 		this.life = 0;
 		var maxLife = 100;
 		var self = this;
@@ -1121,7 +1502,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 	
 	function Enemy(){
 		this.speed = 0;
-		this.thrust = 0.15;
+		this.thrust = 0.06;
 		var explosion = new Explosion(20);
 		explosion.setCanvas(mainCanvas);
 		var missilePool = new Pool(10);
@@ -1145,7 +1526,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			this.alive = true;
 		};
 		this.attack = function(object){
-			if(Math.random() >= 0.01 || !this.alive || !object.alive){
+			if(Math.random() >= 0.005 || !this.alive || !object.alive){
 				return;
 			}
 			missilePool.get(this.x+10, this.y+10, this.angle);
@@ -1171,9 +1552,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			     //appState = STATE_GAME_OVER;
                     this.colliding = false;
                     this.alive = false;
-                    self.spawn(200, 400);
-                     
-                     
+                    //self.spawn(200, 400);
                     }
 			     return;
 			}
@@ -1210,7 +1589,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			newVelX = this.velX+Math.cos(this.angle)*self.thrust;
 			newVelY = this.velY+Math.sin(this.angle)*self.thrust;	
 			futureVel = Math.sqrt(newVelX*newVelX + newVelY*newVelY);	
-					if(futureVel>2){
+					if(futureVel>1.5){
 				newVelX = this.velX;
 				newVelY = this.velY;
 				}else{
@@ -1220,6 +1599,174 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			}	
 		};
 	}
+    
+    function Mothership(){
+        this.hasReleasedShips = false;
+        this.spriteAnimation = new SpriteAnimation();
+        this.spriteAnimation.setCanvas(mainCanvas);
+        this.type;
+        this.alpha = 0;
+        var spriteIndex;
+        var spriteSheetInfo;
+        
+        
+        var shield = new Shield();
+	       shield.setCanvas(mainCanvas);
+	       shield.init(0,0, 80, 80);
+	       shield.width = shield.radius*2;
+	       shield.height = shield.radius*2;
+	    this.shield = shield;
+        
+        var numShips = 0;
+        var alphaSpeed = 0.02;
+        
+        var self = this;
+        this.init = function(x, y, shipType){
+            switch(shipType){
+                case "human":
+                 var spriteSheetInfo = {width:51,height:46, numCol:1, numRow:2,fps:60,speed:30,loop:false,from:0,to:0};
+                 spriteIndex = Math.floor(Math.random()*spriteSheetInfo.to);
+                 spriteSheetInfo.from = spriteSheetInfo.to = spriteIndex;
+                 self.spriteAnimation.init(spriteSheetInfo);
+                 self.type = "human";
+                 this.x = x;
+                 this.y = y;
+                 this.width = spriteSheetInfo.width;
+                 this.height = spriteSheetInfo.height;
+                 this.centerX = this.width / 2;
+                 this.centerY = this.height / 2;
+                    break;
+                case "alien":
+                var spriteSheetInfo = {width:51,height:46, numCol:1, numRow:2,fps:60,speed:30,loop:false,from:1,to:1};
+                spriteIndex = Math.floor(Math.random()*spriteSheetInfo.to);
+                spriteSheetInfo.from = spriteSheetInfo.to = spriteIndex;
+                self.spriteAnimation.init(spriteSheetInfo);
+                self.type = "alien";
+                this.x = x;
+                this.y = y;
+                this.width = spriteSheetInfo.width;
+                this.height = spriteSheetInfo.height;
+                this.centerX = this.width / 2;
+                this.centerY = this.height / 2;
+                    break;     
+            }
+        };
+        
+        this.setRelease = function(numShip, time){
+            console.log('Set released on Mother ship was called');
+            
+            if(self.hasReleasedShips){
+              return;   
+            }
+            
+            console.log('Will begin to release ships');
+            
+            //assigns number of ships to release
+            numShips = numShip;
+            
+            //checks if time to release ships was passed in
+            time = (time == undefined)? 5: time;
+
+            var countDownRunning = true;
+            var currentTime = 0;
+            var finalTime = time;
+            
+            
+            tick();  
+            
+            function tick(){
+                
+                console.log('Tick function has been called');
+            if(countDownRunning){
+                console.log('Timer ticking!');
+                currentTime++;
+                    if(currentTime >= finalTime){
+                        self.releaseShips();
+                        countDownRunning = false;
+                        currentTime = 0;
+                        tick();
+                    }
+                window.setTimeout(tick, 1000);   
+                }    
+            }   
+             
+        };
+        this.releaseShips = function(){
+            
+            self.hasReleasedShips = true;
+            
+            switch(self.type){
+                case "alien":
+                    for(var i=0; i<numShips; i++){
+                    
+                    var positionX = this.x + enemyShipsPool.pool[i].width*i;
+                    var positionY = this.y + enemyShipsPool.pool[i].height*i;
+                        
+                    enemyShipsPool.pool[i].x = positionX;
+                    enemyShipsPool.pool[i].y = positionY;
+                    enemyShipsPool.pool[i].alive = true;
+                    enemyShipsPool.pool[i].colliding = false;  
+                        console.log('creating alien ships');
+                        console.log(enemyShipsPool.pool[i]);
+                        } 
+                    break;
+                case "human":
+                   for(var j=0; j<numShips; j++){
+                    humanShipsPool.pool[j].x = this.x;
+                    humanShipsPool.pool[j].y = this.y;
+                    humanShipsPool.pool[j].alive = true;
+                    humanShipsPool.pool[j].colliding = false;    
+                        }  
+                    break;      
+            }
+            
+        };
+        this.draw = function(){
+            
+            this.context.save();
+            if(self.hasReleasedShips){
+                this.alpha -= alphaSpeed;   
+                this.alpha = (this.alpha <= 0)? 0: this.alpha; 
+            }else{
+            this.alpha += alphaSpeed;
+            this.alpha = (this.alpha >= 1)? 1: this.alpha;
+            }
+            this.context.globalAlpha = this.alpha;
+            self.spriteAnimation.play(this.x, this.y, MothershipSpriteSheet);
+            this.context.restore();
+            
+            if(this.alpha == 1){
+                shield.x = this.x-shield.centerX+this.centerX;
+			    shield.y = this.y-shield.centerY+this.centerY;
+                shield.draw();   
+            }else if(this.alpha <= 0){
+                this.alive = false;
+            }
+            
+        };
+        this.spawn = function(x, y){
+            
+            //if no parameter is passed, keep the x and y values
+            x = (x == undefined)? this.x: x;
+            y = (y == undefined)? this.y: y;
+            
+            //update the x and y values 
+            this.x = x;
+            this.y = y;
+            
+            self.alive = true;
+            self.colliding = false;
+            self.hasReleasedShips = false;
+            this.alpha = 0;
+        };
+        
+        this.jump = function(){
+            console.log('JUMPED MOTHERSHIP!');
+            if(this.alpha == 0 && self.hasReleasedShips){
+                this.alive = false;
+            } 
+        };
+    }
 	
 	function Explosion(numParticles){
 		this.x = 0;
@@ -1307,8 +1854,59 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			self.radius = (self.radius>self.maxRadius)? 40: self.radius;
 		};
 	}
-	
-	
+    
+    
+    function MeteorPool(maxSize){
+        var size = maxSize;
+        var pool = [];
+        this.pool = pool;
+        this.init = function(){
+            var numMediumRocks = size*2;
+            var numSmallRocks = numMediumRocks*2;
+            
+                for(var i=0; i<size; i++){
+                    var meteor = new Rock();
+                    meteor.setCanvas(mainCanvas);
+                    meteor.init("large");
+                    meteor.alive = false;
+                    pool.push(meteor);
+                }
+                for(var j=0; j<numMediumRocks; j++){
+                    var meteorMedium = new Rock();
+                    meteorMedium.setCanvas(mainCanvas);
+                    meteorMedium.init("medium");
+                    meteorMedium.alive = false;
+                    pool.push(meteorMedium);
+                }
+                for(var k=0; k<numSmallRocks; k++){
+                    var meteorSmall = new Rock();
+                    meteorSmall.setCanvas(mainCanvas);
+                    meteorSmall.init("small");
+                    meteorSmall.alive = false;
+                    pool.push(meteorSmall);
+                }
+        }
+        
+        this.getMeteor = function(x, y, meteorSize){
+            
+            var i = 0;
+                while(i<pool.length){
+                    if(pool[i].size == meteorSize && !pool[i].alive){
+                        pool[i].spawn(x, y);
+                        break;
+                    }
+                    i++;     
+                }  
+        };
+        this.hideItems = function(){
+            for(var i=0; i<pool.length; i++){
+                pool[i].alive = false; 
+            }
+            
+        }
+        
+    }
+    
 	function SoundPool(maxSize){
 		var size = maxSize;
 		var pool = [];
@@ -1335,7 +1933,17 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                     document.body.appendChild(shoot);
 					pool[i] = shoot;
 				}
-			}
+			}else if(object == "meteor"){
+                for(var i=0; i<size; i++){
+					var meteorExplosion = new Audio('assets/sounds/meteorExplosion'+supportedFormat);
+					meteorExplosion.volume = 1.0;
+					meteorExplosion.load();
+					meteorExplosion.addEventListener('canplaythrough', onAssetsLoad, false);
+                    //shoot.setAttribute('controls', '');
+                    document.body.appendChild(meteorExplosion);
+					pool[i] = meteorExplosion;
+				}
+            }
 			};
 		this.get = function(volume){
 			volume = (volume == undefined)? 1: volume;
@@ -1363,17 +1971,28 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 				}
 			}else if(object == "enemy"){
                 for(var j=0; j<size; j++){
+                    var randomX = Math.floor(Math.random()*mainCanvas.width);
+                    var randomY = Math.floor(Math.random()*mainCanvas.height);
+                    
                     var enemy = new Enemy();
                     enemy.setCanvas(mainCanvas);
-                    enemy.init(0, 0, 23, 21);
+                    enemy.init(randomX, randomY, 23, 21);
                     enemy.alive = false;
                     enemy.colliding = false;
                     pool[j] = enemy;
                 }
+            }else if(object == "meteor"){
+                for(var h=0; h<size; h++){
+                    var meteor = new Rock();
+                    meteor.setCanvas(mainCanvas);
+                    meteor.init("medium");
+                    meteor.alive = false;
+                    pool[h] = meteor;
+                }
             }
+            
 		};
 		this.get = function(x, y, angle){
-
 			if(!pool[size-1].alive){
 				pool[size-1].spawn(x,y);
 				pool[size-1].alive = true;
@@ -1383,13 +2002,60 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 				pool.unshift(pool.pop());
 			}
 		};
-		
-		
+        this.hideItems  = function(){
+            for(var i=0; i<pool.length; i++){
+                pool[i].alive = false; 
+            }
+        };
 	}
-	
+    
+    function Timer(){
+        this.currentTime = 0;
+        this.totalTime;
+        this.running = false;
+        this.timeUp = false;
+        this.callBack;
+        
+        var self = this;
+        
+        this.init = function(time, callBack){
+            //checks parameters
+            time = (time == undefined)? 5: time;
+            callBack = (callBack == undefined)? self.stop: callBack;
+                        
+            //assigns the count down seconds and callback function on time up
+            self.totalTime = time;
+            self.callBack = callBack;
+            
+        };
+        this.start = function(){
+            self.currentTime = 0;
+            self.running = true;
+            tick();  
+            
+            function tick(){
+            if(self.running){
+                console.log('Timer ticking!');
+                self.currentTime++;
+                if(self.currentTime >= self.totalTime){
+                    self.callBack();
+                    self.running = false;
+                    self.timeUp = true;
+                    tick();
+                }
+                window.setTimeout(tick, 1000);   
+            }    
+        }   
+        };
+        this.stop = function(){
+            self.running = false;
+        };        
+        
+    }
+    
 	function $(selector){
-	return document.querySelector(selector);
-}
+	       return document.querySelector(selector);
+    }
 	
 	//end of canvasApp function
 }

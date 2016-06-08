@@ -65,7 +65,6 @@ button{
 .buttonControl{
     border: 1px solid #00FF00;
     padding: 8px;
-    
 }
 .appPage{
     display: none;
@@ -221,7 +220,7 @@ button{
 }
 
 #gamePlay span{
-    margin-left: 10px;  
+    margin-left: 30px;  
 }
 
 
@@ -239,26 +238,31 @@ button{
 
 #levelTransition h2{
     width: 200px;
-    margin: 10px auto;
+    margin: auto;
+    padding: 30px;
     color: #00FF00;
     display: block;
 }
 
-.gameOver{
-	position: absolute;
-	top: 220px;
-	left: 220px;
-	text-align: center;
+#beatGame{
+    background-color: #000;
 }
-.gameOver span{
-	display: block;
-	font-size: 30px;
+#beatGame h2{
+    width: 200px;
+    margin: auto;
+    padding: 20px;
+    display: block;
+    color: #fff;
 }
-#restart{
-	clear: both;
-	font-size: 18px;
+
+
+#gameOver{
+  background-color: #000; 
 }
-#restart:hover{
-	color: red;
-	cursor: pointer;
+#gameOver h1{
+    color: #FFF;
+    width: 100px;
+    margin: auto;
+    padding: 30px;
+    display: block;
 }

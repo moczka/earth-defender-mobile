@@ -69,8 +69,9 @@ Nevertheless, 54 years passed and still no signs of any aliens. Martial law was 
         
 <div class="appPage" id="levelTransition" style="">
     <h2>Carnage Report:</h2>
-    <span>Score: 32352</span>
-    <span>Enemies Killed: 42</span>
+    <span id="transitionScore">Score: 32352</span>
+    <span id="transitionCarnage">Enemies Killed: 42</span>
+    <span id="transitionAstroids">Astroids Destroyed: 2</span>
     <span>Colony Protected: Chromos</span>
     <div class="blockAd">
        <!--<img src="assets/mobile/ad-holder.png"/>-->
@@ -87,12 +88,17 @@ Nevertheless, 54 years passed and still no signs of any aliens. Martial law was 
     </div> 
     <a class="buttonControl nextButton" id="nextLevel" >NEXT</a>
 </div>        
-        
+<div class="appPage" id="beatGame" style="">
+	<h2>You Saved Earth!</h2>	
+	<a class="buttonControl nextButton" id="shareStart">SHARE</a>
+</div>        
         
 <div class="appPage" id="gameOver" style="">
-	<span>Game Over!</span>	
-	<span id="restart">Restart Game</span>	
-</div>  
+	<h1>Game Over!</h1>	
+	<a class="buttonControl nextButton" id="restart">RESTART</a>	
+</div> 
+        
+        
         </div>
 	</body>
 </html>
