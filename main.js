@@ -807,9 +807,11 @@ function canvasApp(){
 		console.log(object.missiles.length);
 	}
 	if(keyPressList[DOWN_ARROW]){
-		object.shieldActive = true;
+       
+		object.activateShield(true);
+        
 	}else if(keyPressList[DOWN_ARROW] == false){
-		object.shieldActive = false;
+		object.activateShield(false);
 	}
 
 	}
@@ -876,7 +878,7 @@ function canvasApp(){
         //comparings the global touches active if more than one shield is activated.
 		if(e.touches.length >= 2){
 			//if more than one finger on screen. activate shield
-			playerShip.shieldActive = true;
+			playerShip.activateShield(true);
 		}
 	}
 	
@@ -888,7 +890,7 @@ function canvasApp(){
         
 		playerShip.shoot();
 		shootSoundPool.get();
-		playerShip.shieldActive = false;
+		playerShip.activateShield(false);
 	}
 	
 	//Checks for device orientation
@@ -1487,8 +1489,8 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		};
     this.spawn = function(x, y){
         missilePool.hideItems();
-        self.shieldActive = false;
-        self.shield.reset();
+        shield.reset();
+        self.activateShield(false);
         this.alive = true;
         this.colliding = false;
         this.x = x;
@@ -1496,6 +1498,21 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
         this.alpha = 0;
         this.velX = this.velY = 0;
         this.angle = 0;
+    };
+    this.activateShield = function(onOrOff){
+        onOrOff = (onOrOff == undefined)? true: onOrOff;
+        
+        if(self.shield.disabled){
+            self.shieldDisabled = true;   
+        }
+        
+        if(onOrOff && !self.shield.disabled){
+            self.shieldActive = true;
+            self.shieldDisabled = false;
+        }else{
+            self.shieldActive = false;  
+        }
+        
     };
         
 	}
@@ -1868,7 +1885,9 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		this.maxRadius = 45;
         this.life = 100;
         this.disabled = false;
+        
 		var self = this;
+        
 		this.draw = function(){
             
             if(self.life <= 0){
