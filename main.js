@@ -348,7 +348,7 @@ function canvasApp(){
         
 		playerShip.setCanvas(mainCanvas);
 		playerShip.init(centerX,centerY,23,23);
-		background.init(0,0,backgroundSprite, 1);
+		background.init(0,0,1000, 480);
 		background.velX = 1;
         playerShip.thrustAccel = 0.06;
         alienMothership.setCanvas(mainCanvas);
@@ -802,7 +802,7 @@ function canvasApp(){
 		keyPressList[SPACE_BAR] = true;
         if(!object.shieldActive){
 		object.shoot();
-		shootSoundPool.get();
+		shootSoundPool.get(0.5);
         }
 		console.log(object.missiles.length);
 	}
@@ -844,8 +844,8 @@ function canvasApp(){
         
 		var futureVelX, futureVelY, futureVel;
 		
-		ax = (e.accelerationIncludingGravity.x)/5;
-		ay = (e.accelerationIncludingGravity.y)/5;
+		ax = (e.accelerationIncludingGravity.x)/8;
+		ay = (e.accelerationIncludingGravity.y)/8;
 		
 		var landscapeOrientation = window.innerWidth/window.innerHeight > 1;
 		if (landscapeOrientation) {
@@ -858,7 +858,7 @@ function canvasApp(){
 		
 		futureVel = Math.sqrt(futureVelX*futureVelX+futureVelY*futureVelY);
 		
-		if(futureVel >= 5){
+		if(futureVel >= 3){
 			futureVelX = playerShip.velX;   
 		    futureVelY = playerShip.velY; 
 		}
@@ -889,7 +889,7 @@ function canvasApp(){
         }
         
 		playerShip.shoot();
-		shootSoundPool.get();
+		shootSoundPool.get(0.5);
 		playerShip.activateShield(false);
 	}
 	
@@ -1120,7 +1120,10 @@ FrameRateCounter.prototype.countFrames=function() {
         this.hasSplit = false;
         this.size;
         
-        var maxSpeed = 3;
+        var largeRockSpeed = 0.5,
+            mediumRockSpeed = 1.5,
+            smallRockSpeed = 2;
+        
         var rockSprite;
         var spriteAnimation = new SpriteAnimation();
             spriteAnimation.setCanvas(mainCanvas);
@@ -1141,8 +1144,10 @@ FrameRateCounter.prototype.countFrames=function() {
                 this.height = 55;
                 this.centerX = this.width/2;
                 this.centerY = this.height/2;
-                this.velX = Math.random()*maxSpeed - 2;
-                this.velY = Math.random()*maxSpeed - 2;
+                this.angle = Math.random()*(Math.PI*2);
+                this.speed = largeRockSpeed;
+                this.velX = Math.cos(this.angle)*this.speed;
+                this.velY = Math.sin(this.angle)*this.speed;
             rockSprite = meteorLargeSpriteSheet;
                 self.size = "large";
                     break;
@@ -1153,8 +1158,10 @@ FrameRateCounter.prototype.countFrames=function() {
                 this.height = 44;
                 this.centerX = this.width/2;
                 this.centerY = this.height/2;
-                this.velX = Math.random()*maxSpeed+1 - 3;
-                this.velY = Math.random()*maxSpeed+1 - 3;
+                this.angle = Math.random()*(Math.PI*2);
+                this.speed = mediumRockSpeed;
+                this.velX = Math.cos(this.angle)*this.speed;
+                this.velY = Math.sin(this.angle)*this.speed;
             rockSprite = meteorMediumSpriteSheet;
                 self.size = "medium";
                     break;
@@ -1165,8 +1172,10 @@ FrameRateCounter.prototype.countFrames=function() {
                 this.height = 33;
                 this.centerX = this.width/2;
                 this.centerY = this.height/2;
-                this.velX = Math.random()*maxSpeed+2 - 4;
-                this.velY = Math.random()*maxSpeed+2 - 4;
+                this.angle = Math.random()*(Math.PI*2);
+                this.speed = smallRockSpeed;
+                this.velX = Math.cos(this.angle)*this.speed;
+                this.velY = Math.sin(this.angle)*this.speed;
             rockSprite = meteorSmallSpriteSheet;
                 self.size = "small";
                     break;
@@ -1211,7 +1220,7 @@ FrameRateCounter.prototype.countFrames=function() {
             
 			if(this.colliding){ 
             //when object is colliding, creates and draws explosion
-			explosion.create(this.x, this.y);
+			explosion.create(this.x+this.centerX, this.y+this.centerY);
 			explosion.draw();
                 self.split();
 
@@ -1897,6 +1906,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
             }
             
 			this.context.strokeStyle = '#0000FF';
+            this.context.lineWidth = 1;
 			this.context.beginPath(); 
 			this.context.arc(this.x+this.centerX, this.y+this.centerY, self.radius, 0, Math.PI*2, true);
 			this.context.closePath();
@@ -2003,11 +2013,25 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			};
 		this.get = function(volume){
 			volume = (volume == undefined)? 1: volume;
+            
+            //my Way
+            var i = 0;
+            
+            while(i < pool.length){
+                if(pool[i].currentTime == 0 || pool[i].ended ){
+                    pool[i].play();
+                    pool[i].volume = volume;
+                    break;
+                }
+                i++;   
+            }
+            
+            /*How it was from Steve 
 			if(pool[currentSound].currentTime == 0 || pool[currentSound].ended){
 				pool[currentSound].play();
                 pool[currentSound].volume = volume;
 			}	
-			currentSound = (currentSound+1) % size;
+			currentSound = (currentSound+1) % size;*/
 		};
 	}
 	
