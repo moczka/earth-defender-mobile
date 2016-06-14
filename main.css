@@ -72,8 +72,6 @@ button{
     height: 100%; 
 }
 
-
-
 .buttonControl:hover{
    border-color: #0000FF;
    color: #0000FF;
@@ -81,8 +79,9 @@ button{
 
 .blockAd{
     width: 336px;
-    height: 280px;
+    height: 80%;
     margin: auto;
+    margin-top: 10px;
 }
 
 

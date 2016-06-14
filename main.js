@@ -60,7 +60,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 29;
+	var itemsToLoad = 22;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
@@ -115,7 +115,7 @@ function canvasApp(){
 	//score  & level variables
 	var currentScore = 0,
 	    currentLevel = 0,
-        lastLevel = 8,
+        lastLevel = 10,
         userBeatGame = false,
         enemyShipWorth = 10,
         rockWorth = 5,
@@ -135,8 +135,8 @@ function canvasApp(){
     Mothership.prototype = new Display();
     
 	//create sound pool for explosion and shoot sound
-	var shootSoundPool = new SoundPool(8);
-	var explosionSoundPool = new SoundPool(8);
+	var shootSoundPool = new SoundPool(5);
+	var explosionSoundPool = new SoundPool(4);
     var meteorExplosionSoundPool = new SoundPool(3);
 	
 	//gets canvas and its context and creates center x and y variables
@@ -422,7 +422,7 @@ function canvasApp(){
             //begins normal soundtrack 
             soundTrack.loop = true;
 		    soundTrack.play();
-            soundTrack.volume = 0.7;
+            soundTrack.volume = 0.5;
         }
 
         
@@ -519,16 +519,16 @@ function canvasApp(){
                 currentEnemy.attack(playerShip);
                 currentEnemy.draw();
                 
-                if(!currentEnemy.colliding && hitTest(currentEnemy, playerShip)){
+                if(!currentEnemy.colliding && hitTest(currentEnemy, playerShip) && !playerShip.colliding){
                     if(!playerShip.shieldActive){
                         currentScore += enemyShipWorth;
                         enemiesKilled++;
                         shipLives--;
                         playerShip.colliding = true;
                         currentEnemy.colliding = true;
-                        explosionSoundPool.get(0.3);
+                        explosionSoundPool.get(0.2);
                     }else{
-                        explosionSoundPool.get(0.3);
+                        explosionSoundPool.get(0.2);
                         currentEnemy.colliding = true;
                         currentScore += enemyShipWorth;
                         playerShip.shield.life -= 20;
@@ -548,7 +548,7 @@ function canvasApp(){
                 }
                 for(var j=0; j<currentEnemy.missiles.length; j++){
                     var currentEnemyMissile = currentEnemy.missiles[j];
-                    if(currentEnemyMissile.alive && !playerShip.colliding && hitTest(currentEnemyMissile, playerShip) && !playerShip.shieldActive){
+                    if(currentEnemyMissile.alive && !playerShip.colliding && hitTest(currentEnemyMissile, playerShip) && !playerShip.shieldActive && playerShip.alpha == 1){
                         currentEnemyMissile.alive = false;
                         playerShip.colliding = true;
                         shipLives--;
@@ -802,7 +802,7 @@ function canvasApp(){
 		keyPressList[SPACE_BAR] = true;
         if(!object.shieldActive){
 		object.shoot();
-		shootSoundPool.get(0.5);
+		shootSoundPool.get(0.3);
         }
 		console.log(object.missiles.length);
 	}
@@ -1510,15 +1510,12 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
     };
     this.activateShield = function(onOrOff){
         onOrOff = (onOrOff == undefined)? true: onOrOff;
-        
-        if(self.shield.disabled){
-            self.shieldDisabled = true;   
-        }
-        
-        if(onOrOff && !self.shield.disabled){
+    
+        if(onOrOff && !shield.disabled){
             self.shieldActive = true;
             self.shieldDisabled = false;
         }else{
+            self.shieldDisabled = true;
             self.shieldActive = false;  
         }
         
