@@ -60,7 +60,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 22;
+	var itemsToLoad = 23;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
@@ -69,6 +69,7 @@ function canvasApp(){
 	var backgroundSprite = new Image(),
 	    earthSprite = new Image(),
 	    soundTrack = new Audio(),
+        perkSprite = new Image(),
         finalLevelSound = new Audio(),
         enemySpriteSheet = new Image(),
         MothershipSpriteSheet = new Image(),
@@ -115,7 +116,7 @@ function canvasApp(){
 	//score  & level variables
 	var currentScore = 0,
 	    currentLevel = 0,
-        lastLevel = 10,
+        lastLevel = 8,
         userBeatGame = false,
         enemyShipWorth = 10,
         rockWorth = 5,
@@ -133,6 +134,7 @@ function canvasApp(){
 	Background.prototype = new Display();
     Rock.prototype = new Display();
     Mothership.prototype = new Display();
+    Perk.prototype = new Display();
     
 	//create sound pool for explosion and shoot sound
 	var shootSoundPool = new SoundPool(5);
@@ -159,12 +161,14 @@ function canvasApp(){
         totalRocks = 8,
         levelRocks = 5,
         levelEnemies = 8,
+        levelPerks = 4,
         enemiesKilled = 0,
         rocksDestroyed = 0;
 
      //pools holding enemies and rocks
     var enemyShipsPool = new Pool(totalEnemies),
         humanShipsPool = new Pool(10),
+        perksPool = new Pool(10);
         meteorPool = new MeteorPool(totalRocks);
     
 	
@@ -292,7 +296,7 @@ function canvasApp(){
         finalLevelSound.load();
         finalLevelSound.addEventListener('canplaythrough', onAssetsLoad, false);
 		
-		//sprites | images 4 images
+		//sprites | images 5 images
 		earthSprite.src = 'assets/sprites/earth.png';
 		earthSprite.addEventListener('load', onAssetsLoad, false);
         playerSpriteSheet.src = 'assets/sprites/playerShip.png';
@@ -309,6 +313,8 @@ function canvasApp(){
         meteorMediumSpriteSheet.addEventListener('load', onAssetsLoad, false);
         meteorSmallSpriteSheet.src = 'assets/sprites/meteorSmall.png';
         meteorSmallSpriteSheet.addEventListener('load', onAssetsLoad, false);
+        perkSprite.src = 'assets/sprites/perks.png';
+        perkSprite.addEventListener('load', onAssetsLoad, false);
         
 
         //hides preload image
@@ -343,6 +349,10 @@ function canvasApp(){
         
         meteorPool.init();
           //init enemy pool
+        
+        //init perks
+        
+        perksPool.init("perks");
         
         enemyShipsPool.init('enemy');
         
@@ -429,11 +439,12 @@ function canvasApp(){
         //resets enemy killed and rocks destroyed counter and ship lives
         enemiesKilled = 0;
         rocksDestroyed = 0;
+        if(currentLevel == 1){
         shipLives = 4;
-        
+        }
         //sets up number of rocks and enemies that will be displayed
         levelEnemies = currentLevel+1;
-        levelRocks = currentLevel+2;
+        levelRocks = currentLevel+1;
         
         //checks to see if the level rocks and enemies exceed total in pool.
         levelEnemies = (levelEnemies>=totalEnemies)? totalEnemies : levelEnemies;
@@ -451,6 +462,15 @@ function canvasApp(){
             randomX = Math.floor(Math.random()*(mainCanvas.width-50));
             randomY = Math.floor(Math.random()*(mainCanvas.height-50));
             meteorPool.getMeteor(randomX, randomY, "large");
+        }
+        
+        for(var j=0; j<perksPool.pool.length; j++){
+            perksPool.hideItems();
+        }
+        
+        for(var h=0; h<levelPerks; h++){
+            var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
+            perksPool.pool[randomPerk].alive = true;
         }
         
         alienMothership.init(0, 0, "alien");
@@ -479,6 +499,8 @@ function canvasApp(){
             appState = STATE_LEVEL_TRANSITION;
             return;
         }else if(shipLives < 0 && !playerShip.colliding){
+            shipLives = 0;
+            updateCounter('life');
             appState = STATE_GAME_OVER;
             return;
         }
@@ -519,7 +541,7 @@ function canvasApp(){
                 currentEnemy.attack(playerShip);
                 currentEnemy.draw();
                 
-                if(!currentEnemy.colliding && hitTest(currentEnemy, playerShip) && !playerShip.colliding){
+                if(!currentEnemy.colliding && hitTest(currentEnemy, playerShip) && !playerShip.colliding && !playerShip.velX == 0){
                     if(!playerShip.shieldActive){
                         currentScore += enemyShipWorth;
                         enemiesKilled++;
@@ -527,6 +549,8 @@ function canvasApp(){
                         playerShip.colliding = true;
                         currentEnemy.colliding = true;
                         explosionSoundPool.get(0.2);
+                        var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
+                        perksPool.pool[randomPerk].alive = true;
                     }else{
                         explosionSoundPool.get(0.2);
                         currentEnemy.colliding = true;
@@ -548,16 +572,29 @@ function canvasApp(){
                 }
                 for(var j=0; j<currentEnemy.missiles.length; j++){
                     var currentEnemyMissile = currentEnemy.missiles[j];
-                    if(currentEnemyMissile.alive && !playerShip.colliding && hitTest(currentEnemyMissile, playerShip) && !playerShip.shieldActive && playerShip.alpha == 1){
+                    if(currentEnemyMissile.alive && !playerShip.colliding && hitTest(currentEnemyMissile, playerShip) && !playerShip.shieldActive && !playerShip.velX == 0){
                         currentEnemyMissile.alive = false;
                         playerShip.colliding = true;
                         shipLives--;
+                        var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
+                        perksPool.pool[randomPerk].alive = true;
                         explosionSoundPool.get(0.3);
                     }else if(hitTest(currentEnemyMissile, playerShip.shield) && playerShip.shieldActive && currentEnemyMissile.alive){
                             currentEnemyMissile.alive = false;
                             playerShip.shield.life -= 10;
                             console.log('enemy missiled attacked sheld!!');
-                            }
+                    }
+                    
+                    for(var o=0; o<meteorPool.pool.length; o++){
+                        var currentRock2 = meteorPool.pool[o];
+                        if(currentRock2.alive){
+                            if(hitTest(currentEnemyMissile, currentRock2) && !currentRock2.colliding && currentEnemyMissile.alive){
+                                     meteorExplosionSoundPool.get();
+                                     currentRock2.colliding = true;
+                                     currentEnemyMissile.alive = false;
+                               }
+                        }
+                    }
                 }
             }
         }
@@ -570,13 +607,15 @@ function canvasApp(){
             checkBoundary(currentRock);
             currentRock.draw();
             
-            if(hitTest(currentRock, playerShip) && !currentRock.colliding && !playerShip.colliding && !playerShip.shieldActive && playerShip.alpha == 1){
+            if(hitTest(currentRock, playerShip) && !currentRock.colliding && !playerShip.colliding && !playerShip.shieldActive && !playerShip.velX == 0){
                 meteorExplosionSoundPool.get();
                 currentRock.colliding = true;
                 playerShip.colliding = true;
                 shipLives--;
                 rocksDestroyed++;
                 currentScore += rockWorth;
+                var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
+                perksPool.pool[randomPerk].alive = true;
             }
             for(var l=0; l<playerShip.missiles.length; l++){
                     var currentPlayerMissile2 = playerShip.missiles[l];
@@ -588,6 +627,23 @@ function canvasApp(){
                         rocksDestroyed++;
                     }
                 } 
+            }
+        }
+        
+        
+        for(var m=0; m<perksPool.pool.length; m++){
+            var currentPerk = perksPool.pool[m];
+            if(currentPerk.alive){
+                currentPerk.draw(); 
+                if(hitTest(playerShip, currentPerk) && !playerShip.shieldActive){
+                    currentPerk.alive = false;
+                    if(currentPerk.type == "life"){
+                        shipLives++;   
+                    }else{
+                        playerShip.shield.reset();   
+                    }
+                }
+                
             }
         }
         
@@ -802,7 +858,6 @@ function canvasApp(){
 		keyPressList[SPACE_BAR] = true;
         if(!object.shieldActive){
 		object.shoot();
-		shootSoundPool.get(0.3);
         }
 		console.log(object.missiles.length);
 	}
@@ -889,7 +944,6 @@ function canvasApp(){
         }
         
 		playerShip.shoot();
-		shootSoundPool.get(0.5);
 		playerShip.activateShield(false);
 	}
 	
@@ -1440,9 +1494,11 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
             this.alpha = 0;
 		};
 	this.shoot = function(){
-		if(!this.alive || this.colliding){
+		if(!this.alive || this.colliding || this.velX == 0){
 			return;
 		}
+        
+        shootSoundPool.get(0.3);
 		missilePool.get(this.x+this.centerX, this.y+this.centerY, this.angle, 5);
 		
 	};
@@ -1451,7 +1507,6 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			var currentMissile = missilePool.pool[i];
 			if(currentMissile.alive){
 				currentMissile.draw();
-				//console.log('DRAWING');
 			}
 		}
 		
@@ -1472,10 +1527,15 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 		}
 		
 		if(self.shieldActive){
+            if(shield.disabled){
+                self.shieldActive = false;   
+            }
 			shield.x = this.x-shield.centerX+this.centerX;
 			shield.y = this.y-shield.centerY+this.centerY;
 			shield.draw();
 		}
+        
+
 		this.context.save();
         this.alpha += alphaSpeed;
         this.alpha = (this.alpha >= 1)? 1: this.alpha;
@@ -1522,7 +1582,62 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
     };
         
 	}
-	
+    
+    function Perk(){
+        
+        var spriteAnimation = new SpriteAnimation();
+        var spriteInfo;
+        this.type;
+    
+        var self = this;
+        this.init = function(perk){
+            
+             var randomX = Math.floor(Math.random()*mainCanvas.width-20),
+                 randomY = Math.floor(Math.random()*mainCanvas.height-20);
+            
+            
+            switch(perk){
+                    
+                case "shield":
+                    spriteInfo = {width:18,height:19, numCol:1, numRow:2,fps:60,speed:1,loop:false,from:0,to:0};
+                    spriteAnimation.setCanvas(mainCanvas);
+                    spriteAnimation.init(spriteInfo);
+                    this.width = spriteInfo.width;
+                    this.height = spriteInfo.height;
+                    this.centerX = spriteInfo.width/2;
+                    this.centerY = spriteInfo.height/2;
+                    this.x = randomX;
+                    this.y = randomY;
+                    self.type = "shield";
+                    break;
+                    
+                case "life":
+                    spriteInfo = {width:18,height:19, numCol:1, numRow:2,fps:60,speed:1,loop:false,from:1,to:1};
+                    spriteAnimation.setCanvas(mainCanvas);
+                    spriteAnimation.init(spriteInfo);
+                    this.width = spriteInfo.width;
+                    this.height = spriteInfo.height;
+                    this.centerX = spriteInfo.width/2;
+                    this.centerY = spriteInfo.height/2;
+                    this.x = randomX;
+                    this.y = randomY;
+                    self.type = "life";
+                    break;
+            }
+        };
+        this.spawn = function(x, y){
+            this.alive = true;
+            this.x = x;
+            this.y = y;
+        };
+        this.draw = function(){
+            
+            spriteAnimation.play(this.x, this.y, perkSprite);
+            
+        };
+    
+    }
+    
 	function Missile(){
 		this.speed = 3;
 		this.life = 0;
@@ -2018,11 +2133,14 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                 if(pool[i].currentTime == 0 || pool[i].ended ){
                     pool[i].play();
                     pool[i].volume = volume;
+                    console.log('Sound Played!');
                     break;
+                }else{
+                    pool[pool.length-1].currentTime = 0;   
+                    console.log('the the last to 0');
                 }
                 i++;   
             }
-            
             /*How it was from Steve 
 			if(pool[currentSound].currentTime == 0 || pool[currentSound].ended){
 				pool[currentSound].play();
@@ -2058,19 +2176,27 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                     enemy.colliding = false;
                     pool[j] = enemy;
                 }
-            }else if(object == "meteor"){
-                for(var h=0; h<size; h++){
-                    var meteor = new Rock();
-                    meteor.setCanvas(mainCanvas);
-                    meteor.init("medium");
-                    meteor.alive = false;
-                    pool[h] = meteor;
+            }else if(object == "perks"){
+                
+                size = Math.floor(size / 2);
+                
+                for(var k=0; k<size; k++){
+                    var life = new Perk();
+                    life.init("life");
+                    pool.push(life); 
                 }
+                
+                for(var h=0; h<size; h++){
+                    var shield = new Perk();
+                    shield.init("shield");
+                    pool.push(shield);
+                }
+                
             }
-            
 		};
 		this.get = function(x, y, angle, speed){
             speed = (speed == undefined)? 3: speed;
+            angle = (angle == undefined)? 0: angle;
             
 			if(!pool[size-1].alive){
 				pool[size-1].spawn(x,y);
