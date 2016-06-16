@@ -60,7 +60,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 23;
+	var itemsToLoad = 14;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
@@ -136,11 +136,13 @@ function canvasApp(){
     Mothership.prototype = new Display();
     Perk.prototype = new Display();
     
-	//create sound pool for explosion and shoot sound
-	var shootSoundPool = new SoundPool(5);
-	var explosionSoundPool = new SoundPool(4);
-    var meteorExplosionSoundPool = new SoundPool(3);
-	
+	//sounds API
+    var meteorExplosionSound;
+    var playerShootSound;
+    var explosionSound;
+    
+    
+    
 	//gets canvas and its context and creates center x and y variables
 	var mainCanvas = $('#bgCanvas');
 	var mainContext = mainCanvas.getContext('2d');
@@ -281,22 +283,33 @@ function canvasApp(){
 		appState = STATE_LOADING;
 		
 		background.setCanvas(mainCanvas);
-		
-		//init and load sound pool sounds
-		explosionSoundPool.init("explosion");
-		shootSoundPool.init("shoot");
-        meteorExplosionSoundPool.init("meteor");
         
 		
-		//sounds 2 sounds
+		//sounds 5 sounds
 		soundTrack.src = 'assets/sounds/soundtrack'+supportedFormat;
 		soundTrack.load();
 		soundTrack.addEventListener('canplaythrough', onAssetsLoad, false);
         finalLevelSound.src = 'assets/sounds/finalLevelSound'+supportedFormat;
         finalLevelSound.load();
         finalLevelSound.addEventListener('canplaythrough', onAssetsLoad, false);
-		
-		//sprites | images 5 images
+        
+        meteorExplosionSound = new Howl({
+                                    urls: ['assets/sounds/meteorExplosion.mp3','assets/sounds/meteorExplosion.wav'],
+                                    volume: 1,
+                                    onload: onAssetsLoad
+                                    });
+        playerShootSound = new Howl({
+                                    urls: ['assets/sounds/shoot.mp3','assets/sounds/shoot.wav'],
+                                    volume: 0.5,
+                                    onload: onAssetsLoad
+                                    });
+        explosionSound = new Howl({
+                                    urls: ['assets/sounds/explosion.mp3','assets/sounds/explosion.wav'],
+                                    volume: 0.2,
+                                    onload: onAssetsLoad
+                                    });
+        
+		//sprites | images 9 images
 		earthSprite.src = 'assets/sprites/earth.png';
 		earthSprite.addEventListener('load', onAssetsLoad, false);
         playerSpriteSheet.src = 'assets/sprites/playerShip.png';
@@ -323,8 +336,12 @@ function canvasApp(){
 	}
 	
 	function onAssetsLoad(e){
+        
+        if(loadCount === itemsToLoad){
+         return;   
+        }
 		
-		var target = e.target;
+		var target = (e == undefined)? {} : e;
 		loadCount++;
 		
 		//removes event listeners of loaded items
@@ -333,7 +350,7 @@ function canvasApp(){
 		}else if(target.tagName == "IMG"){
 			target.removeEventListener('load', onAssetsLoad, false);
 		}
-		
+
 		console.log('The number of items that have loaded is '+ loadCount);
 		
 		//draws loading progress
@@ -548,11 +565,11 @@ function canvasApp(){
                         shipLives--;
                         playerShip.colliding = true;
                         currentEnemy.colliding = true;
-                        explosionSoundPool.get(0.2);
+                        explosionSound.play();
                         var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
                         perksPool.pool[randomPerk].alive = true;
                     }else{
-                        explosionSoundPool.get(0.2);
+                        explosionSound.play();
                         currentEnemy.colliding = true;
                         currentScore += enemyShipWorth;
                         playerShip.shield.life -= 20;
@@ -565,7 +582,7 @@ function canvasApp(){
                     if(!currentEnemy.colliding && hitTest(currentPlayerMissile, currentEnemy) && currentPlayerMissile.alive ){
                        currentScore += enemyShipWorth;
                         enemiesKilled++;
-                       explosionSoundPool.get(0.3);
+                       explosionSound.play();
                        currentEnemy.colliding = true;
                        currentPlayerMissile.alive = false;
                     }
@@ -578,7 +595,7 @@ function canvasApp(){
                         shipLives--;
                         var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
                         perksPool.pool[randomPerk].alive = true;
-                        explosionSoundPool.get(0.3);
+                        explosionSound.play();
                     }else if(hitTest(currentEnemyMissile, playerShip.shield) && playerShip.shieldActive && currentEnemyMissile.alive){
                             currentEnemyMissile.alive = false;
                             playerShip.shield.life -= 10;
@@ -589,7 +606,7 @@ function canvasApp(){
                         var currentRock2 = meteorPool.pool[o];
                         if(currentRock2.alive){
                             if(hitTest(currentEnemyMissile, currentRock2) && !currentRock2.colliding && currentEnemyMissile.alive){
-                                     meteorExplosionSoundPool.get();
+                                     meteorExplosionSound.play();
                                      currentRock2.colliding = true;
                                      currentEnemyMissile.alive = false;
                                }
@@ -608,7 +625,7 @@ function canvasApp(){
             currentRock.draw();
             
             if(hitTest(currentRock, playerShip) && !currentRock.colliding && !playerShip.colliding && !playerShip.shieldActive && !playerShip.velX == 0){
-                meteorExplosionSoundPool.get();
+                meteorExplosionSound.play();
                 currentRock.colliding = true;
                 playerShip.colliding = true;
                 shipLives--;
@@ -621,7 +638,7 @@ function canvasApp(){
                     var currentPlayerMissile2 = playerShip.missiles[l];
                     if(hitTest(currentPlayerMissile2, currentRock) && !currentRock.colliding && currentPlayerMissile2.alive){
                         currentPlayerMissile2.alive = false;
-                       meteorExplosionSoundPool.get();
+                       meteorExplosionSound.play();
                        currentRock.colliding = true;
                         currentScore += rockWorth;
                         rocksDestroyed++;
@@ -1498,7 +1515,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			return;
 		}
         
-        shootSoundPool.get(0.3);
+        playerShootSound.play();
 		missilePool.get(this.x+this.centerX, this.y+this.centerY, this.angle, 5);
 		
 	};
@@ -2149,6 +2166,8 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 			currentSound = (currentSound+1) % size;*/
 		};
 	}
+    
+    
 	
 	function Pool(maxSize){
 		var size = maxSize;
