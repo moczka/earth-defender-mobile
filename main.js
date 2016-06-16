@@ -40,7 +40,8 @@ function canvasApp(){
     STATE_LEVEL_TRANSITION = 33,
     STATE_NEXT_LEVEL = 40,
 	STATE_USER_BEAT_GAME = 50,
-	STATE_GAME_OVER = 60;
+	STATE_GAME_OVER = 60,
+    STATE_CREDITS = 70;
 		var appState;
 		var previousAppState;
 	
@@ -60,7 +61,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 14;
+	var itemsToLoad = 15;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
@@ -68,9 +69,10 @@ function canvasApp(){
 	//set up sprites sheets & sounds
 	var backgroundSprite = new Image(),
 	    earthSprite = new Image(),
-	    soundTrack = new Audio(),
+	    soundTrack,
         perkSprite = new Image(),
-        finalLevelSound = new Audio(),
+        finalLevelSound,
+        perkSound,
         enemySpriteSheet = new Image(),
         MothershipSpriteSheet = new Image(),
 	    playerSpriteSheet = new Image(),
@@ -97,6 +99,7 @@ function canvasApp(){
     var howToPlayButton = $('#howToPlay');
 	var restartButton = $('#restart');
     var storyLineButton = $('#storyLine');
+    var creditsButton = $('#creditsButton');
     
 	
 	//game text div holders and controls
@@ -106,12 +109,14 @@ function canvasApp(){
     var howToPlayHolder = $('#howToPlayHolder');
     var storyLineHolder = $('#storyLineHolder');
     var levelTransitionHolder = $('#levelTransition');
+    var creditsHolder = $('#credits');
     var beatGameHolder = $('#beatGame');
     
     var nextLevelButton = $('#nextLevel');
 	var howToBackButton = $('#howToBack');
     var storyLineSkipButton = $('#skipStoryLine');
     var shareButton = $('#shareStart');
+    var skipCredits = $('#skipCredits');
     
 	//score  & level variables
 	var currentScore = 0,
@@ -223,6 +228,9 @@ function canvasApp(){
 		case STATE_USER_BEAT_GAME:
             beatGame();
 			break;
+        case STATE_CREDITS:
+            //sets to credits
+            break;
 		case STATE_GAME_OVER:
 			gameOver();
 			break;
@@ -286,12 +294,20 @@ function canvasApp(){
         
 		
 		//sounds 5 sounds
-		soundTrack.src = 'assets/sounds/soundtrack'+supportedFormat;
-		soundTrack.load();
-		soundTrack.addEventListener('canplaythrough', onAssetsLoad, false);
-        finalLevelSound.src = 'assets/sounds/finalLevelSound'+supportedFormat;
-        finalLevelSound.load();
-        finalLevelSound.addEventListener('canplaythrough', onAssetsLoad, false);
+		soundTrack = new Howl({
+                    urls: ['assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
+                    volume: 0.5,
+                    loop: true,
+                    onload: onAssetsLoad
+                        });
+        
+        
+        finalLevelSound = new Howl({
+                     urls: ['assets/sounds/finalLevelSound.mp3','assets/sounds/finalLevelSound.wav'],
+                     volume: 1,
+                     loop: true,
+                     onload: onAssetsLoad
+                        });
         
         meteorExplosionSound = new Howl({
                                     urls: ['assets/sounds/meteorExplosion.mp3','assets/sounds/meteorExplosion.wav'],
@@ -300,7 +316,7 @@ function canvasApp(){
                                     });
         playerShootSound = new Howl({
                                     urls: ['assets/sounds/shoot.mp3','assets/sounds/shoot.wav'],
-                                    volume: 0.5,
+                                    volume: 0.3,
                                     onload: onAssetsLoad
                                     });
         explosionSound = new Howl({
@@ -308,6 +324,13 @@ function canvasApp(){
                                     volume: 0.2,
                                     onload: onAssetsLoad
                                     });
+        perkSound = new Howl({
+                    urls: ['assets/sounds/perk.mp3','assets/sounds/perk.wav'],
+                    volume: 1.5,
+                    onload: onAssetsLoad
+                        });
+        
+        
         
 		//sprites | images 9 images
 		earthSprite.src = 'assets/sprites/earth.png';
@@ -443,13 +466,10 @@ function canvasApp(){
         }
            
         if(currentLevel == lastLevel){
-            finalLevelSound.loop = true;
             finalLevelSound.play();
         }else{
             //begins normal soundtrack 
-            soundTrack.loop = true;
 		    soundTrack.play();
-            soundTrack.volume = 0.5;
         }
 
         
@@ -503,11 +523,9 @@ function canvasApp(){
         
         if(enemiesKilled == levelEnemies && !playerShip.colliding){
             if(currentLevel<lastLevel){
-                soundTrack.currentTime = 0;
-                soundTrack.pause();
+                soundTrack.stop();
             }else{
-                finalLevelSound.currentTime = 0;
-                finalLevelSound.pause();
+                finalLevelSound.stop();
             }
             gameInterface.hide('gamePlay');
             playerShip.angle = 0;
@@ -656,8 +674,10 @@ function canvasApp(){
                     currentPerk.alive = false;
                     if(currentPerk.type == "life"){
                         shipLives++;   
+                        perkSound.play();
                     }else{
                         playerShip.shield.reset();   
+                        perkSound.play();
                     }
                 }
                 
@@ -713,8 +733,7 @@ function canvasApp(){
         appState = STATE_WAITING;
         
         //outputs the final score to the winner gamer :)
-        finalLevelSound.currentTime = 0;
-        finalLevelSound.pause();        
+        finalLevelSound.stop();       
         beatGameScore.innerHTML = "Your Score: "+currentScore;
         userBeatGame = false;
         gameInterface.hide('gamePlay');
@@ -734,11 +753,9 @@ function canvasApp(){
         
         //checks to see which sound to stop playing given the level the user was before dying.
         if(currentLevel == lastLevel){
-            finalLevelSound.currentTime = 0;
-            finalLevelSound.pause();
+            finalLevelSound.stop();
         }else{
-            soundTrack.currentTime = 0;
-            soundTrack.pause();
+            soundTrack.stop();
             
         }
         
@@ -960,8 +977,10 @@ function canvasApp(){
             return;    
         }
         
-		playerShip.shoot();
-		playerShip.activateShield(false);
+        if(e.touches.length <= 1){
+            playerShip.shoot();
+		    playerShip.activateShield(false);
+        }
 	}
 	
 	//Checks for device orientation
@@ -1373,6 +1392,16 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                 gameInterface.display('howToPlay');
                 appState = STATE_HOW_TO_PLAY;
             }, false);
+            creditsButton.addEventListener('mousedown', function(){
+                gameInterface.hide('titleScreen');
+                gameInterface.display('credits');
+                appState = STATE_CREDITS;
+            }, false);
+            skipCredits.addEventListener('mousedown', function(){
+                gameInterface.hide('credits');
+                gameInterface.display('titleScreen');
+                appState = STATE_TITLE_SCREEN;
+            }, false);
             howToBackButton.addEventListener('mousedown', function(){
                 gameInterface.hide('howToPlay');
                 gameInterface.display('titleScreen');
@@ -1432,6 +1461,9 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                 case "beatGame":
                     beatGameHolder.setAttribute('style', 'display: block;');
                     break;
+                case "credits":
+                    creditsHolder.setAttribute('style', 'display: block;');
+                    break;
                 case "none":
                     interfaceWrapper.setAttribute('style', '');
                     break;        
@@ -1459,6 +1491,9 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                     break;
                 case "beatGame":
                     beatGameHolder.setAttribute('style', '');
+                    break;
+                case "credits":
+                    creditsHolder.setAttribute('style', '');
                     break;
                 case "none":
                     interfaceWrapper.setAttribute('style', '');

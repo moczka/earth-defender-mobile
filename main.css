@@ -215,6 +215,21 @@ button{
     
 }
 
+#credits{
+   color: #00FF00; 
+   background-color: #000;
+}
+#credits ul{
+    text-align: left;
+}
+#credits h2{
+    width: 200px;
+    margin: auto;
+    padding: 10px;
+    color: #00FF00;
+    display: block;
+}
+
 #gamePlay{
     font-size: 23px;
 }
