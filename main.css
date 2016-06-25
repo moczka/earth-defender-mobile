@@ -241,6 +241,8 @@ button{
 
 #levelTransition{
     background-color: #000;
+	background-image: url(assets/sprites/backgroundPiece.png);
+	background-repeat: repeat;
     text-align: left;
 }
 
@@ -261,27 +263,37 @@ button{
 
 #beatGame{
     background-color: #000;
+    background-image: url("assets/sprites/beatGame_background.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: auto 100%;
+    text-align: center;
 }
 #beatGame h2{
     display: block;
+    width: 250px;
+    padding: 10px;
+    margin: auto;
     color: #fff;
 }
 #beatGame div{
     width: 300px;
-    position: absolute;
-    top: 40%;
-    left: 30%;
+    margin: auto;
 }
 #beatGame span{
     display: block;
 }
 #gameOver{
-  background-color: #000; 
+    background-color: #000;
+    background-image: url("assets/sprites/game_over_background.png");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: auto 100%;
 }
 #gameOver h1{
-    position: absolute;
-    top: 40%;
-    left: 40%;
+    width: 300px;
+    margin: auto;
+    padding: 10px;
     display: block;
     color: #fff;
 }

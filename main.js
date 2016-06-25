@@ -61,7 +61,7 @@ function canvasApp(){
 	var frameRate = new FrameRateCounter();
 	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
-	var itemsToLoad = 15;
+	var itemsToLoad = 17;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
@@ -120,7 +120,7 @@ function canvasApp(){
     
 	//score  & level variables
 	var currentScore = 0,
-	    currentLevel = 0,
+	    currentLevel = 7,
         lastLevel = 8,
         userBeatGame = false,
         enemyShipWorth = 10,
@@ -145,7 +145,8 @@ function canvasApp(){
     var meteorExplosionSound;
     var playerShootSound;
     var explosionSound;
-    
+    var gameOverSound;
+	var victorySound;
     
     
 	//gets canvas and its context and creates center x and y variables
@@ -297,18 +298,18 @@ function canvasApp(){
 		soundTrack = new Howl({
                     urls: ['assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
                     volume: 0.5,
-                    loop: true,
+					loop: true,
                     onload: onAssetsLoad
                         });
-        
-        
+
+		
         finalLevelSound = new Howl({
                      urls: ['assets/sounds/finalLevelSound.mp3','assets/sounds/finalLevelSound.wav'],
                      volume: 1,
-                     loop: true,
+					 loop: true,
                      onload: onAssetsLoad
                         });
-        
+	
         meteorExplosionSound = new Howl({
                                     urls: ['assets/sounds/meteorExplosion.mp3','assets/sounds/meteorExplosion.wav'],
                                     volume: 1,
@@ -326,10 +327,20 @@ function canvasApp(){
                                     });
         perkSound = new Howl({
                     urls: ['assets/sounds/perk.mp3','assets/sounds/perk.wav'],
-                    volume: 1.5,
+                    volume: 1.0,
                     onload: onAssetsLoad
                         });
-        
+		
+        victorySound = new Howl({
+                    urls: ['assets/sounds/victory.mp3','assets/sounds/victory.wav'],
+                    volume: 1.0,
+                    onload: onAssetsLoad
+                        });
+        gameOverSound = new Howl({
+                    urls: ['assets/sounds/gameover.mp3','assets/sounds/gameover.wav'],
+                    volume: 1.0,
+                    onload: onAssetsLoad
+                        });
         
         
 		//sprites | images 9 images
@@ -469,10 +480,9 @@ function canvasApp(){
             finalLevelSound.play();
         }else{
             //begins normal soundtrack 
-		    soundTrack.play();
+		   soundTrack.play();
         }
-
-        
+		
         //resets enemy killed and rocks destroyed counter and ship lives
         enemiesKilled = 0;
         rocksDestroyed = 0;
@@ -731,13 +741,14 @@ function canvasApp(){
     
     function beatGame(){
         appState = STATE_WAITING;
-        
+		
         //outputs the final score to the winner gamer :)
         finalLevelSound.stop();       
         beatGameScore.innerHTML = "Your Score: "+currentScore;
         userBeatGame = false;
         gameInterface.hide('gamePlay');
         gameInterface.display('beatGame'); 
+        victorySound.play();
         
         //resets that score
         currentScore = 0;
@@ -758,6 +769,8 @@ function canvasApp(){
             soundTrack.stop();
             
         }
+		
+		gameOverSound.play();
         
         //resets the score and level
         currentLevel = 0;
