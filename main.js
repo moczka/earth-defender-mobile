@@ -120,8 +120,8 @@ function canvasApp(){
     
 	//score  & level variables
 	var currentScore = 0,
-	    currentLevel = 7,
-        lastLevel = 8,
+	    currentLevel = 0,
+        lastLevel = 14,
         userBeatGame = false,
         enemyShipWorth = 10,
         rockWorth = 5,
@@ -165,8 +165,8 @@ function canvasApp(){
 	var background = new Background();
     var gameInterface = new Interface();
     
-    var totalEnemies = 10,
-        totalRocks = 8,
+    var totalEnemies = 8,
+        totalRocks = 10,
         levelRocks = 5,
         levelEnemies = 8,
         levelPerks = 4,
@@ -298,7 +298,6 @@ function canvasApp(){
 		soundTrack = new Howl({
                     urls: ['assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
                     volume: 0.5,
-					loop: true,
                     onload: onAssetsLoad
                         });
 
@@ -306,7 +305,6 @@ function canvasApp(){
         finalLevelSound = new Howl({
                      urls: ['assets/sounds/finalLevelSound.mp3','assets/sounds/finalLevelSound.wav'],
                      volume: 1,
-					 loop: true,
                      onload: onAssetsLoad
                         });
 	
@@ -491,7 +489,7 @@ function canvasApp(){
         }
         //sets up number of rocks and enemies that will be displayed
         levelEnemies = currentLevel+1;
-        levelRocks = currentLevel+1;
+        levelRocks = currentLevel+2;
         
         //checks to see if the level rocks and enemies exceed total in pool.
         levelEnemies = (levelEnemies>=totalEnemies)? totalEnemies : levelEnemies;
@@ -600,7 +598,7 @@ function canvasApp(){
                         explosionSound.play();
                         currentEnemy.colliding = true;
                         currentScore += enemyShipWorth;
-                        playerShip.shield.life -= 20;
+                        playerShip.shield.life -= 50;
                         enemiesKilled++;
                     }
                 }
