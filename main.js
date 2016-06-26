@@ -530,16 +530,21 @@ function canvasApp(){
         //console.log('The draw screen function is being called');
         
         if(enemiesKilled == levelEnemies && !playerShip.colliding){
-            if(currentLevel<lastLevel){
-                soundTrack.stop();
-            }else{
-                finalLevelSound.stop();
-            }
+			
+			//Stops the soundtrack
+				if(currentLevel == lastLevel){
+					finalLevelSound.stop();
+				}else{
+					soundTrack.stop();  
+				}
+			
             gameInterface.hide('gamePlay');
             playerShip.angle = 0;
             playerShip.velY = 0;
             playerShip.velX = 0.2;
+			
             appState = STATE_LEVEL_TRANSITION;
+			
             return;
         }else if(shipLives < 0 && !playerShip.colliding){
             shipLives = 0;
@@ -764,8 +769,7 @@ function canvasApp(){
         if(currentLevel == lastLevel){
             finalLevelSound.stop();
         }else{
-            soundTrack.stop();
-            
+            soundTrack.stop(); 
         }
 		
 		gameOverSound.play();
