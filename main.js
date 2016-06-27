@@ -529,7 +529,7 @@ function canvasApp(){
         
         //console.log('The draw screen function is being called');
         
-        if(enemiesKilled == levelEnemies && !playerShip.colliding){
+        if(enemiesKilled == levelEnemies && !playerShip.colliding && shipLives != -1){
 			
 			//Stops the soundtrack
 				if(currentLevel == lastLevel){
@@ -545,11 +545,23 @@ function canvasApp(){
 			
             appState = STATE_LEVEL_TRANSITION;
 			
+			console.log("Passes to the next Level");
+			
             return;
+			
         }else if(shipLives < 0 && !playerShip.colliding){
-            shipLives = 0;
-            updateCounter('life');
+			
+			//stops the current soundtrack playing
+			        if(currentLevel == lastLevel){
+						finalLevelSound.stop();
+					}else{
+						soundTrack.stop(); 
+					}
+			
             appState = STATE_GAME_OVER;
+			
+			console.log("End of game");
+			
             return;
         }
         
@@ -766,11 +778,6 @@ function canvasApp(){
 		appState = STATE_WAITING;
         
         //checks to see which sound to stop playing given the level the user was before dying.
-        if(currentLevel == lastLevel){
-            finalLevelSound.stop();
-        }else{
-            soundTrack.stop(); 
-        }
 		
 		gameOverSound.play();
         
