@@ -26,6 +26,7 @@ function canvasApp(){
 	LEFT_ARROW = 37,
 	RIGHT_ARROW = 39,
 	DOWN_ARROW = 40,
+	X_KEY = 88,
 	SPACE_BAR = 32,
 	LETTER_P = 80;
 	
@@ -414,6 +415,8 @@ function canvasApp(){
         
         window.addEventListener('mousemove', onMouseMove, false);
         gameInterface.addButtonListeners();
+		
+		userAgent.mobile = false;
         
         
         if(userAgent.mobile){
@@ -917,11 +920,11 @@ function canvasApp(){
         }
 		console.log(object.missiles.length);
 	}
-	if(keyPressList[DOWN_ARROW]){
+	if(keyPressList[X_KEY]){
        
 		object.activateShield(true);
         
-	}else if(keyPressList[DOWN_ARROW] == false){
+	}else if(keyPressList[X_KEY] == false){
 		object.activateShield(false);
 	}
 
@@ -1645,6 +1648,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
     this.activateShield = function(onOrOff){
         onOrOff = (onOrOff == undefined)? true: onOrOff;
     
+		
         if(onOrOff && !shield.disabled){
             self.shieldActive = true;
             self.shieldDisabled = false;
