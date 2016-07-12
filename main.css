@@ -7,6 +7,14 @@ html, body{
 	height: 100%;
 }
 
+.fr{
+ float: right;
+}
+
+.fl{
+ float: left;
+}
+
 .preload{
     background: #FFF;
     width: 100%;
@@ -171,12 +179,21 @@ button{
 
 
 
-#gameStart{
-    
+.socialPlugins{
+    position: absolute;
+    padding: 20px;
+    height: 40px;
+    left: 10px;
+    bottom: 10px;
+}
+
+#googlePlay{
+    position: relative;
+    top: -15px;
     
 }
 
-#gameStart span, #gameStart a{
+.titleMenu span, .titleMenu a{
     width: 150px;
     display: block;
     clear: both;

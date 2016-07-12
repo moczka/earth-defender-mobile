@@ -299,7 +299,8 @@ function canvasApp(){
 		soundTrack = new Howl({
                     urls: ['assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
                     volume: 0.5,
-                    onload: onAssetsLoad
+                    onload: onAssetsLoad,
+                    loop: true
                         });
 
 		
