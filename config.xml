@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+    <widget xmlns   = "http://www.w3.org/ns/widgets"
+        xmlns:gap   = "http://phonegap.com/ns/1.0"
+        id          = "com.noxtar.defender-earth"
+        versionCode = "10" 
+        version     = "0.0.1" >
+
+    <!-- versionCode is optional and Android only -->
+
+    <name>Earth Defender</name>
+
+    <description>
+        Protect our planet Earth and our human colonies in Space from the evil aliens. Destroy the aliens and claim our independence!
+    </description>
+
+    <author href="https://noxtar.com/p/about.html" email="steven.guesp@gmail.com">
+        Javier Guerrero
+    </author>
+        
+    <platform name="ios" >
+        <preference name="exit-on-suspend" value="false" />
+        <preference name="orientation" value="landscape" />
+        
+        <splash src="splash/ios/Default-568h@2x~iphone.png" platform="ios" width="320" height="480" />
+        
+        <!-- iPhone 6 / 6+ -->
+        <icon src="icon-60@3x.png" platform="ios" width="180" height="180" />
+
+        <!-- iPhone / iPod Touch  -->
+        <icon src="icon-60.png" platform="ios" width="60" height="60" />
+        <icon src="icon-60@2x.png" platform="ios" width="120" height="120" />
+
+        <!-- iPad -->
+        <icon src="icon-76.png" platform="ios" width="76" height="76" />
+        <icon src="icon-76@2x.png" platform="ios" width="152" height="152" />
+
+        <!-- Settings Icon -->
+        <icon src="icon-small.png" platform="ios" width="29" height="29" />
+        <icon src="icon-small@2x.png" platform="ios" width="58" height="58" />
+
+        <!-- Spotlight Icon -->
+        <icon src="icon-40.png" platform="ios" width="40" height="40" />
+        <icon src="icon-40@2x.png" platform="ios" width="80" height="80" />
+        
+        <!-- splsh screen -->
+        
+        <!-- iPhone and iPod touch -->
+        <splash src="Default.png" platform="ios" width="320" height="480" />
+        <splash src="Default@2x.png" platform="ios" width="640" height="960" />
+
+        <!-- iPhone 5 / iPod Touch (5th Generation) -->
+        <splash src="Default-568h@2x.png" platform="ios" width="640" height="1136" />
+
+        <!-- iPhone 6 -->
+        <splash src="Default-Landscape-736h@3x.png" platform="ios" width="2208" height="1242" />
+
+        <!-- iPad -->
+        <splash src="Default-Landscape.png" platform="ios" width="1024" height="768" />
+
+        <!-- Retina iPad -->
+        <splash src="Default-Landscape@2x.png" platform="ios" width="2048" height="1536" />
+
+    </platform>
+
+    <platform name="android" >
+        <preference name="orientation" value="portrait" />
+        
+        <icon src="ldpi.png" platform="android" qualifier="ldpi" />
+        <icon src="mdpi.png" platform="android" qualifier="mdpi" />
+        <icon src="hdpi.png" platform="android" qualifier="hdpi" />
+        <icon src="xhdpi.png" platform="android" qualifier="xhdpi" />
+        <icon src="xxhdpi.png" platform="android" qualifier="xxhdpi" />
+        <icon src="fr-xxhdpi.png" platform="android" qualifier="fr-xxhdpi" />
+        
+        <!-- splash screen -->
+        
+        <splash src="ldpi.png" platform="android" qualifier="ldpi" />
+        <splash src="mdpi.png" platform="android" qualifier="mdpi" />
+        <splash src="hdpi.png" platform="android" qualifier="hdpi" />
+        <splash src="xhdpi.png" platform="android" qualifier="xhdpi" />
+        <splash src="fr-xhdpi.png" platform="android" qualifier="fr-xhdpi" />
+        <splash src="portrait-xxhdpi.png" platform="android" qualifier="port-xxhdpi" />
+        <splash src="landscape-xxhdpi.png" platform="android" qualifier="land-xxhdpi" />
+
+        
+
+    </platform>
+
+</widget>

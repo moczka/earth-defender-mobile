@@ -60,7 +60,6 @@ function canvasApp(){
 	
 	//frame, assets counter and audio support
 	var frameRate = new FrameRateCounter();
-	var supportedFormat = getSoundFormat();
 	var maxVelocity = 4;
 	var itemsToLoad = 17;
 	var loadCount = 0;
@@ -131,16 +130,22 @@ function canvasApp(){
 	//mobile acceleration
 	var ax, ay;
 	var friction = 0.005;
-	
+    
+    inheritFrom(Display, Physics);
+    inheritFrom(Physics, Spacecraft);
+    inheritFrom(Display, Background);
+    
 	//make custom classes inherit display class
-	Ship.prototype = new Display(); 
-	Missile.prototype = new Display();
-	Enemy.prototype = new Display();
-	Shield.prototype = new Display();
-	Background.prototype = new Display();
-    Rock.prototype = new Display();
-    Mothership.prototype = new Display();
-    Perk.prototype = new Display();
+    inheritFrom(Physics, Missile);
+    inheritFrom(Display, Shield);
+    inheritFrom(Spacecraft, Ship);
+    inheritFrom(Display, Explosion);
+    inheritFrom(Spacecraft, Enemy);
+    inheritFrom(Physics, Rock);
+    inheritFrom(Spacecraft, Mothership);
+    inheritFrom(Physics, Perk);
+    
+
     
 	//sounds API
     var meteorExplosionSound;
@@ -164,7 +169,13 @@ function canvasApp(){
 	var alienMothership = new Mothership();
     var humanMothership = new Mothership();
 	var background = new Background();
+
     var gameInterface = new Interface();
+    //temp assets
+    var tempEnemy = new Enemy();
+    var tempMothership = new Mothership();
+	var tempSpriteSheetAnimation = new SpriteAnimation();
+    
     
     var totalEnemies = 8,
         totalRocks = 10,
@@ -177,9 +188,15 @@ function canvasApp(){
      //pools holding enemies and rocks
     var enemyShipsPool = new Pool(totalEnemies),
         humanShipsPool = new Pool(10),
-        perksPool = new Pool(10);
-        meteorPool = new MeteorPool(totalRocks);
+        perksPool = new Pool(10),
+        meteorPool = new Pool(totalRocks);
     
+    console.log(background);
+    console.log(playerShip);
+    console.log(tempEnemy);
+    console.log(tempMothership);
+    
+
 	
 	appState = STATE_USER_AGENT;
 	runState();
@@ -279,7 +296,7 @@ function canvasApp(){
 			mainCanvas.setAttribute('style', 'width: 100%; height: 100%');
 			document.addEventListener('touchmove', onTouchMove, false);
 			interfaceWrapper.setAttribute('style', 'margin: auto;');
-		}
+		}        
 		
 		loopOn = true;
 		appState = STATE_INIT;
@@ -291,10 +308,7 @@ function canvasApp(){
         
         //change app state
 		appState = STATE_LOADING;
-		
-		background.setCanvas(mainCanvas);
-        
-		
+	    
 		//sounds 5 sounds
 		soundTrack = new Howl({
                     urls: ['assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
@@ -362,7 +376,7 @@ function canvasApp(){
         meteorSmallSpriteSheet.addEventListener('load', onAssetsLoad, false);
         perkSprite.src = 'assets/sprites/perks.png';
         perkSprite.addEventListener('load', onAssetsLoad, false);
-        
+                
 
         //hides preload image
         preloadImage.setAttribute('style', 'display:none;');
@@ -388,35 +402,41 @@ function canvasApp(){
 		console.log('The number of items that have loaded is '+ loadCount);
 		
 		//draws loading progress
-		background.drawProgress(loadCount, itemsToLoad);
+		//background.drawProgress(loadCount, itemsToLoad);
+        mainContext.fillStyle = "rgb("+loadCount*5+","+loadCount*8+","+loadCount*10+")";
+        mainContext.fillRect(0,0,mainCanvas.width, mainCanvas.height);
+        
+        
 		if(loadCount === itemsToLoad){
 			console.log('The number of items that should  have loaded are '+ itemsToLoad);
-			background.clear();
+			//background.clear();
 			initAssets();
 		}
 	}
 	
 	function initAssets(){
         
-        meteorPool.init();
-          //init enemy pool
-        
-        //init perks
+        background.setCanvas(mainCanvas);
+		background.init(1000, 480);
+		background.velX = 1;
         
         perksPool.init("perks");
-        
+        meteorPool.init("rocks");
         enemyShipsPool.init('enemy');
         
-		playerShip.setCanvas(mainCanvas);
-		playerShip.init(centerX,centerY,23,23);
-		background.init(0,0,1000, 480);
-		background.velX = 1;
-        playerShip.thrustAccel = 0.06;
         alienMothership.setCanvas(mainCanvas);
+        alienMothership.init('alien');
+      
+        
+        
+
+        playerShip.setCanvas(mainCanvas);
+        playerShip.init(23, 23);
+        playerShip.spawn(centerX, centerY);
         
         window.addEventListener('mousemove', onMouseMove, false);
         gameInterface.addButtonListeners();
-		
+
 		userAgent.mobile = false;
         
         
@@ -441,10 +461,14 @@ function canvasApp(){
     
     //function in charged of playing the story line
     function storyLine(){
+        
         background.draw(); 
     }
 	
 	function introAnimation(){
+        
+        
+        
 		background.draw();
 		mainContext.drawImage(earthSprite, (mainCanvas.width/2-(earthSprite.width/2)), 0);
         for(var i=0; i<7; i++){
@@ -453,6 +477,10 @@ function canvasApp(){
             currentEnemy.follow(mouse);
             checkBoundary(currentEnemy);
         }
+        
+        
+        
+        
 	}
     
     function howToPlay(){
@@ -462,12 +490,13 @@ function canvasApp(){
     //function in charged of setting up the enemies and rocks in the new level given the current level
     function setUpLevel(){
         
+        
+        
         console.log('Set Up Level function CALLED');
         
         
         //sets up random location for rocks and mothership
-        var randomX;
-        var randomY;
+            var randomX, randomY;
         
         //increases level by 1
         currentLevel += 1;
@@ -503,225 +532,135 @@ function canvasApp(){
         playerShip.spawn(centerX, centerY);
         
         //kill off any alive rocks and enemies
+        perksPool.hideItems();
         enemyShipsPool.hideItems();
         meteorPool.hideItems();
         
         //inits the rocks
         for(var i=0; i<levelRocks; i++){
-            randomX = Math.floor(Math.random()*(mainCanvas.width-50));
+            randomX = Math.floor(Math.random()*(mainCanvas.width-50)),
             randomY = Math.floor(Math.random()*(mainCanvas.height-50));
-            meteorPool.getMeteor(randomX, randomY, "large");
-        }
-        
-        for(var j=0; j<perksPool.pool.length; j++){
-            perksPool.hideItems();
+            meteorPool.get(randomX, randomY, "largeRock");
+            meteorPool.get(randomX, randomY, "smallRock");
         }
         
         for(var h=0; h<levelPerks; h++){
-            var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
-            perksPool.pool[randomPerk].alive = true;
+            randomX = Math.floor(Math.random()*(mainCanvas.width-50)),
+            randomY = Math.floor(Math.random()*(mainCanvas.height-50));
+            perksPool.get(randomX, randomY, "life");
+            perksPool.get(randomY, randomX, "shield");
         }
-        
-        alienMothership.init(0, 0, "alien");
+    
+        //alienMothership.init("alien");
         alienMothership.spawn(randomX, randomY);
+        alienMothership.shield.active = true;
         alienMothership.setRelease(levelEnemies, 8);
+        
+        updateCounter('level');
+        updateCounter('life');
+        updateCounter('score');
         
     }
 
 	//once the user has clicked the start button, this function draws the game
 	function drawCanvas(){
         
-        //console.log('The draw screen function is being called');
+        background.draw();
+
+        if(alienMothership.alive){
+        alienMothership.draw();
+        playerShip.missiles.isCollidingWith(alienMothership, alienMothership.shield);
+        }
+
+            for(var m=0; m<perksPool.pool.length; m++){
+                    var currentPerk = perksPool.pool[m];
+                    if(currentPerk.alive){
+                        currentPerk.draw(); 
+                        
+                        if(hitTest(currentPerk, playerShip)){
+                            console.log('DETECTION CONFIRMED!!');
+                            console.log(currentPerk);
+                            console.log(playerShip);
+                            currentPerk.destroy();
+                            recordCollision(currentPerk.type);
+                        }
+                    }
+                }
         
-        if(enemiesKilled == levelEnemies && !playerShip.colliding && shipLives != -1){
-			
-			//Stops the soundtrack
-				if(currentLevel == lastLevel){
-					finalLevelSound.stop();
-				}else{
-					soundTrack.stop();  
-				}
-			
-            gameInterface.hide('gamePlay');
-            playerShip.angle = 0;
-            playerShip.velY = 0;
-            playerShip.velX = 0.2;
-			
-            appState = STATE_LEVEL_TRANSITION;
-			
-			console.log("Passes to the next Level");
-			
-            return;
-			
-        }else if(shipLives < 0 && !playerShip.colliding){
-			
-			//stops the current soundtrack playing
-			        if(currentLevel == lastLevel){
-						finalLevelSound.stop();
-					}else{
-						soundTrack.stop(); 
-					}
-			
-            appState = STATE_GAME_OVER;
-			
-			console.log("End of game");
-			
-            return;
+        for(var i = 0; i<meteorPool.pool.length; i++){
+           
+            var currentMeteor = meteorPool.pool[i];
+            
+            if(currentMeteor.alive){
+                currentMeteor.draw();
+                checkBoundary(currentMeteor);
+                playerShip.missiles.isCollidingWith(currentMeteor);
+
+            }
         }
         
-		//draw background
-		background.draw();
-		
+        meteorPool.isCollidingWith(playerShip, playerShip.shield);
+        
+        for(var h = 0; h<enemyShipsPool.pool.length; h++){
+            
+            var currentEnemy = enemyShipsPool.pool[h];
+            
+            if(currentEnemy.alive){
+                currentEnemy.draw();
+                checkBoundary(currentEnemy);
+                currentEnemy.follow(playerShip);
+                currentEnemy.attack(playerShip);
+                currentEnemy.missiles.isCollidingWith(playerShip, playerShip.shield);
+                playerShip.missiles.isCollidingWith(currentEnemy, currentEnemy.shield);
+            }
+            
+        }
+
         //counts actual frames
 		frameRate.countFrames();
         
         //hide debugging frame counter on final versions
-		//frameRateCounter.innerHTML = "Frames: "+frameRate.lastFrameCount;
-        frameRateCounter.innerHTML = "";
-		
-        //adds friction to player ship motion
-		playerShip.velX -= playerShip.velX*friction;
-		playerShip.velY -= playerShip.velY*friction;
-        //draws player ship
-		checkBoundary(playerShip);
-		playerShip.draw();
+		frameRateCounter.innerHTML = "Frames: "+frameRate.lastFrameCount;
         
-        if(alienMothership.alive){
-            alienMothership.draw();
+        if(playerShip.alive){
+            keyControl(playerShip);
+            checkBoundary(playerShip);
+            playerShip.draw();
         }
         
         
-        if(!userAgent.mobile){
-		keyControl(playerShip);
-		}
-        
-        
-        for(var i=0; i<levelEnemies; i++){
-            var currentEnemy = enemyShipsPool.pool[i];
+        if(shipLives <= 0 && !playerShip.colliding && appState == STATE_PLAYING){
             
-            if(currentEnemy.alive){
-                checkBoundary(currentEnemy);
-                currentEnemy.follow(playerShip);
-                currentEnemy.attack(playerShip);
-                currentEnemy.draw();
-                
-                if(!currentEnemy.colliding && hitTest(currentEnemy, playerShip) && !playerShip.colliding && !playerShip.velX == 0){
-                    if(!playerShip.shieldActive){
-                        currentScore += enemyShipWorth;
-                        enemiesKilled++;
-                        shipLives--;
-                        playerShip.colliding = true;
-                        currentEnemy.colliding = true;
-                        explosionSound.play();
-                        var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
-                        perksPool.pool[randomPerk].alive = true;
-                    }else{
-                        explosionSound.play();
-                        currentEnemy.colliding = true;
-                        currentScore += enemyShipWorth;
-                        playerShip.shield.life -= 50;
-                        enemiesKilled++;
-                    }
-                }
-        
-                for(var h=0; h<playerShip.missiles.length; h++){
-                    var currentPlayerMissile = playerShip.missiles[h];
-                    if(!currentEnemy.colliding && hitTest(currentPlayerMissile, currentEnemy) && currentPlayerMissile.alive ){
-                       currentScore += enemyShipWorth;
-                        enemiesKilled++;
-                       explosionSound.play();
-                       currentEnemy.colliding = true;
-                       currentPlayerMissile.alive = false;
-                    }
-                }
-                for(var j=0; j<currentEnemy.missiles.length; j++){
-                    var currentEnemyMissile = currentEnemy.missiles[j];
-                    if(currentEnemyMissile.alive && !playerShip.colliding && hitTest(currentEnemyMissile, playerShip) && !playerShip.shieldActive && !playerShip.velX == 0){
-                        currentEnemyMissile.alive = false;
-                        playerShip.colliding = true;
-                        shipLives--;
-                        var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
-                        perksPool.pool[randomPerk].alive = true;
-                        explosionSound.play();
-                    }else if(hitTest(currentEnemyMissile, playerShip.shield) && playerShip.shieldActive && currentEnemyMissile.alive){
-                            currentEnemyMissile.alive = false;
-                            playerShip.shield.life -= 10;
-                            console.log('enemy missiled attacked sheld!!');
-                    }
-                    
-                    for(var o=0; o<meteorPool.pool.length; o++){
-                        var currentRock2 = meteorPool.pool[o];
-                        if(currentRock2.alive){
-                            if(hitTest(currentEnemyMissile, currentRock2) && !currentRock2.colliding && currentEnemyMissile.alive){
-                                     meteorExplosionSound.play();
-                                     currentRock2.colliding = true;
-                                     currentEnemyMissile.alive = false;
-                               }
-                        }
-                    }
-                }
-            }
+                    if(currentLevel == lastLevel){
+						finalLevelSound.stop();
+					}else{
+						soundTrack.stop(); 
+					}
+            
+                currentLevel = 0;
+                appState = STATE_GAME_OVER;
+            
+        }else if(levelEnemies <= 0 && !playerShip.colliding && playerShip.alive && appState == STATE_PLAYING){
+            
+                    if(currentLevel == lastLevel){
+						finalLevelSound.stop();
+					}else{
+						soundTrack.stop(); 
+					}
+            
+            playerShip.angle = playerShip.velY = playerShip.velX = 0;
+            
+            gameInterface.hide('gamePlay');
+            updateCounter('level');
+            appState = STATE_LEVEL_TRANSITION;
+
         }
-        
-        for(var k=0; k<meteorPool.pool.length; k++){
-            var currentRock = meteorPool.pool[k];
-            
-            if(currentRock.alive){
-            
-            checkBoundary(currentRock);
-            currentRock.draw();
-            
-            if(hitTest(currentRock, playerShip) && !currentRock.colliding && !playerShip.colliding && !playerShip.shieldActive && !playerShip.velX == 0){
-                meteorExplosionSound.play();
-                currentRock.colliding = true;
-                playerShip.colliding = true;
-                shipLives--;
-                rocksDestroyed++;
-                currentScore += rockWorth;
-                var randomPerk = Math.floor(Math.random()*perksPool.pool.length);
-                perksPool.pool[randomPerk].alive = true;
-            }
-            for(var l=0; l<playerShip.missiles.length; l++){
-                    var currentPlayerMissile2 = playerShip.missiles[l];
-                    if(hitTest(currentPlayerMissile2, currentRock) && !currentRock.colliding && currentPlayerMissile2.alive){
-                        currentPlayerMissile2.alive = false;
-                       meteorExplosionSound.play();
-                       currentRock.colliding = true;
-                        currentScore += rockWorth;
-                        rocksDestroyed++;
-                    }
-                } 
-            }
-        }
-        
-        
-        for(var m=0; m<perksPool.pool.length; m++){
-            var currentPerk = perksPool.pool[m];
-            if(currentPerk.alive){
-                currentPerk.draw(); 
-                if(hitTest(playerShip, currentPerk) && !playerShip.shieldActive){
-                    currentPerk.alive = false;
-                    if(currentPerk.type == "life"){
-                        shipLives++;   
-                        perkSound.play();
-                    }else{
-                        playerShip.shield.reset();   
-                        perkSound.play();
-                    }
-                }
-                
-            }
-        }
-        
-			
-        updateCounter('score');
-        updateCounter('life');
-        updateCounter('level');
-		
+    
 	}
     
     //function in charged of transition level
     function nextLevelDialog(){
+        
         appState = STATE_WAITING;
         
         reportEnemiesKilled.innerHTML = "Enemies Killed: "+enemiesKilled;
@@ -749,7 +688,7 @@ function canvasApp(){
             }
         }
         
-        playerShip.velX += playerShip.velX*playerShip.easeValue;
+        playerShip.velX += 2*playerShip.easeValue;
         playerShip.draw();
         
         if(playerShip.x >= 1020-playerShip.width){
@@ -781,8 +720,7 @@ function canvasApp(){
         //changes the state to call code only once.
 		appState = STATE_WAITING;
         
-        //checks to see which sound to stop playing given the level the user was before dying.
-		
+        //checks to see which sound to stop playing given the level the user was before dying
 		gameOverSound.play();
         
         //resets the score and level
@@ -825,24 +763,79 @@ function canvasApp(){
    		if (top1 > bottom2) return(false);
    		if (right1 < left2) return(false);
    		if (left1 > right2) return(false);
+        if (!object1.alive || object1.colliding || object2.colliding || !object2.alive) return(false);
+        
+        if (object1.type == "humanShip" && object1.velX == 0) return(false);
+        if (object2.type == "humanShip" && object2.velX == 0) return(false);
+        
+        if(object2 instanceof Spacecraft){
+            if(object2.shield.active){
+                return (false);
+            }
+        }
+        if(object1 instanceof Spacecraft){
+            if(object1.shield.active){
+                return (false);
+            }
+        }
+        
+
+        //otherwise return true 
    		return(true);
+
 	}
-	
-	//checks if the shield has been hit
-	function hitTestShield(object1, object2){
-		var dx = object2.x - object1.x;
-		var dy = object2.y - object1.y;
-		var distance = Math.sqrt(dx*dx + dy*dy);
-		
-		if(distance<40){
-			return (true);
-		}else{
-		
-		return (false);
-		}
-		
-	}
-	
+        
+    //game score tracker
+    
+    function recordCollision(objectType){
+        switch(objectType){
+            case "largeRock":
+                currentScore += 20;
+                updateCounter('score');
+                rocksDestroyed++;
+                break;
+                
+            case "mediumRock":
+                currentScore += 10;
+                updateCounter('score');
+                rocksDestroyed++;
+                break;
+                
+            case "smallRock":
+                currentScore += 5;
+                updateCounter('score');
+                rocksDestroyed++;
+                break;
+                
+            case "humanShip":
+                shipLives--;
+                currentScore -= 50;
+                updateCounter('score');
+                updateCounter('life');
+                break;
+                
+            case "enemy":
+                currentScore += 50;
+                updateCounter('score');
+                levelEnemies--;
+                enemiesKilled++;
+                break;
+                
+            case "life":
+                shipLives++;
+                updateCounter('life');
+                break;
+                
+            case "shield":
+                playerShip.shield.reset();
+                break;
+            case "cash":
+                break;
+        }
+        
+    }
+    
+    
 	//updates game board, scores, level etc..
 	function updateCounter(object){
 		switch(object){
@@ -866,15 +859,18 @@ function canvasApp(){
         
         //pauses the game
         if(keyPressList[LETTER_P] == false){
-		keyPressList[LETTER_P] = true;
+            
+		  keyPressList[LETTER_P] = true;
+            
 		if(appState == STATE_PLAYING){
             appState = STATE_WAITING;
             console.log('STATE CHANGED');
-        }else{
+        }else if(appState == STATE_WAITING){
             appState = STATE_PLAYING;
             runState();
             console.log(appState);
         }
+            
 	}
 		
 	}
@@ -916,17 +912,17 @@ function canvasApp(){
 	}
 	if(keyPressList[SPACE_BAR] == false){
 		keyPressList[SPACE_BAR] = true;
-        if(!object.shieldActive){
+        if(!object.shield.active){
 		object.shoot();
+            playerShootSound.play();
         }
-		console.log(object.missiles.length);
+		console.log(object.missiles.pool.length);
 	}
 	if(keyPressList[X_KEY]){
-       
-		object.activateShield(true);
+		object.shield.active = true;
         
 	}else if(keyPressList[X_KEY] == false){
-		object.activateShield(false);
+		object.shield.active = false;
 	}
 
 	}
@@ -993,7 +989,7 @@ function canvasApp(){
         //comparings the global touches active if more than one shield is activated.
 		if(e.touches.length >= 2){
 			//if more than one finger on screen. activate shield
-			playerShip.activateShield(true);
+			playerShip.shield.active = true;
 		}
 	}
 	
@@ -1005,7 +1001,8 @@ function canvasApp(){
         
         if(e.touches.length <= 1){
             playerShip.shoot();
-		    playerShip.activateShield(false);
+            playerShootSound.play();
+		    playerShip.shield.active = false;
         }
 	}
 	
@@ -1037,17 +1034,6 @@ function canvasApp(){
 		gameLoop();
 	}
 	
-
-	function getSoundFormat(){
-		var sound = new Audio();
-		var format;
-		if(sound.canPlayType('audio/mp3') == "maybe" || sound.canPlayType('audio/mp3') == "probably"){
-			format = ".mp3";
-		}else if(sound.canPlayType('audio/wav') == "maybe" || sound.canPlayType('audio/wav') == "probably"){
-			format = ".wav";
-		}
-		return format;
-	}
 	
 	//FramRate Class
 	
@@ -1058,289 +1044,258 @@ function canvasApp(){
    this.frameLast = dateTemp.getTime();
    delete dateTemp;
    this.frameCtr = 0;
-}
+    }
 
-FrameRateCounter.prototype.countFrames=function() {
-   var dateTemp = new Date();
-   this.frameCtr++;
+    FrameRateCounter.prototype.countFrames=function() {
+       var dateTemp = new Date();
+       this.frameCtr++;
 
-   if (dateTemp.getTime() >=this.frameLast+1000) {
-      //ConsoleLog.log("frame event");
-      this.lastFrameCount = this.frameCtr;
-      this.frameLast = dateTemp.getTime();
-      this.frameCtr = 0;
-   }
+       if (dateTemp.getTime() >=this.frameLast+1000) {
+          //ConsoleLog.log("frame event");
+          this.lastFrameCount = this.frameCtr;
+          this.frameLast = dateTemp.getTime();
+          this.frameCtr = 0;
+       }
 
-   delete dateTemp;
-}
+       delete dateTemp;
+    }
+
+
+    //inheriter function
+    function inheritFrom(parent, child){
+        var copyOfParent = Object.create(parent.prototype);
+        copyOfParent.constructor = child;
+        child.prototype = copyOfParent;
+    }
 	
 	//custom classes
-   function Display(){
-		this.context;
-		this.canvasWidth;
-		this.canvasHeight;
-		this.centerX;
-		this.centerY;
-		this.height = 0;
-		this.width = 0;
-		this.x = 0;
-		this.y = 0;
-		this.color = "#00FF00";
-		this.alpha = 1;
+    function Physics(){
+        
+            Display.call(this);
+        
         this.velX = 0;
-		this.velY = 0;
-		this.angle = 0;  
-        this.alive = false;  
+        this.velY = 0;
+        this.acelX = 0;
+        this.acelY = 0;
         this.colliding = false;
-		var self = this;
-		this.setCanvas = function(canvas){
-			self.context = canvas.getContext('2d');
-			self.canvasWidth = canvas.width;
-			self.canvasHeight = canvas.height;
-		};
-			//this init function is for all inanimate objects not.
-		this.init = function(x,y, width, height){
-			self.x = x;
-			self.y = y;
-			self.width = width || 20;
-			self.height = height || 20;
-			self.centerX = width/2;
-			self.centerY = height/2;
-			self.alive = true;
-		};
-        this.reset = function(){
-			self.x = 0;
-			self.y = 0;
-			self.angle = 0;
-			self.velX = 0;
-			self.velY = 0;
-			self.alive = false;
-			self.colliding = false;
-		};
-
-	}
+        this.speed = 0; 
+        this.thrust = 0;
+        this.angle = 0;
+    }
     
-       function SpriteAnimation(){
-        this.width;
-        this.height;
-        this.x;
-        this.y;
-        this.context;
-        this.canvasHeight;
-        this.canvasWidth;
-        this.speed;
-        this.numCol;
-        this.numRow;
-        this.currentFrame;
-        this.finalFrame;
-        this.startFrame;
-        this.totalFrames;
-        this.appFPS;
-        this.loop = true;
+    Physics.prototype.spawn = function(x, y, angle, speed){
         
-        var frames = [];
-        var frameIncrement;
-        var frameIndex;
+        this.x = x || centerX;
+        this.y = y || centerY;
+        this.colliding = false;
+        this.alive = true;
+        this.angle = angle || this.angle;
+        this.speed = speed || this.speed;
+        this.velX = Math.cos(this.angle)*this.speed;
+        this.velY = Math.sin(this.angle)*this.speed;
         
-        var self = this;
-        this.setCanvas = function(canvas){
-            self.context = canvas.getContext('2d');
-            self.canvasHeight = canvas.height;
-            self.canvasWidth = canvas.width;
-        };
-        this.init = function(spriteObject){
+    };
+    
+    Physics.prototype.destroy = function(){
+        this.alive = false; 
+    };
+    
+    //spaceCraft function constructor 
+    function Spacecraft(){
             
-            //sets up sprite properties from the spritesheet info object being passed in.
-            self.width = spriteObject.width || 32;
-            self.height = spriteObject.height || 32;
-            self.numCol = spriteObject.numCol || 1;
-            self.numRow = spriteObject.numRow || 1;
-            self.startFrame = spriteObject.from || 0;
-            self.finalFrame = spriteObject.to || 0;
-            self.speed = spriteObject.speed || 15;
-            self.totalFrames = spriteObject.numCol * spriteObject.numRow - 1;
-            self.loop = (spriteObject.loop != undefined)? spriteObject.loop: true;
-            self.appFPS = spriteObject.fps;
+           Physics.call(this);
+        
+        this.autoSpawn = false;
+        this.thrustAccel = 0.06;
+        this.alphaSpeed = 0.03;
+        this.shieldActive = false;
+        this.shieldDisabled = false;
+        
+    }
+    
+    Spacecraft.prototype.init = function(width, height){
+        
+            Display.prototype.init.call(this, width, height);
+        
+        var shield = new Shield();
+            shield.setCanvas(mainCanvas);
+            shield.init(80,80);
+        var missilePool = new Pool(10);
+            missilePool.init('missile');
+        var explosion = new Explosion(15);
+            explosion.setCanvas(mainCanvas);
             
-            //creates the decimal of increment for each second
-            frameIncrement = self.speed/spriteObject.fps;
-            frameIndex = self.startFrame;        
-            
-            //creates a variable holding the length of the array holding the frames
-            var totalFramesLength = spriteObject.numCol * spriteObject.numRow;
-            
-            for(var i = 0; i < totalFramesLength; i++){
-                var frame = {regX:0, regY:0};
-                
-                //indexes the regX and regY points of each sprite frame into the array.
-                if(i>=self.numCol){
-                    frame.regX = (i - Math.floor(i/self.numCol)*self.numCol)*self.width;
-                    frame.regY = Math.floor(i/self.numCol)*self.height;
-                }else{
-                    frame.regX = i * self.width;
-                    frame.regY = 0;
-                }
-                //pushes the objects with the regX and regY for each frame into a frame array.
-                frames.push(frame);
-                
-            }
-              
-        };
-        //use this method to locate or move the sprite sheet to a cordinate
-        this.play = function(x, y, sprite){
-            self.x = x;
-            self.y = y;
+        this.explosion = explosion;
+        this.shield = shield;
+        this.missiles = missilePool;
+        
+    };    
+    Spacecraft.prototype.follow = function(object){
+        
+			if(!object.alive){
+				return;
+			}	
+			var dx, dy, distance, newVelX, newVelY, futureVel, direction;
+			dx = object.x - this.x;
+			dy = object.y - this.y;
+			distance = Math.sqrt(dx*dx+dy*dy);
+			direction = Math.atan2(dy, dx);
+			this.angle = direction;
+			
+			if(distance>=140){
+			newVelX = this.velX+Math.cos(this.angle)*this.thrustAccel;
+			newVelY = this.velY+Math.sin(this.angle)*this.thrustAccel;	
+			futureVel = Math.sqrt(newVelX*newVelX + newVelY*newVelY);	
+					if(futureVel>1.5){
+				newVelX = this.velX;
+				newVelY = this.velY;
+				}else{
+				this.velX = newVelX;
+				this.velY = newVelY;
+				}
+			}	
+    };
+    
+    Spacecraft.prototype.spawn = function(x, y, angle, speed){
+        
+            Physics.prototype.spawn.call(this, x, y, angle, speed);
+            this.missiles.hideItems();
+            //this.shield.reset();
+        
+    };
+    
+    Spacecraft.prototype.destroy = function(){
+        
+        this.colliding = true;  
+        explosionSound.play();
+        
+    };
 
-            //no animation will be playeed if the starting frame is equal to the final frame.
-            if(self.startFrame === self.finalFrame){
-               
-                self.currentFrame = frames[self.startFrame];
-                self.context.drawImage(sprite, self.currentFrame.regX, self.currentFrame.regY, self.width, self.height, self.x, self.y, self.width, self.height);
-                
-            }else{
-                //increments the frameIndex by a decimal, this will be floored because it is used to find an item in the frame array.
-                frameIndex += frameIncrement;
-                
-                if(frameIndex >= self.finalFrame + 1){
-                    frameIndex = (self.loop)? self.startFrame: self.finalFrame;
+    Spacecraft.prototype.draw = function(){
+        
+        //draws spacecraft launched missiles
+        for(var i=0; i<this.missiles.pool.length; i++){
+            var currentMissile = this.missiles.pool[i];   
+            if(currentMissile.alive){
+                currentMissile.draw();   
+            }
+        }
+        
+        if(this.colliding){	
+                //if spacecraft is colliding, create an explosion
+            this.explosion.create(this.x+this.centerX, this.y+this.centerY);
+            this.explosion.draw();
+                //once the explosion is not running, kill off spacecraft
+            if(!this.explosion.running){
+                this.alive = false;
+                this.colliding = false;
+                if(this.autoSpawn){
+                 this.spawn();   
                 }
-                //floors the current index to a whole number so to find an object in the frame array
-                self.currentFrame = frames[Math.floor(frameIndex)];
-                //surrounds the sprite into a white block for debugging purposes, you can remove this in your final app
-                //self.context.strokeStyle = '#FFFFFF';
-                //self.context.strokeRect(self.x, self.y, self.width, self.height);
-                //draws the section of the image given the regX and regY as well as the width and height
-                self.context.drawImage(sprite, self.currentFrame.regX, self.currentFrame.regY, self.width, self.height, self.x, self.y, self.width, self.height); 
-            } 
-        };
-        //use this method to change the fps speed of your sprite sheet animation
-        this.setSpeed = function(speed){
-            //reason why a method for this is needed is because there is  math to be done when speed is changed.
-          self.speed = speed || self.speed;
-            frameIncrement = self.speed / self.appFPS;
-            frameIndex = self.startFrame;   
-        };   
-        this.getFrame = function(frameIndex){
-            frameIndex = (frameIndex == undefined)? 0: frameIndex;
-            return frames[frameIndex];
-        };
-           
-    }  
+            }
+                //return while colliding
+            return;
+                    
+        }
+            //if shield is active draw it.
+        if(this.shield.active){
+                this.shield.x = this.x-this.shield.centerX+this.centerX;
+                this.shield.y = this.y-this.shield.centerY+this.centerY;
+                this.shield.draw();
+        }    
+        
+    };
+    
+    Spacecraft.prototype.shoot = function(){
+        
+        //if instance is not alive, is colliding or not moving, it will NOT shoot
+        if(!this.alive || this.colliding || this.velX == 0){
+                return;
+        }
+
+        this.missiles.get(this.x+10, this.y+10, "missile", this.angle, 5);
+    };
+    
     //class for the rocks floating
     
     function Rock(){
         
-        this.x = Math.floor(Math.random()*mainCanvas.width);
-        this.y = Math.floor(Math.random()*mainCanvas.height);
+            Physics.call(this);
         
-        this.hasSplit = false;
         this.size;
+        this.spriteAnimation = new SpriteAnimation();
+        this.spriteAnimation.setCanvas(mainCanvas);
+        this.explosion = new Explosion(15);
+        this.explosion.setCanvas(mainCanvas);
+        this.type = 'rock';
+    
+    }
+    
+    Rock.prototype.init = function(size){
         
-        var largeRockSpeed = 0.5,
-            mediumRockSpeed = 1.5,
-            smallRockSpeed = 2;
+          var spriteAnimationInfo,
+              largeRockSpeed = 0.5,
+              mediumRockSpeed = 1.5,
+              smallRockSpeed = 2,
+              randomAngle;
         
-        var rockSprite;
-        var spriteAnimation = new SpriteAnimation();
-            spriteAnimation.setCanvas(mainCanvas);
-        var spriteAnimationInfo;
-        var explosion = new Explosion(15);
-            explosion.setCanvas(mainCanvas);
-
-        var self = this;
-        this.init = function(size){
+        
             
-            size = (size === undefined)? "large": size;
+            size = size || "large";
     
             switch(size){
                 case "large":
-            spriteAnimationInfo = {width:56,height:55, numCol:2, numRow:9,fps:60,speed:8,loop:true,from:0,to:17};
-            spriteAnimation.init(spriteAnimationInfo);
-                this.width = 56;
-                this.height = 55;
-                this.centerX = this.width/2;
-                this.centerY = this.height/2;
-                this.angle = Math.random()*(Math.PI*2);
-                this.speed = largeRockSpeed;
-                this.velX = Math.cos(this.angle)*this.speed;
-                this.velY = Math.sin(this.angle)*this.speed;
-            rockSprite = meteorLargeSpriteSheet;
-                self.size = "large";
+                    
+                    spriteAnimationInfo = {width:56,height:55, offsetX: 0, offsetY: 0, numCol:2, numRow:9,fps:60,speed:8,loop:false,from:0,to:17};
+                    this.spriteAnimation.init(spriteAnimationInfo);
+                    this.sprite = meteorLargeSpriteSheet;
+                    randomAngle = Math.random()*(Math.PI*2);
+                    Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
+                    Physics.prototype.spawn.call(this, 0, 0, randomAngle, largeRockSpeed);
+                    this.alive = false;
+                    this.size = "large";
+                    this.type = "largeRock";
+                    
                     break;
                 case "medium":
-            spriteAnimationInfo = {width:44,height:44, numCol:3, numRow:6,fps:60,speed:12,loop:true,from:0,to:17};   
-            spriteAnimation.init(spriteAnimationInfo);
-                this.width = 44;
-                this.height = 44;
-                this.centerX = this.width/2;
-                this.centerY = this.height/2;
-                this.angle = Math.random()*(Math.PI*2);
-                this.speed = mediumRockSpeed;
-                this.velX = Math.cos(this.angle)*this.speed;
-                this.velY = Math.sin(this.angle)*this.speed;
-            rockSprite = meteorMediumSpriteSheet;
-                self.size = "medium";
+                    
+                    spriteAnimationInfo = {width:44,height:44, numCol:3, numRow:6,fps:60,speed:12,loop:true,from:0,to:17};   
+                    this.spriteAnimation.init(spriteAnimationInfo);
+                    this.sprite = meteorMediumSpriteSheet;
+                    randomAngle = Math.random()*(Math.PI*2);
+                    Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
+                    Physics.prototype.spawn.call(this, 0, 0, randomAngle, mediumRockSpeed);
+                    this.alive = false;
+                    this.size = "medium";
+                    this.type = "mediumRock";
+                    
                     break;
                 case "small":
-            spriteAnimationInfo = {width:33,height:33, numCol:3, numRow:6,fps:60,speed:15,loop:true,from:0,to:17};
-            spriteAnimation.init(spriteAnimationInfo);
-                this.width = 33;
-                this.height = 33;
-                this.centerX = this.width/2;
-                this.centerY = this.height/2;
-                this.angle = Math.random()*(Math.PI*2);
-                this.speed = smallRockSpeed;
-                this.velX = Math.cos(this.angle)*this.speed;
-                this.velY = Math.sin(this.angle)*this.speed;
-            rockSprite = meteorSmallSpriteSheet;
-                self.size = "small";
+                    
+                    spriteAnimationInfo = {width:33,height:33, numCol:3, numRow:6,fps:60,speed:15,loop:true,from:0,to:17};
+                    this.spriteAnimation.init(spriteAnimationInfo);
+                    this.sprite = meteorSmallSpriteSheet;
+                    randomAngle = Math.random()*(Math.PI*2);
+                    Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
+                    Physics.prototype.spawn.call(this, 0, 0, randomAngle, smallRockSpeed);
+                    this.alive = false;
+                    this.size = "small";
+                    this.type = "smallRock";
+                    
                     break;
             }
             
-            this.alive = false;
-            this.x = 0;
-            this.y = 0;
-            
-        };
-        this.spawn = function(x, y){
-            this.colliding = false;
-            this.alive = true;
-            self.hasSplit = false;
-            this.x = x;
-            this.y = y;
-        };
-        
-        this.split = function(){
-            if(self.hasSplit){
-                return;
-            }
-            
-            self.hasSplit = true;
-            
-            switch(self.size){
-                case "large":
-                meteorPool.getMeteor(this.x, this.y, "medium");
-                meteorPool.getMeteor(this.x, this.y, "medium");
-                    break;
-                case "medium":
-                meteorPool.getMeteor(this.x, this.y, "small");
-                meteorPool.getMeteor(this.x, this.y, "small");
-                    break;
-                case "small":
-                    //no rocks
-                    break;     
-            }  
-        };
-        
-        this.draw = function(){
+    };
+    
+    Rock.prototype.draw = function(){
             
 			if(this.colliding){ 
             //when object is colliding, creates and draws explosion
-			explosion.create(this.x+this.centerX, this.y+this.centerY);
-			explosion.draw();
-                self.split();
+			this.explosion.create(this.x+this.centerX, this.y+this.centerY);
+			this.explosion.draw();
+                this.destroy();
 
-			     if(!explosion.running){
+			     if(!this.explosion.running){
 			     //once explosion is over, kills off object
                     this.colliding = false;
                     this.alive = false;
@@ -1352,43 +1307,73 @@ FrameRateCounter.prototype.countFrames=function() {
             this.x += this.velX;
             this.y += this.velY;
             
-            spriteAnimation.play(this.x, this.y, rockSprite);    
+            this.spriteAnimation.play(this.x, this.y, this.sprite);    
             
         };
+    
+    Rock.prototype.destroy = function(){
         
-    }
+            if(this.colliding){
+                return;
+            }
+        
+            meteorExplosionSound.play();
+            this.colliding = true;
+            
+            switch(this.size){
+                case "large":
+                meteorPool.get(this.x, this.y, "mediumRock");
+                meteorPool.get(this.x, this.y, "mediumRock");
+                    break;
+                case "medium":
+                meteorPool.get(this.x, this.y, "smallRock");
+                meteorPool.get(this.x, this.y, "smallRock");
+                    break;
+                case "small":
+                    //no rocks
+                    break;     
+            }  
+    };    
     
 	function Background(){
-		var self = this;
-		var progressBarWidth = 400;
-		var progressBarHeight = 40;
-		this.draw = function(){
-			this.x += this.velX;
+        
+            Display.call(this);
+        
+        this.velX = 0;
+        this.velY = 0;
+		this.progressBarWidth = 400;
+		this.progressBarHeight = 40;
+	}
+    
+    Background.prototype.draw = function(){
+            this.x += this.velX;
 			this.y += this.velY;
             
-this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x-this.canvasWidth, this.y,this.canvasWidth,this.canvasHeight);	
-this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x,this.y,this.canvasWidth,this.canvasHeight);
+            this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x-this.canvasWidth, this.y,this.canvasWidth,this.canvasHeight);	
+            this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x,this.y,this.canvasWidth,this.canvasHeight);
 			
 			if(this.x>this.canvasWidth){
 				this.x = 0;
 			}	
-		};
-		this.drawProgress = function(loaded, toLoad){
+    };
+    Background.prototype.drawProgress = function(loaded, toLoad){
 			this.context.fillStyle = '#000000';
 			this.context.fillRect(0,0, this.canvasWidth, this.canvasHeight);
 			this.context.strokeStyle = '#FFFFFF';
-			this.context.strokeRect((this.canvasWidth-400)/2, this.canvasHeight/2-40, progressBarWidth, progressBarHeight);
+			this.context.strokeRect((this.canvasWidth-400)/2, this.canvasHeight/2-40, this.progressBarWidth, this.progressBarHeight);
 			this.context.fillStyle = '#FFFFFF';
-			this.context.fillRect((this.canvasWidth-400)/2, this.canvasHeight/2-40, (progressBarWidth*(loaded/toLoad)), progressBarHeight);
+			this.context.fillRect((this.canvasWidth-400)/2, this.canvasHeight/2-40, (this.progressBarWidth*(loaded/toLoad)), this.progressBarHeight);
 			this.context.font = '20px Ariel';
 			this.context.textAlign = 'center';
 			this.context.fillText('Loading...', this.canvasWidth/2, this.canvasHeight/2+40);
 		};
-		this.clear = function(){
+    Background.prototype.clear = function(){
 			this.context.fillStyle = '#000000';
 			this.context.fillRect(0,0,this.canvasWidth, this.canvasHeight);
 		};	
-	}
+    
+    
+    
     
     function Interface(){
         
@@ -1531,385 +1516,241 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
     
 	
 	function Ship(){
-	this.shieldActive = false;
-	this.shieldDisabled = false;
-	this.speed = 0;
-	this.thrustAccel = 0;
-	this.angle = 0;
-	this.accelX = 0;
-	this.accelY = 0;
-	this.thrust = false;
-    this.easeValue = 0.03;
         
-    var alphaSpeed = 0.03;
-	var missilePool = new Pool(10);
-		missilePool.init('missile');
-	this.missiles = missilePool.pool;	
-	var allowSound = false;
-	var explosion = new Explosion(20);
-	explosion.setCanvas(mainCanvas);
-	var shield = new Shield();
-	shield.setCanvas(mainCanvas);
-	shield.init(0,0, 80, 80);
-	shield.width = shield.radius*2;
-	shield.height = shield.radius*2;
-	this.shield = shield;
+                Spacecraft.call(this);
         
-    this.spriteAnimation = new SpriteAnimation();
-    this.spriteAnimation.setCanvas(mainCanvas);
-    var shipSpriteInfo = {width:21,height:22, numCol:1, numRow:2,fps:60,speed:30,loop:false,from:0,to:0};
-    this.spriteAnimation.init(shipSpriteInfo);    
+            var shipSpriteInfo = {width:21,height:22, numCol:1, numRow:2,fps:60,speed:30,loop:false,from:0,to:0};
         
-	var self = this;
-	this.init = function(x,y, width, height){
-			this.x = x;
-			this.y = y;
-			this.width = width || 20;
-			this.height = height || 20;
-			this.centerX = width/2 || 10;
-			this.centerY = height/2 || 10;
-			this.alive = true;
-            this.alpha = 0;
-		};
-	this.shoot = function(){
-		if(!this.alive || this.colliding || this.velX == 0){
-			return;
-		}
-        
-        playerShootSound.play();
-		missilePool.get(this.x+this.centerX, this.y+this.centerY, this.angle, 5);
-		
-	};
-	this.draw = function(){
-		for(var i=0; i<missilePool.pool.length; i++){
-			var currentMissile = missilePool.pool[i];
-			if(currentMissile.alive){
-				currentMissile.draw();
-			}
-		}
-		
-		if(this.colliding){	
-            
-            //creates explosion when ship is colliding
-			explosion.create(this.x, this.y);
-			explosion.draw();
-			
-			if(!explosion.running){
-			     //when explosion ends set to dead
-                this.colliding = false;
-                this.alive = false;
-                self.spawn(centerX,centerY);
-			}
-
-			return;
-		}
-		
-		if(self.shieldActive){
-            if(shield.disabled){
-                self.shieldActive = false;   
-            }
-			shield.x = this.x-shield.centerX+this.centerX;
-			shield.y = this.y-shield.centerY+this.centerY;
-			shield.draw();
-		}
-        
-
-		this.context.save();
-        this.alpha += alphaSpeed;
-        this.alpha = (this.alpha >= 1)? 1: this.alpha;
-        this.context.globalAlpha = this.alpha;
-		this.context.translate(this.x+10, this.y+10);	
-		this.context.rotate(this.angle);
-		this.x += this.velX;
-		this.y += this.velY;
-		if(self.thrust){
-            self.spriteAnimation.startFrame = 1;
-            self.spriteAnimation.finalFrame = 1;
-			self.spriteAnimation.play(-this.centerX, -this.centerY, playerSpriteSheet);
-		}else{
-			//this.context.drawImage(shipSprite, 0, 0, this.width, this.height, -10,-10, this.width, this.height);
-            self.spriteAnimation.startFrame = 0;
-            self.spriteAnimation.finalFrame = 0;
-			self.spriteAnimation.play(-this.centerX, -this.centerY, playerSpriteSheet);
-		}
-		this.context.restore();
-		};
-    this.spawn = function(x, y){
-        missilePool.hideItems();
-        shield.reset();
-        self.activateShield(false);
-        this.alive = true;
-        this.colliding = false;
-        this.x = x;
-        this.y = y;
-        this.alpha = 0;
-        this.velX = this.velY = 0;
-        this.angle = 0;
-    };
-    this.activateShield = function(onOrOff){
-        onOrOff = (onOrOff == undefined)? true: onOrOff;
-    
-		
-        if(onOrOff && !shield.disabled){
-            self.shieldActive = true;
-            self.shieldDisabled = false;
-        }else{
-            self.shieldDisabled = true;
-            self.shieldActive = false;  
-        }
-        
-    };
+            this.thrust = false;
+            this.autoSpawn = true;
+            this.easeValue = 0.03;
+            this.spriteAnimation = new SpriteAnimation();
+            this.spriteAnimation.setCanvas(mainCanvas);
+            this.spriteAnimation.init(shipSpriteInfo); 
+            this.type = "humanShip";
         
 	}
     
+    Ship.prototype.draw = function(){
+        
+           Spacecraft.prototype.draw.call(this);
+        
+        if(this.colliding){
+            return;   
+        }
+        
+                this.context.save();
+                this.alpha += this.alphaSpeed;
+                this.alpha = (this.alpha >= 1)? 1: this.alpha;
+                this.context.globalAlpha = this.alpha;
+                this.context.translate(this.x+10, this.y+10);	
+                this.context.rotate(this.angle);
+                this.x += this.velX;
+                this.y += this.velY;
+                if(this.thrust){
+                    this.spriteAnimation.startFrame = 1;
+                    this.spriteAnimation.finalFrame = 1;
+                    this.spriteAnimation.play(-this.centerX, -this.centerY, playerSpriteSheet);
+                }else{
+                    //this.context.drawImage(shipSprite, 0, 0, this.width, this.height, -10,-10, this.width, this.height);
+                    this.spriteAnimation.startFrame = 0;
+                    this.spriteAnimation.finalFrame = 0;
+                    this.spriteAnimation.play(-this.centerX, -this.centerY, playerSpriteSheet);
+                }
+                this.context.restore();
+    };
+    
     function Perk(){
         
-        var spriteAnimation = new SpriteAnimation();
-        var spriteInfo;
-        this.type;
+            Physics.call(this);
+        
+        this.spriteAnimation = new SpriteAnimation(); 
+        this.spriteAnimation.setCanvas(mainCanvas);
     
-        var self = this;
-        this.init = function(perk){
+        this.type = 'perk';    
+    }
+    Perk.prototype.draw = function(){
+        
+        if(!this.alive){
+            return;
+        }
+        
+        this.x += this.velX;
+        this.y += this.velY;
+        
+        this.spriteAnimation.play(this.x, this.y, perkSprite);
+        
+    };
+    Perk.prototype.init = function(perk){
             
-             var randomX = Math.floor(Math.random()*mainCanvas.width-20),
-                 randomY = Math.floor(Math.random()*mainCanvas.height-20);
-            
+            var spriteInfo; 
+                
             
             switch(perk){
                     
                 case "shield":
-                    spriteInfo = {width:18,height:19, numCol:1, numRow:2,fps:60,speed:1,loop:false,from:0,to:0};
-                    spriteAnimation.setCanvas(mainCanvas);
-                    spriteAnimation.init(spriteInfo);
-                    this.width = spriteInfo.width;
-                    this.height = spriteInfo.height;
-                    this.centerX = spriteInfo.width/2;
-                    this.centerY = spriteInfo.height/2;
-                    this.x = randomX;
-                    this.y = randomY;
-                    self.type = "shield";
+                        spriteInfo = {width:18,height:19, numCol:1, numRow:2,fps:60,speed:1,loop:false,from:0,to:0};
+                        this.spriteAnimation.init(spriteInfo);
+                        Display.prototype.init.call(this, spriteInfo.width, spriteInfo.height);
+                        this.type = "shield";
                     break;
                     
                 case "life":
-                    spriteInfo = {width:18,height:19, numCol:1, numRow:2,fps:60,speed:1,loop:false,from:1,to:1};
-                    spriteAnimation.setCanvas(mainCanvas);
-                    spriteAnimation.init(spriteInfo);
-                    this.width = spriteInfo.width;
-                    this.height = spriteInfo.height;
-                    this.centerX = spriteInfo.width/2;
-                    this.centerY = spriteInfo.height/2;
-                    this.x = randomX;
-                    this.y = randomY;
-                    self.type = "life";
+                        spriteInfo = {width:18,height:19, numCol:1, numRow:2,fps:60,speed:1,loop:false,from:1,to:1};
+                        this.spriteAnimation.init(spriteInfo);
+                        Display.prototype.init.call(this, spriteInfo.width, spriteInfo.height);
+                        this.type = "life";
                     break;
             }
-        };
-        this.spawn = function(x, y){
-            this.alive = true;
-            this.x = x;
-            this.y = y;
-        };
-        this.draw = function(){
-            
-            spriteAnimation.play(this.x, this.y, perkSprite);
-            
-        };
+    };    
     
-    }
+    //missle constructor
     
 	function Missile(){
+        
+            Physics.call(this);
+        
 		this.speed = 3;
 		this.life = 0;
-		var maxLife = 100;
-		var self = this;
-		this.draw = function(){
-			self.life++;
-			if(self.life>=maxLife){
-				self.life = 0;
+		this.maxLife = 100;
+        this.type = "missile";
+
+	}
+    
+    Missile.prototype.spawn = function(x, y, angle, speed){
+        Physics.prototype.spawn.call(this, x, y, angle, speed);  
+        this.life = 0;
+    };
+    
+    Missile.prototype.draw = function(){
+        
+        this.life++;
+			if(this.life>=this.maxLife){
+				this.life = 0;
 				this.alive = false;
 			}
 			this.x += this.velX;
 			this.y += this.velY;
 			this.context.fillStyle = this.color;
 			this.context.fillRect(this.x, this.y, this.width, this.height);
-		};
-		this.init = function(x,y, width, height){
-			this.x = x;
-			this.y = y;
-			this.width = width|| 20;
-			this.height = height || 20;
-			this.centerX = width/2;
-			this.centerY = height/2;
-			this.alive = true;
-		};
-		this.spawn = function(x, y){
-			this.alive = true;
-			this.x = x;
-			this.y = y;
-			this.colliding = false;
-		};
-	}
-	
+    
+    };
+    
 	function Enemy(){
-		this.speed = 0;
-		this.thrust = 0.06;
-		var explosion = new Explosion(20);
-		explosion.setCanvas(mainCanvas);
-		var missilePool = new Pool(10);
-		missilePool.init('missile');
-		this.missiles = missilePool.pool;
+        
+            Spacecraft.call(this);
+        
+		this.thrustAccel = 0.03;
+        this.type = "enemy";
+        
+		
         var spriteRandomIndex = Math.floor(Math.random()*4);
         this.spriteAnimation = new SpriteAnimation();
         this.spriteAnimation.setCanvas(mainCanvas);
         var enemySpriteInfo = {width:23,height:21, numCol:1, numRow:4,fps:60,speed:30,loop:false,from:spriteRandomIndex,to:spriteRandomIndex};
         this.spriteAnimation.init(enemySpriteInfo);
+    
+	}
+    
+    Enemy.prototype.draw = function(){
         
-        var self = this;
+                Spacecraft.prototype.draw.call(this);
+            
+            if(this.colliding || !this.alive){
+                return;   
+            }
         
-		this.init = function(x,y, width, height){
-			this.x = x;
-			this.y = y;
-			this.width = width || 20;
-			this.height = height || 20;
-			this.centerX = width/2 || 10;
-			this.centerY = height/2 || 10;
-			this.alive = true;
-		};
-		this.attack = function(object){
+                this.x += this.velX;
+                this.y += this.velY;
+                this.context.save();
+                this.context.translate(this.x+this.centerX, this.y+this.centerY);
+                this.context.rotate(this.angle);
+                this.spriteAnimation.play(-this.centerX, -this.centerX, enemySpriteSheet);
+                this.context.restore();  
+                
+
+    };
+    
+    Enemy.prototype.attack = function(object){
 			if(Math.random() >= 0.005 || !this.alive || !object.alive){
 				return;
 			}
-			missilePool.get(this.x+10, this.y+10, this.angle);
-		};
-		this.draw = function(){
-            
-            
-            //console.log(spriteInfo);
-
-			for(var i=0; i<self.missiles.length; i++){
-				currentMissle = self.missiles[i];
-				if(currentMissle.alive){
-				currentMissle.draw();
-				}
-			}
-			
-			if(this.colliding){
-			explosion.create(this.x, this.y);
-			explosion.draw();
-                //console.log('Enemy explosion running');
-				
-			     if(!explosion.running){
-			     //appState = STATE_GAME_OVER;
-                    this.colliding = false;
-                    this.alive = false;
-                    //self.spawn(200, 400);
-                    }
-			     return;
-			}
-			
-			this.x += this.velX;
-			this.y += this.velY;
-			this.context.save();
-			this.context.translate(this.x+this.centerX, this.y+this.centerY);
-			this.context.rotate(this.angle);
-            self.spriteAnimation.play(-this.centerX, -this.centerX, enemySpriteSheet);
-			this.context.restore();
-			
-		};
-        
-        this.spawn = function(x, y){
-            missilePool.hideItems();
-            this.alive = true;
-            this.colliding = false;
-            this.x = x;
-            this.y = y;
-        };
-        
-		this.follow = function(object){
-			if(!object.alive){
-				return;
-			}	
-			var dx, dy, distance, newVelX, newVelY, futureVel, direction;
-			dx = object.x - this.x;
-			dy = object.y - this.y;
-			distance = Math.sqrt(dx*dx+dy*dy);
-			direction = Math.atan2(dy, dx);
-			this.angle = direction;
-			
-			if(distance>=140){
-			newVelX = this.velX+Math.cos(this.angle)*self.thrust;
-			newVelY = this.velY+Math.sin(this.angle)*self.thrust;	
-			futureVel = Math.sqrt(newVelX*newVelX + newVelY*newVelY);	
-					if(futureVel>1.5){
-				newVelX = this.velX;
-				newVelY = this.velY;
-				}else{
-				this.velX = newVelX;
-				this.velY = newVelY;
-				}
-			}	
-		};
-	}
+			Spacecraft.prototype.shoot.call(this);
+    };
     
+    
+    //mothership constructor
     function Mothership(){
+        
+             Spacecraft.call(this);
+        
+        
         this.hasReleasedShips = false;
         this.spriteAnimation = new SpriteAnimation();
         this.spriteAnimation.setCanvas(mainCanvas);
-        this.type;
+        this.type = undefined;
         this.alpha = 0;
-        var spriteIndex;
-        var spriteSheetInfo;
+        this.alphaSpeed = 0.02;
+        this.numShips = 0;
+        this.type = "mothership";
+    
+    }
+    
+    Mothership.prototype.jump = function(){
         
-        var shield = new Shield();
-	       shield.setCanvas(mainCanvas);
-	       shield.init(0,0, 80, 80);
-	       shield.width = shield.radius*2;
-	       shield.height = shield.radius*2;
-	    this.shield = shield;
+            console.log('JUMPED MOTHERSHIP!');
+            if(this.alpha == 0 && this.hasReleasedShips){
+                this.alive = false;
+            } 
+            this.alive = false;
+            this.shield.active = false;
         
-        var numShips = 0;
-        var alphaSpeed = 0.02;
+        };
+    
+    Mothership.prototype.init = function(shipType){
         
-        var self = this;
-        this.init = function(x, y, shipType){
             switch(shipType){
+                    
                 case "human":
+                    
                  var spriteSheetInfo = {width:51,height:46, numCol:1, numRow:2,fps:60,speed:30,loop:false,from:0,to:0};
-                 spriteIndex = Math.floor(Math.random()*spriteSheetInfo.to);
+                 var spriteIndex = Math.floor(Math.random()*spriteSheetInfo.to);
                  spriteSheetInfo.from = spriteSheetInfo.to = spriteIndex;
-                 self.spriteAnimation.init(spriteSheetInfo);
-                 self.type = "human";
-                 this.x = x;
-                 this.y = y;
+                 this.spriteAnimation.init(spriteSheetInfo);
+                 this.type = "human";
                  this.width = spriteSheetInfo.width;
                  this.height = spriteSheetInfo.height;
                  this.centerX = this.width / 2;
                  this.centerY = this.height / 2;
+                    Spacecraft.prototype.init.call(this, this.width, this.height);
                     break;
+                    
                 case "alien":
-                var spriteSheetInfo = {width:51,height:46, numCol:3, numRow:2,fps:60,speed:30,loop:false,from:0,to:3};
-                spriteIndex = Math.floor(Math.random()*spriteSheetInfo.to);
+                    
+                var spriteSheetInfo = {width:51,height:46, numCol:4, numRow:2,fps:60,speed:30,loop:false,from:0,to:4};
+                var spriteIndex = Math.floor(Math.random()*spriteSheetInfo.to);
                 spriteSheetInfo.from = spriteSheetInfo.to = spriteIndex;
-                self.spriteAnimation.init(spriteSheetInfo);
-                self.type = "alien";
-                this.x = x;
-                this.y = y;
+                this.spriteAnimation.init(spriteSheetInfo);
+                this.type = "alien";
                 this.width = spriteSheetInfo.width;
                 this.height = spriteSheetInfo.height;
                 this.centerX = this.width / 2;
                 this.centerY = this.height / 2;
+                    Spacecraft.prototype.init.call(this, this.width, this.height);
+                    
                     break;     
             }
-        };
-        
-        this.setRelease = function(numShip, time){
             
-            if(self.hasReleasedShips){
+        };
+    
+    Mothership.prototype.setRelease = function(numShip, time){
+            
+            if(this.hasReleasedShips){
               return;   
             }
             
             //assigns number of ships to release
-            numShips = numShip;
+            this.numShips = numShip;
             
             //checks if time to release ships was passed in
             time = (time == undefined)? 5: time;
@@ -1917,7 +1758,7 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
             var countDownRunning = true;
             var currentTime = 0;
             var finalTime = time;
-            
+            var self = this;
             
             tick();  
             
@@ -1927,7 +1768,8 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
                 
                 currentTime++;
                     if(currentTime >= finalTime){
-                        self.releaseShips();
+                        
+                        Mothership.prototype.releaseShips.call(self);
                         countDownRunning = false;
                         currentTime = 0;
                         tick();
@@ -1937,109 +1779,110 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
             }   
              
         };
-        this.releaseShips = function(){
+    
+    Mothership.prototype.releaseShips = function(){
+        
+            if(!this.alive) return;
+        
+        console.log('ship release function has been called');
             
-            self.hasReleasedShips = true;
+            this.hasReleasedShips = true;
+            this.shield.active = false;
             
-            switch(self.type){
+            switch(this.type){
                 case "alien":
-                    for(var i=0; i<numShips; i++){
+                    
+                    for(var i=0; i<this.numShips; i++){
                     
                     var positionX = this.x + enemyShipsPool.pool[i].width*i;
                     var positionY = this.y + enemyShipsPool.pool[i].height*i;
-                        
-                    enemyShipsPool.pool[i].x = positionX;
-                    enemyShipsPool.pool[i].y = positionY;
-                    enemyShipsPool.pool[i].alive = true;
-                    enemyShipsPool.pool[i].colliding = false;  
+                    enemyShipsPool.get(positionX, positionY, 'enemy');
+                    enemyShipsPool.pool[i].shield.active = false;
                         
                         } 
+                    
                     break;
                 case "human":
-                   for(var j=0; j<numShips; j++){
-                    humanShipsPool.pool[j].x = this.x;
-                    humanShipsPool.pool[j].y = this.y;
-                    humanShipsPool.pool[j].alive = true;
-                    humanShipsPool.pool[j].colliding = false;    
+                    
+                   for(var j=0; j<this.numShips; j++){
+
+                    enemyShipsPool.pool[j].spawn(this.x, this.y);   
+                    
                         }  
+                    
                     break;      
-            }
+            } 
             
         };
-        this.draw = function(){
+    
+    
+    Mothership.prototype.spawn = function(x, y, angle, speed){
             
+            Spacecraft.prototype.spawn.call(this, x, y, angle, speed);
+            this.hasReleasedShips = false;
+            this.alpha = 0;
+            
+        };
+    
+    Mothership.prototype.draw = function(){
+            
+            Spacecraft.prototype.draw.call(this);
+        
+            if(this.colliding || !this.alive){
+                console.log('ships dead wont draw it');
+                return;
+                
+            }
+            this.x += this.velX;
+            this.y += this.velY;
+        
+        
             this.context.save();
-            if(self.hasReleasedShips){
-                this.alpha -= alphaSpeed;   
+            this.context.translate(this.x+this.centerX, this.y+this.centerY);
+            this.context.rotate(this.angle);
+            if(this.hasReleasedShips){
+                this.alpha -= this.alphaSpeed;   
                 this.alpha = (this.alpha <= 0)? 0: this.alpha; 
+                this.alive = (this.alpha <= 0)? false : true;
             }else{
-            this.alpha += alphaSpeed;
+            this.alpha += this.alphaSpeed;
             this.alpha = (this.alpha >= 1)? 1: this.alpha;
             }
             this.context.globalAlpha = this.alpha;
-            self.spriteAnimation.play(this.x, this.y, MothershipSpriteSheet);
+            this.spriteAnimation.play(-this.centerX, -this.centerY, MothershipSpriteSheet);
             this.context.restore();
             
-            if(this.alpha == 1){
-                shield.x = this.x-shield.centerX+this.centerX;
-			    shield.y = this.y-shield.centerY+this.centerY;
-                shield.draw();   
-            }else if(this.alpha <= 0){
-                this.alive = false;
-            }
-            
-        };
-        this.spawn = function(x, y){
-            
-            //if no parameter is passed, keep the x and y values
-            x = (x == undefined)? this.x: x;
-            y = (y == undefined)? this.y: y;
-            
-            //update the x and y values 
-            this.x = x;
-            this.y = y;
-            
-            self.alive = true;
-            self.colliding = false;
-            self.hasReleasedShips = false;
-            this.alpha = 0;
-        };
-        
-        this.jump = function(){
-            console.log('JUMPED MOTHERSHIP!');
-            if(this.alpha == 0 && self.hasReleasedShips){
+            if(this.alpha <= 0){
                 this.alive = false;
             } 
         };
-    }
-	
+    
+    
+    
+    
+    // explosion constructor
 	function Explosion(numParticles){
-		this.x = 0;
-		this.y = 0;
-		this.context;
-		this.canvasWidth;
-		this.canvasHeight;
+        
+            Display.call(this);
+        
 		this.running = false;
 		this.particles = [];
 		this.deadParticleCounter = 0;
-		var size = numParticles;
-		var self = this;
-		for(var i = 0; i<size; i++){
+		this.size = numParticles;
+        
+		for(var i = 0; i<numParticles; i++){
 			this.particles.push({x:0,y:0,alive:false,maxLife:0,velX:0,velY:0, width:2, height:2, life:0});
 		}
-		
-		this.setCanvas = function(canvas){
-			self.context = canvas.getContext('2d');
-			self.canvasWidth = canvas.width;
-			self.canvasHeight = canvas.height;
-		};
-		this.create = function(x, y){
-			if(self.running){
+			
+	}
+    
+    Explosion.prototype.create = function(x, y){
+        if(this.running){
 				return;
 			}
 			
-			for(var i=0;i<size;i++){
-				var currentParticle = self.particles[i];
+			for(var i=0;i<this.size;i++){
+				var currentParticle = this.particles[i];
 				currentParticle.x = x;
 				currentParticle.y = y;
 				currentParticle.maxLife = Math.random()*30+10;
@@ -2048,298 +1891,270 @@ this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,
 				currentParticle.alive = true;
 				currentParticle.life = 0;
 			}
-			self.running = true;
-			self.deadParticleCounter = 0;
-		};
-		this.draw = function(){
-			if(!self.running){
+			this.running = true;
+			this.deadParticleCounter = 0;
+    };
+    Explosion.prototype.draw = function(){
+        
+        if(!this.running){
 				return;
 			}
 			
-			self.context.fillStyle = '#00FF00';
-			for(var i=0; i<size; i++){
-				var currentParticle = self.particles[i];
+			this.context.fillStyle = '#00FF00';
+			for(var i=0; i<this.size; i++){
+				var currentParticle = this.particles[i];
 				if(currentParticle.alive){
 				currentParticle.x += currentParticle.velX;
 				currentParticle.y += currentParticle.velY;
 				currentParticle.life++;
-				self.context.fillRect(currentParticle.x, currentParticle.y, currentParticle.width, currentParticle.height);
-					if(currentParticle.life >= currentParticle.maxLife){
-					currentParticle.alive = false;
-					currentParticle.life = 0;
-					self.deadParticleCounter++;
-				}
+				this.context.fillRect(currentParticle.x, currentParticle.y, currentParticle.width, currentParticle.height);
+                        if(currentParticle.life >= currentParticle.maxLife){
+                        currentParticle.alive = false;
+                        currentParticle.life = 0;
+                        this.deadParticleCounter++;
+                    }
 				}
 				
 			}
-			//change the state from running to false by checking if there are any particles alive left
-			if(self.deadParticleCounter>=size){
-				self.running = false;
+//change the state from running to false by checking if there are any particles alive left
+			if(this.deadParticleCounter>=this.size){
+				this.running = false;
 			}
-		};
-		
-	}
-	
+        
+    };
+    
+    //Shield constructor
 	function Shield(){
+        
+            Display.call(this);
+        
 		this.radius = 40;
 		this.maxRadius = 45;
         this.life = 100;
         this.disabled = false;
+        this.color = '#0000FF';
+        this.type = 'shield';
+        var shieldState = false;
+    
+        Object.defineProperty(this, "active", {
+            get: function(){
+                
+                return shieldState;
+                
+            },
+            set: function(value){
+                
+                shieldState = (this.disabled)? false: value;
+                this.alive = shieldState;
+                
+            },
+            configurable: true,
+            enumerable: true
+        });
         
-		var self = this;
         
-		this.draw = function(){
-            
-            if(self.life <= 0){
-              self.life = 0;
-              self.disabled = true;   
+	}
+    
+    Shield.prototype.reduceLife = function(amount){
+        amount = (amount === undefined)? 50: amount;
+        this.life -= amount;
+    };
+    
+    Shield.prototype.draw = function(){
+        
+            if(!this.active){
+                console.log('shield is disabled');
                 return;
             }
-            
-			this.context.strokeStyle = '#0000FF';
+            if(this.life <= 0){
+                this.life = 0;
+                this.disabled = true;
+                this.active = false;
+                    return;
+            }
+			this.context.strokeStyle = this.color;
             this.context.lineWidth = 1;
 			this.context.beginPath(); 
-			this.context.arc(this.x+this.centerX, this.y+this.centerY, self.radius, 0, Math.PI*2, true);
+			this.context.arc(this.x+this.centerX, this.y+this.centerY, this.radius, 0, Math.PI*2, true);
 			this.context.closePath();
 			this.context.stroke(); 
-			
-			self.radius += .25;
-			self.radius = (self.radius>self.maxRadius)? 40: self.radius;
-		};
-        this.reset = function(){
-            self.life = 100;
-            self.disabled = false;
-        };
-	}
-    
-    
-    function MeteorPool(maxSize){
-        var size = maxSize;
-        var pool = [];
-        this.pool = pool;
-        this.init = function(){
-            var numMediumRocks = size*2;
-            var numSmallRocks = numMediumRocks*2;
-            
-                for(var i=0; i<size; i++){
-                    var meteor = new Rock();
-                    meteor.setCanvas(mainCanvas);
-                    meteor.init("large");
-                    meteor.alive = false;
-                    pool.push(meteor);
-                }
-                for(var j=0; j<numMediumRocks; j++){
-                    var meteorMedium = new Rock();
-                    meteorMedium.setCanvas(mainCanvas);
-                    meteorMedium.init("medium");
-                    meteorMedium.alive = false;
-                    pool.push(meteorMedium);
-                }
-                for(var k=0; k<numSmallRocks; k++){
-                    var meteorSmall = new Rock();
-                    meteorSmall.setCanvas(mainCanvas);
-                    meteorSmall.init("small");
-                    meteorSmall.alive = false;
-                    pool.push(meteorSmall);
-                }
-        }
+			this.radius += .25;
+			this.radius = (this.radius>this.maxRadius)? 40: this.radius;
         
-        this.getMeteor = function(x, y, meteorSize){
-            
-            var i = 0;
-                while(i<pool.length){
-                    if(pool[i].size == meteorSize && !pool[i].alive){
-                        pool[i].spawn(x, y);
-                        break;
-                    }
-                    i++;     
-                }  
-        };
-        this.hideItems = function(){
-            for(var i=0; i<pool.length; i++){
-                pool[i].alive = false; 
-            }
-            
-        }
-        
-    }
+    };
     
-	function SoundPool(maxSize){
-		var size = maxSize;
-		var pool = [];
-		this.pool = pool;
-		var currentSound = 0;
-		this.init = function(object){
-			if(object == "explosion"){
-				for(var i=0; i<size; i++){
-					var explosion = new Audio('assets/sounds/explosion'+supportedFormat);
-					explosion.volume = 1.0;
-					explosion.load();
-					explosion.addEventListener('canplaythrough', onAssetsLoad, false);
-                    //explosion.setAttribute('controls', '');
-                    document.body.appendChild(explosion);
-					pool[i] = explosion;
-				}
-			}else if(object == "shoot"){
-				for(var i=0; i<size; i++){
-					var shoot = new Audio('assets/sounds/shoot'+supportedFormat);
-					shoot.volume = 1.0;
-					shoot.load();
-					shoot.addEventListener('canplaythrough', onAssetsLoad, false);
-                    //shoot.setAttribute('controls', '');
-                    document.body.appendChild(shoot);
-					pool[i] = shoot;
-				}
-			}else if(object == "meteor"){
-                for(var i=0; i<size; i++){
-					var meteorExplosion = new Audio('assets/sounds/meteorExplosion'+supportedFormat);
-					meteorExplosion.volume = 1.0;
-					meteorExplosion.load();
-					meteorExplosion.addEventListener('canplaythrough', onAssetsLoad, false);
-                    //shoot.setAttribute('controls', '');
-                    document.body.appendChild(meteorExplosion);
-					pool[i] = meteorExplosion;
-				}
-            }
-			};
-		this.get = function(volume){
-			volume = (volume == undefined)? 1: volume;
-            
-            //my Way
-            var i = 0;
-            
-            while(i < pool.length){
-                if(pool[i].currentTime == 0 || pool[i].ended ){
-                    pool[i].play();
-                    pool[i].volume = volume;
-                    console.log('Sound Played!');
-                    break;
-                }else{
-                    pool[pool.length-1].currentTime = 0;   
-                    console.log('the the last to 0');
-                }
-                i++;   
-            }
-            /*How it was from Steve 
-			if(pool[currentSound].currentTime == 0 || pool[currentSound].ended){
-				pool[currentSound].play();
-                pool[currentSound].volume = volume;
-			}	
-			currentSound = (currentSound+1) % size;*/
-		};
-	}
+    Shield.prototype.reset = function(){
+            this.life = 100;
+            this.disabled = false;
+    };
     
     
-	
+    //meteor pool
 	function Pool(maxSize){
-		var size = maxSize;
+        
 		var pool = [];
+        
 		this.pool = pool;
-		var currentObject = 0;
-		this.init = function(object){
-			if(object == "missile"){
-				for(var i=0; i<size; i++){
+        this.size = maxSize;
+        
+	}
+    
+    Pool.prototype.init = function(type){
+            
+            switch(type){
+                case "missile":
+                    
+                  for(var i=0; i<this.size; i++){
 					var missile = new Missile();
 					missile.setCanvas(mainCanvas);
-					missile.init(0,0,2,2);
-					missile.alive = false;
-					pool[i] = missile;
-				}
-			}else if(object == "enemy"){
-                for(var j=0; j<size; j++){
+					missile.init(2,2);
+					this.pool[i] = missile;
+				}  
+                    break;
+                    
+                case "enemy":
+                   for(var j=0; j<this.size; j++){
                     var randomX = Math.floor(Math.random()*mainCanvas.width);
                     var randomY = Math.floor(Math.random()*mainCanvas.height);
                     
                     var enemy = new Enemy();
                     enemy.setCanvas(mainCanvas);
-                    enemy.init(randomX, randomY, 23, 21);
-                    enemy.alive = false;
-                    enemy.colliding = false;
-                    pool[j] = enemy;
-                }
-            }else if(object == "perks"){
-                
-                size = Math.floor(size / 2);
-                
-                for(var k=0; k<size; k++){
-                    var life = new Perk();
-                    life.init("life");
-                    pool.push(life); 
-                }
-                
-                for(var h=0; h<size; h++){
-                    var shield = new Perk();
-                    shield.init("shield");
-                    pool.push(shield);
-                }
-                
+                    enemy.init(23, 21);
+                    enemy.x = randomX;
+                    enemy.y = randomY;
+
+                    this.pool[j] = enemy;
+                       
+                } 
+                    break;
+                    
+                case "perks":
+                    this.size = Math.floor(this.size / 2);
+
+                    for(var k=0; k<this.size; k++){
+                        var life = new Perk();
+                        life.setCanvas(mainCanvas);
+                        life.init("life");
+                        this.pool.push(life); 
+                    }
+
+                    for(var h=0; h<this.size; h++){
+                        var shield = new Perk();
+                        shield.setCanvas(mainCanvas);
+                        shield.init("shield");
+                        this.pool.push(shield);
+                    }
+                    
+                    this.size *= 2;
+                    
+                    break;
+                    
+                case "rocks":
+                    
+                    var numMediumRocks = this.size*2;
+                    var numSmallRocks = numMediumRocks*2;
+
+                        for(var l=0; l<this.size; l++){
+                            var meteor = new Rock();
+                            meteor.setCanvas(mainCanvas);
+                            meteor.init("large");
+                            //meteor.alive = false;
+                            meteor.type = "largeRock";
+                            this.pool.push(meteor);
+                        }
+                        for(var m=0; m<numMediumRocks; m++){
+                            var meteorMedium = new Rock();
+                            meteorMedium.setCanvas(mainCanvas);
+                            meteorMedium.init("medium");
+                            //meteorMedium.alive = false;
+                            meteorMedium.type = "mediumRock";
+                            this.pool.push(meteorMedium);
+                        }
+                        for(var n=0; n<numSmallRocks; n++){
+                            var meteorSmall = new Rock();
+                            meteorSmall.setCanvas(mainCanvas);
+                            meteorSmall.init("small");
+                            //meteorSmall.alive = false;
+                            meteorSmall.type = "smallRock";
+                            this.pool.push(meteorSmall);
+                        }
+                    
+                    this.size += (numMediumRocks+numSmallRocks);
+                    
+                    break;
             }
-		};
-		this.get = function(x, y, angle, speed){
-            speed = (speed == undefined)? 3: speed;
-            angle = (angle == undefined)? 0: angle;
             
-			if(!pool[size-1].alive){
-				pool[size-1].spawn(x,y);
-				pool[size-1].alive = true;
-				pool[size-1].life=0;
-                pool[size-1].speed = speed;
-				pool[size-1].velX = Math.cos(angle)*pool[size-1].speed;
-				pool[size-1].velY = Math.sin(angle)*pool[size-1].speed;
-				pool.unshift(pool.pop());
+    };
+    
+    Pool.prototype.get = function(x, y, type, angle, speed){
+        
+            type = type || "missile";
+        
+            /* code from before mixing both pools meteor and regular 
+			if(!this.pool[size-1].alive){
+				this.pool[size-1].spawn(x,y, angle, speed);
+				this.pool.unshift(pool.pop());
 			}
-		};
-        this.hideItems  = function(){
-            for(var i=0; i<pool.length; i++){
-                pool[i].alive = false; 
-            }
-        };
-	}
-    
-    function Timer(){
-        this.currentTime = 0;
-        this.totalTime;
-        this.running = false;
-        this.timeUp = false;
-        this.callBack;
-        
-        var self = this;
-        
-        this.init = function(time, callBack){
-            //checks parameters
-            time = (time == undefined)? 5: time;
-            callBack = (callBack == undefined)? self.stop: callBack;
-                        
-            //assigns the count down seconds and callback function on time up
-            self.totalTime = time;
-            self.callBack = callBack;
-            
-        };
-        this.start = function(){
-            self.currentTime = 0;
-            self.running = true;
-            tick();  
-            
-            function tick(){
-            if(self.running){
-                console.log('Timer ticking!');
-                self.currentTime++;
-                if(self.currentTime >= self.totalTime){
-                    self.callBack();
-                    self.running = false;
-                    self.timeUp = true;
-                    tick();
+            */
+            var i = 0;
+
+                while(i<this.size){
+                    if(this.pool[i].type === type && !this.pool[i].alive){
+                        this.pool[i].spawn(x, y, angle, speed);
+                        break;
+                    }
+                    i++;     
                 }
-                window.setTimeout(tick, 1000);   
-            }    
-        }   
-        };
-        this.stop = function(){
-            self.running = false;
-        };        
         
-    }
+    };
+
+    Pool.prototype.isCollidingWith = function(args){
+            
+            var length = this.pool.length;
+            var argsLength = arguments.length;
+            
+            for(var i = 0; i<length; i++){
+                
+                var currentItem = this.pool[i];
+                
+                if(currentItem.alive){
+                
+                for(var h = 0; h<argsLength; h++){
+                    
+                    var currentArgument = arguments[h];
+                    
+                    if(hitTest(currentItem, currentArgument)){
+                        
+                        if(currentArgument instanceof Shield){
+                            if(!(currentItem instanceof Rock)){
+                                currentItem.destroy();
+                                currentArgument.reduceLife(10);
+                                recordCollision(currentItem.type);
+                            }
+                        }else if(currentItem instanceof Perk){
+                            currentItem.destroy();
+                            recordCollision(currentItem.type);
+                        }else{
+                            currentArgument.destroy();
+                            currentItem.destroy();
+                            recordCollision(currentArgument.type);
+                            recordCollision(currentItem.type);
+                        }
+                    }
+                }
+            }
+                
+        }
+            
+    };
     
+    Pool.prototype.hideItems  = function(){
+            var length = this.pool.length;
+            for(var i=0; i<length; i++){
+                this.pool[i].alive = false; 
+            }
+    };
+        
 	function $(selector){
 	       return document.querySelector(selector);
     }
