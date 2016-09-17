@@ -310,40 +310,40 @@ function canvasApp(){
 	    
 		//sounds 5 sounds
 		soundTrack = new Howl({
-                    urls: ['assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
+                    src: ['assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
                     volume: 0.5,
                     loop: true
                         });
 
 		
         finalLevelSound = new Howl({
-                     urls: ['assets/sounds/finalLevelSound.mp3','assets/sounds/finalLevelSound.wav'],
+                     src: ['assets/sounds/finalLevelSound.mp3','assets/sounds/finalLevelSound.wav'],
                      volume: 1,
                         });
 	
         meteorExplosionSound = new Howl({
-                                    urls: ['assets/sounds/meteorExplosion.mp3','assets/sounds/meteorExplosion.wav'],
+                                    src: ['assets/sounds/meteorExplosion.mp3','assets/sounds/meteorExplosion.wav'],
                                     volume: 1,
                                     });
         playerShootSound = new Howl({
-                                    urls: ['assets/sounds/shoot.mp3','assets/sounds/shoot.wav'],
+                                    src: ['assets/sounds/shoot.mp3','assets/sounds/shoot.wav'],
                                     volume: 0.3,
                                     });
         explosionSound = new Howl({
-                                    urls: ['assets/sounds/explosion.mp3','assets/sounds/explosion.wav'],
+                                    src: ['assets/sounds/explosion.mp3','assets/sounds/explosion.wav'],
                                     volume: 0.2,
                                     });
         perkSound = new Howl({
-                    urls: ['assets/sounds/perk.mp3','assets/sounds/perk.wav'],
+                    src: ['assets/sounds/perk.mp3','assets/sounds/perk.wav'],
                     volume: 1.0,
                         });
 		
         victorySound = new Howl({
-                    urls: ['assets/sounds/victory.mp3','assets/sounds/victory.wav'],
+                    src: ['assets/sounds/victory.mp3','assets/sounds/victory.wav'],
                     volume: 1.0,
                         });
         gameOverSound = new Howl({
-                    urls: ['assets/sounds/gameover.mp3','assets/sounds/gameover.wav'],
+                    src: ['assets/sounds/gameover.mp3','assets/sounds/gameover.wav'],
                     volume: 1.0,
                         });
         
