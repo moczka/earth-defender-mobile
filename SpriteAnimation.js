@@ -45,8 +45,8 @@ var SpriteAnimation = (function(){
             this.startFrame = spriteObject.from || 0;
             this.finalFrame = spriteObject.to || 0;
             this.speed = spriteObject.speed || 15;
-		 	//this.offsetX = spriteObject.offsetX || 0;
-		 	//this.offsetY = spriteObject.offsetY || 0;
+		 	this.offsetX = spriteObject.offsetX || 0;
+		 	this.offsetY = spriteObject.offsetY || 0;
             this.totalFrames = spriteObject.numCol * spriteObject.numRow - 1;
             this.loop = spriteObject.loop || true;
             this.appFPS = spriteObject.fps;
@@ -59,23 +59,18 @@ var SpriteAnimation = (function(){
             var totalFramesLength = spriteObject.numCol * spriteObject.numRow;
             
             for(var i = 0; i < totalFramesLength; i++){
-                var frame = {regX:0, regY:0};
+                var frame = {};
+					frame.regX = this.offsetX;
+					frame.regY = this.offsetY;
                 
                 //indexes the regX and regY points of each sprite frame into the array.
                 if(i>=this.numCol){
-                    frame.regX = (i - Math.floor(i/this.numCol)*this.numCol)*this.width;
-                    frame.regY = Math.floor(i/this.numCol)*this.height;
-					//frame.regX += this.offsetX;
-					//frame.regY += this.offsetY;
-					
+                    frame.regX += (i - Math.floor(i/this.numCol)*this.numCol)*this.width;
+                    frame.regY += Math.floor(i/this.numCol)*this.height;
 
-					
-					
                 }else{
-                    frame.regX = i * this.width;
-                    frame.regY = 0;
-					//frame.regX += this.offsetX;
-					//frame.regY += this.offsetY;
+                    frame.regX += i * this.width;
+                    frame.regY += 0;
                 }
                 //pushes the objects with the regX and regY for each frame into a frame array.
                 this._frames.push(frame);

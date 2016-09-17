@@ -1,4 +1,6 @@
 window.addEventListener('load', onWindowLoad, false);
+	
+	"use strict";
 
 function onWindowLoad(){
 	
@@ -20,36 +22,25 @@ function canvasApp(){
 				window.setTimeout(callback, FRAME_RATE);
 			};
 })();
-	
-	//keyboard keycode constants
-	const UP_ARROW = 38,
-	LEFT_ARROW = 37,
-	RIGHT_ARROW = 39,
-	DOWN_ARROW = 40,
-	X_KEY = 88,
-	SPACE_BAR = 32,
-	LETTER_P = 80;
-	
+
 	//pc normal states
-	const STATE_LOADING = 10,
-    STATE_INIT = 20,
-    STATE_STORY_LINE = 21,
-	STATE_TITLE_SCREEN = 70,
-    STATE_HOW_TO_PLAY = 80,
-	STATE_PLAYING = 30,
-    STATE_WAITING = 31,
-    STATE_LEVEL_TRANSITION = 33,
-    STATE_NEXT_LEVEL = 40,
-	STATE_USER_BEAT_GAME = 50,
-	STATE_GAME_OVER = 60,
-    STATE_CREDITS = 70;
+	const STATE_LOADING = 1,
+    STATE_INIT = 2,
+    STATE_STORY_LINE = 3,
+	STATE_TITLE_SCREEN = 4,
+    STATE_HOW_TO_PLAY = 5,
+	STATE_PLAYING = 6,
+    STATE_WAITING = 7,
+    STATE_LEVEL_TRANSITION = 8,
+    STATE_NEXT_LEVEL = 9,
+	STATE_USER_BEAT_GAME = 10,
+	STATE_GAME_OVER = 11,
+	STATE_ASPECT_RATIO = 13,
+	STATE_ORIENTATION_CHANGE = 14,
+	STATE_USER_AGENT = 15,
+    STATE_CREDITS = 12;
 		var appState;
 		var previousAppState;
-	
-	//orientation and mobile device states
-	const STATE_ASPECT_RATIO = 0,
-	STATE_ORIENTATION_CHANGE = 1,
-	STATE_USER_AGENT = 4;
 	
 	//userAgent info and canvas control
 	var userAgent = {mobile:false,platform:"", portrait:false};
@@ -60,25 +51,31 @@ function canvasApp(){
 	
 	//frame, assets counter and audio support
 	var frameRate = new FrameRateCounter();
-	var maxVelocity = 4;
 	var itemsToLoad = 17;
 	var loadCount = 0;
 	var FRAME_RATE = 1000/60;
 	var loopOn = false;
 	
-	//set up sprites sheets & sounds
-	var backgroundSprite = new Image(),
-	    earthSprite = new Image(),
-	    soundTrack,
-        perkSprite = new Image(),
-        finalLevelSound,
-        perkSound,
-        enemySpriteSheet = new Image(),
-        MothershipSpriteSheet = new Image(),
-	    playerSpriteSheet = new Image(),
-        meteorLargeSpriteSheet = new Image(),
-        meteorMediumSpriteSheet = new Image(),
-        meteorSmallSpriteSheet = new Image();
+	//set up loader
+	var loaderOptions = {
+			assets : {
+				imgs : {
+			earthSprite : "assets/sprites/earth.png",
+			playerSpriteSheet : "assets/sprites/playerShip.png",
+			enemySpriteSheet : "assets/sprites/enemyShips.png",
+			MothershipSpriteSheet : "assets/sprites/motherships.png",
+			backgroundSprite : "assets/sprites/background.png",
+			meteorSprite : "assets/sprites/meteorSprite.png",
+			perkSprite : "assets/sprites/perks.png"
+				}
+			},
+			onload : function(item){
+				console.log("The source of the item that has just loaded is " + item.src);
+			},
+			final : function(){
+				initAssets();
+			}
+		};
     
     
 	//mouse
@@ -127,8 +124,6 @@ function canvasApp(){
         rockWorth = 5,
 	    shipLives = 4;
 	
-	//mobile acceleration
-	var ax, ay;
 	var friction = 0.005;
     
     inheritFrom(Display, Physics);
@@ -153,6 +148,10 @@ function canvasApp(){
     var explosionSound;
     var gameOverSound;
 	var victorySound;
+	var mySubscription = PubSub.subscribe('gamestate', handleSub);
+	var secondSub = PubSub.subscribe('gamestate', handleSubTwo);
+	console.log("The event key for sub one is : ", mySubscription);
+	console.log("The event key for sub two is : ", secondSub); 
     
     
 	//gets canvas and its context and creates center x and y variables
@@ -313,7 +312,6 @@ function canvasApp(){
 		soundTrack = new Howl({
                     urls: ['assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
                     volume: 0.5,
-                    onload: onAssetsLoad,
                     loop: true
                         });
 
@@ -321,97 +319,40 @@ function canvasApp(){
         finalLevelSound = new Howl({
                      urls: ['assets/sounds/finalLevelSound.mp3','assets/sounds/finalLevelSound.wav'],
                      volume: 1,
-                     onload: onAssetsLoad
                         });
 	
         meteorExplosionSound = new Howl({
                                     urls: ['assets/sounds/meteorExplosion.mp3','assets/sounds/meteorExplosion.wav'],
                                     volume: 1,
-                                    onload: onAssetsLoad
                                     });
         playerShootSound = new Howl({
                                     urls: ['assets/sounds/shoot.mp3','assets/sounds/shoot.wav'],
                                     volume: 0.3,
-                                    onload: onAssetsLoad
                                     });
         explosionSound = new Howl({
                                     urls: ['assets/sounds/explosion.mp3','assets/sounds/explosion.wav'],
                                     volume: 0.2,
-                                    onload: onAssetsLoad
                                     });
         perkSound = new Howl({
                     urls: ['assets/sounds/perk.mp3','assets/sounds/perk.wav'],
                     volume: 1.0,
-                    onload: onAssetsLoad
                         });
 		
         victorySound = new Howl({
                     urls: ['assets/sounds/victory.mp3','assets/sounds/victory.wav'],
                     volume: 1.0,
-                    onload: onAssetsLoad
                         });
         gameOverSound = new Howl({
                     urls: ['assets/sounds/gameover.mp3','assets/sounds/gameover.wav'],
                     volume: 1.0,
-                    onload: onAssetsLoad
                         });
         
-        
-		//sprites | images 9 images
-		earthSprite.src = 'assets/sprites/earth.png';
-		earthSprite.addEventListener('load', onAssetsLoad, false);
-        playerSpriteSheet.src = 'assets/sprites/playerShip.png';
-        playerSpriteSheet.addEventListener('load', onAssetsLoad, false);
-        enemySpriteSheet.src = 'assets/sprites/enemyShips.png';
-        enemySpriteSheet.addEventListener('load', onAssetsLoad, false);
-        MothershipSpriteSheet.src = 'assets/sprites/motherships.png';
-        MothershipSpriteSheet.addEventListener('load', onAssetsLoad, false);
-		backgroundSprite.src = 'assets/sprites/background.png';
-		backgroundSprite.addEventListener('load', onAssetsLoad, false);
-        meteorLargeSpriteSheet.src = 'assets/sprites/meteorLarge.png';
-        meteorLargeSpriteSheet.addEventListener('load', onAssetsLoad, false);
-        meteorMediumSpriteSheet.src = 'assets/sprites/meteorMedium.png';
-        meteorMediumSpriteSheet.addEventListener('load', onAssetsLoad, false);
-        meteorSmallSpriteSheet.src = 'assets/sprites/meteorSmall.png';
-        meteorSmallSpriteSheet.addEventListener('load', onAssetsLoad, false);
-        perkSprite.src = 'assets/sprites/perks.png';
-        perkSprite.addEventListener('load', onAssetsLoad, false);
-                
-
+		ResourceLoader.init(loaderOptions);
+		ResourceLoader.downloadAll();
+	
         //hides preload image
         preloadImage.setAttribute('style', 'display:none;');
         
-	}
-	
-	function onAssetsLoad(e){
-        
-        if(loadCount === itemsToLoad){
-         return;   
-        }
-		
-		var target = (e == undefined)? {} : e;
-		loadCount++;
-		
-		//removes event listeners of loaded items
-		if(target.tagName == "AUDIO"){
-			target.removeEventListener('canplaythrough', onAssetsLoad, false);
-		}else if(target.tagName == "IMG"){
-			target.removeEventListener('load', onAssetsLoad, false);
-		}
-
-		console.log('The number of items that have loaded is '+ loadCount);
-		
-		//draws loading progress
-		//background.drawProgress(loadCount, itemsToLoad);
-        mainContext.fillStyle = "rgb("+loadCount*5+","+loadCount*8+","+loadCount*10+")";
-        mainContext.fillRect(0,0,mainCanvas.width, mainCanvas.height);
-        
-        
-		if(loadCount === itemsToLoad){
-			console.log('The number of items that should  have loaded are '+ itemsToLoad);
-			//background.clear();
-			initAssets();
-		}
 	}
 	
 	function initAssets(){
@@ -439,7 +380,7 @@ function canvasApp(){
 
 		userAgent.mobile = false;
         
-        
+    
         if(userAgent.mobile){
 			//add game controls for mobile devices based on motion
 			window.addEventListener('touchend', onTouchEndHandler, false);
@@ -449,10 +390,9 @@ function canvasApp(){
 			
 		}else{
 			//add game control for desktop based on keyboard events
-		 	document.addEventListener('keyup', onKeyUp, false);
-			document.addEventListener('keydown', onKeyDown, false);
+			keywordControl.init(playerShip);
 		}
-        
+		
         gameInterface.display('storyLine');
 		appState = STATE_STORY_LINE;
 		
@@ -470,7 +410,7 @@ function canvasApp(){
         
         
 		background.draw();
-		mainContext.drawImage(earthSprite, (mainCanvas.width/2-(earthSprite.width/2)), 0);
+		mainContext.drawImage(ResourceLoader.assets.earthSprite, (mainCanvas.width/2-(ResourceLoader.assets.earthSprite.width/2)), 0);
         for(var i=0; i<7; i++){
             var currentEnemy = enemyShipsPool.pool[i];
             currentEnemy.draw();
@@ -561,6 +501,21 @@ function canvasApp(){
         updateCounter('score');
         
     }
+	
+	//temp code
+	
+	function handleSub(event, data){
+		window.alert("The game state has changed to : " + data);
+	}
+	
+	function handleSubTwo(event, data){
+		console.log("the game state has changed to : " + data);
+	}
+	
+	
+	
+	
+	
 
 	//once the user has clicked the start button, this function draws the game
 	function drawCanvas(){
@@ -569,6 +524,10 @@ function canvasApp(){
 
         if(alienMothership.alive){
         alienMothership.draw();
+        checkBoundary(alienMothership);
+        alienMothership.follow(playerShip);
+        alienMothership.attack(playerShip);
+        alienMothership.missiles.isCollidingWith(playerShip, playerShip.shield);
         playerShip.missiles.isCollidingWith(alienMothership, alienMothership.shield);
         }
 
@@ -622,8 +581,9 @@ function canvasApp(){
         //hide debugging frame counter on final versions
 		frameRateCounter.innerHTML = "Frames: "+frameRate.lastFrameCount;
         
+		
         if(playerShip.alive){
-            keyControl(playerShip);
+			keywordControl.update();
             checkBoundary(playerShip);
             playerShip.draw();
         }
@@ -649,6 +609,7 @@ function canvasApp(){
 					}
             
             playerShip.angle = playerShip.velY = playerShip.velX = 0;
+            playerShip.velX = 1;
             
             gameInterface.hide('gamePlay');
             updateCounter('level');
@@ -688,8 +649,11 @@ function canvasApp(){
             }
         }
         
-        playerShip.velX += 2*playerShip.easeValue;
+        playerShip.velX += playerShip.velX*playerShip.easeValue;
         playerShip.draw();
+        
+        console.log(playerShip.velX);
+        
         
         if(playerShip.x >= 1020-playerShip.width){
             appState = STATE_NEXT_LEVEL;   
@@ -851,82 +815,6 @@ function canvasApp(){
 		}
 	}
 	
-	//PC CONTROLS 
-	//handles the key presses on desktop
-	function onKeyUp(e){
-		e.preventDefault();
-		keyPressList[e.keyCode] = false;
-        
-        //pauses the game
-        if(keyPressList[LETTER_P] == false){
-            
-		  keyPressList[LETTER_P] = true;
-            
-		if(appState == STATE_PLAYING){
-            appState = STATE_WAITING;
-            console.log('STATE CHANGED');
-        }else if(appState == STATE_WAITING){
-            appState = STATE_PLAYING;
-            runState();
-            console.log(appState);
-        }
-            
-	}
-		
-	}
-	
-	function onKeyDown(e){
-		e.preventDefault();
-		keyPressList[e.keyCode] = true; 
-	}
-
-	//key control if user is playing on desktop
-	function keyControl(object){
-	
-	if(keyPressList[LEFT_ARROW]){
-		object.angle -= 5*Math.PI/180;
-	}else if(keyPressList[RIGHT_ARROW]){
-		object.angle += 5*Math.PI/180;
-	}
-	if(keyPressList[UP_ARROW]){
-		object.thrust = true;
-		var faceX = Math.cos(object.angle);
-		var faceY = Math.sin(object.angle);
-		var newVelX = object.velX+faceX*object.thrustAccel;
-		var newVelY = object.velY+faceY*object.thrustAccel;
-		
-		var futureVelocity = Math.sqrt((newVelX*newVelX)+(newVelY*newVelY));
-		currentVelocity = Math.floor(futureVelocity*200);
-		
-		if(futureVelocity > 4){
-			newVelX = object.velX;
-			newVelY = object.velY;
-			currentVelocity = 800;
-		}
-		
-		object.velX = newVelX;
-		object.velY = newVelY;	
-		
-	}else{
-		object.thrust = false;
-	}
-	if(keyPressList[SPACE_BAR] == false){
-		keyPressList[SPACE_BAR] = true;
-        if(!object.shield.active){
-		object.shoot();
-            playerShootSound.play();
-        }
-		console.log(object.missiles.pool.length);
-	}
-	if(keyPressList[X_KEY]){
-		object.shield.active = true;
-        
-	}else if(keyPressList[X_KEY] == false){
-		object.shield.active = false;
-	}
-
-	}
-	
 	//handles the mousemove interaction at title screen.
 	function onMouseMove(event){
         
@@ -944,67 +832,7 @@ function canvasApp(){
 		
 	}
 	
-	//MOBILE CONTROLS
-	//function that handles mobile controls of the game
-	
-	function devMotionHandler(e){
-        
-        if(appState != STATE_PLAYING){
-            return;    
-        }
-        
-		var futureVelX, futureVelY, futureVel;
-		
-		ax = (e.accelerationIncludingGravity.x)/8;
-		ay = (e.accelerationIncludingGravity.y)/8;
-		
-		var landscapeOrientation = window.innerWidth/window.innerHeight > 1;
-		if (landscapeOrientation) {
-			futureVelX = playerShip.velX-ay;
-			futureVelY = playerShip.velY-ax;
-		} else {
-			futureVelX = playerShip.velX+ax;
-			futureVelY = playerShip.velY-ay;
-		}
-		
-		futureVel = Math.sqrt(futureVelX*futureVelX+futureVelY*futureVelY);
-		
-		if(futureVel >= 3){
-			futureVelX = playerShip.velX;   
-		    futureVelY = playerShip.velY; 
-		}
-		
-		playerShip.velX = futureVelX;
-		playerShip.velY = futureVelY;	
-		playerShip.angle = Math.atan2(playerShip.velY, playerShip.velX);
-		
-	}
-	
-	function onTouchStart(e){
-		
-        if(appState != STATE_PLAYING){
-            return;   
-        }
-        
-        //comparings the global touches active if more than one shield is activated.
-		if(e.touches.length >= 2){
-			//if more than one finger on screen. activate shield
-			playerShip.shield.active = true;
-		}
-	}
-	
-	function onTouchEndHandler(e){
-        
-        if(appState != STATE_PLAYING){
-            return;    
-        }
-        
-        if(e.touches.length <= 1){
-            playerShip.shoot();
-            playerShootSound.play();
-		    playerShip.shield.active = false;
-        }
-	}
+
 	
 	//Checks for device orientation
 	function onOrientationChange(e){
@@ -1110,6 +938,7 @@ function canvasApp(){
         this.alphaSpeed = 0.03;
         this.shieldActive = false;
         this.shieldDisabled = false;
+		this.maxVelocity = 4;
         
     }
     
@@ -1154,6 +983,13 @@ function canvasApp(){
 				this.velY = newVelY;
 				}
 			}	
+    };
+    
+    Spacecraft.prototype.attack = function(object){
+			if(Math.random() >= 0.005 || !this.alive || !object.alive){
+				return;
+			}
+			this.shoot();
     };
     
     Spacecraft.prototype.spawn = function(x, y, angle, speed){
@@ -1214,6 +1050,7 @@ function canvasApp(){
         }
 
         this.missiles.get(this.x+10, this.y+10, "missile", this.angle, 5);
+		
     };
     
     //class for the rocks floating
@@ -1248,7 +1085,7 @@ function canvasApp(){
                     
                     spriteAnimationInfo = {width:56,height:55, offsetX: 0, offsetY: 0, numCol:2, numRow:9,fps:60,speed:8,loop:false,from:0,to:17};
                     this.spriteAnimation.init(spriteAnimationInfo);
-                    this.sprite = meteorLargeSpriteSheet;
+                    this.sprite = ResourceLoader.assets.meteorSprite;
                     randomAngle = Math.random()*(Math.PI*2);
                     Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
                     Physics.prototype.spawn.call(this, 0, 0, randomAngle, largeRockSpeed);
@@ -1259,9 +1096,9 @@ function canvasApp(){
                     break;
                 case "medium":
                     
-                    spriteAnimationInfo = {width:44,height:44, numCol:3, numRow:6,fps:60,speed:12,loop:true,from:0,to:17};   
+                    spriteAnimationInfo = {width:44,height:44, numCol:3, numRow:6,fps:60,offsetX: 130, offsetY : 0, speed:12,loop:true,from:0,to:17};   
                     this.spriteAnimation.init(spriteAnimationInfo);
-                    this.sprite = meteorMediumSpriteSheet;
+                    this.sprite = ResourceLoader.assets.meteorSprite;
                     randomAngle = Math.random()*(Math.PI*2);
                     Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
                     Physics.prototype.spawn.call(this, 0, 0, randomAngle, mediumRockSpeed);
@@ -1272,9 +1109,9 @@ function canvasApp(){
                     break;
                 case "small":
                     
-                    spriteAnimationInfo = {width:33,height:33, numCol:3, numRow:6,fps:60,speed:15,loop:true,from:0,to:17};
+                    spriteAnimationInfo = {width:33,height:33, numCol:3,offsetX: 290, offsetY: 0, numRow:6,fps:60,speed:15,loop:true,from:0,to:17};
                     this.spriteAnimation.init(spriteAnimationInfo);
-                    this.sprite = meteorSmallSpriteSheet;
+                    this.sprite = ResourceLoader.assets.meteorSprite;
                     randomAngle = Math.random()*(Math.PI*2);
                     Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
                     Physics.prototype.spawn.call(this, 0, 0, randomAngle, smallRockSpeed);
@@ -1349,8 +1186,8 @@ function canvasApp(){
             this.x += this.velX;
 			this.y += this.velY;
             
-            this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x-this.canvasWidth, this.y,this.canvasWidth,this.canvasHeight);	
-            this.context.drawImage(backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x,this.y,this.canvasWidth,this.canvasHeight);
+            this.context.drawImage(ResourceLoader.assets.backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x-this.canvasWidth, this.y,this.canvasWidth,this.canvasHeight);	
+            this.context.drawImage(ResourceLoader.assets.backgroundSprite, 0,0,this.canvasWidth,this.canvasHeight,this.x,this.y,this.canvasWidth,this.canvasHeight);
 			
 			if(this.x>this.canvasWidth){
 				this.x = 0;
@@ -1550,15 +1387,20 @@ function canvasApp(){
                 if(this.thrust){
                     this.spriteAnimation.startFrame = 1;
                     this.spriteAnimation.finalFrame = 1;
-                    this.spriteAnimation.play(-this.centerX, -this.centerY, playerSpriteSheet);
+                    this.spriteAnimation.play(-this.centerX, -this.centerY, ResourceLoader.assets.playerSpriteSheet);
                 }else{
                     //this.context.drawImage(shipSprite, 0, 0, this.width, this.height, -10,-10, this.width, this.height);
                     this.spriteAnimation.startFrame = 0;
                     this.spriteAnimation.finalFrame = 0;
-                    this.spriteAnimation.play(-this.centerX, -this.centerY, playerSpriteSheet);
+                    this.spriteAnimation.play(-this.centerX, -this.centerY, ResourceLoader.assets.playerSpriteSheet);
                 }
                 this.context.restore();
     };
+	
+	Ship.prototype.shoot = function(){
+		Spacecraft.prototype.shoot.call(this);
+		playerShootSound.play();
+	};
     
     function Perk(){
         
@@ -1578,7 +1420,7 @@ function canvasApp(){
         this.x += this.velX;
         this.y += this.velY;
         
-        this.spriteAnimation.play(this.x, this.y, perkSprite);
+        this.spriteAnimation.play(this.x, this.y, ResourceLoader.assets.perkSprite);
         
     };
     Perk.prototype.init = function(perk){
@@ -1602,8 +1444,12 @@ function canvasApp(){
                         this.type = "life";
                     break;
             }
-    };    
-    
+    }; 
+	
+	Perk.prototype.destroy = function(){
+		Physics.prototype.destroy.call(this);
+		perkSound.play();
+	};        
     //missle constructor
     
 	function Missile(){
@@ -1665,20 +1511,12 @@ function canvasApp(){
                 this.context.save();
                 this.context.translate(this.x+this.centerX, this.y+this.centerY);
                 this.context.rotate(this.angle);
-                this.spriteAnimation.play(-this.centerX, -this.centerX, enemySpriteSheet);
+                this.spriteAnimation.play(-this.centerX, -this.centerX, ResourceLoader.assets.enemySpriteSheet);
                 this.context.restore();  
                 
 
     };
-    
-    Enemy.prototype.attack = function(object){
-			if(Math.random() >= 0.005 || !this.alive || !object.alive){
-				return;
-			}
-			Spacecraft.prototype.shoot.call(this);
-    };
-    
-    
+        
     //mothership constructor
     function Mothership(){
         
@@ -1849,7 +1687,7 @@ function canvasApp(){
             this.alpha = (this.alpha >= 1)? 1: this.alpha;
             }
             this.context.globalAlpha = this.alpha;
-            this.spriteAnimation.play(-this.centerX, -this.centerY, MothershipSpriteSheet);
+            this.spriteAnimation.play(-this.centerX, -this.centerY, ResourceLoader.assets.MothershipSpriteSheet);
             this.context.restore();
             
             if(this.alpha <= 0){
