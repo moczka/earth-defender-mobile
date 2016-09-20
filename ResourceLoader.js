@@ -84,7 +84,7 @@ var ResourceLoader = (function(){
             //creates howl instance and passes in howl options given by the user.
             for(var item in UserOptions.assets.sounds){
                 var howlOptions = UserOptions.assets.sounds[item];
-                howlOptions.onload = (howlOptions.onload)? howlOptions.onload : onLoad;
+                howlOptions.onload = onLoad;
                 assets[item] = new Howl(howlOptions); 
                 totalAssets++;
                 
