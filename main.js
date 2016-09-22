@@ -390,7 +390,7 @@ function canvasApp(){
 			
 		}else{
 			//add game control for desktop based on keyboard events
-			keywordControl.init(playerShip);
+			keyboardControl.init(playerShip);
 		}
 		
         gameInterface.display('storyLine');
@@ -554,7 +554,11 @@ function canvasApp(){
                 currentMeteor.draw();
                 checkBoundary(currentMeteor);
                 playerShip.missiles.isCollidingWith(currentMeteor);
-
+                /*
+                enemyShipsPool.pool.forEach(function(enemy){
+                    enemy.missiles.isCollidingWith(currentMeteor);
+                });
+                */
             }
         }
         
@@ -569,7 +573,7 @@ function canvasApp(){
                 checkBoundary(currentEnemy);
                 currentEnemy.follow(playerShip);
                 currentEnemy.attack(playerShip);
-                currentEnemy.missiles.isCollidingWith(playerShip, playerShip.shield);
+                currentEnemy.missiles.isCollidingWith(playerShip, playerShip.shield, meteorPool.pool);
                 playerShip.missiles.isCollidingWith(currentEnemy, currentEnemy.shield);
             }
             
@@ -583,7 +587,7 @@ function canvasApp(){
         
 		
         if(playerShip.alive){
-			keywordControl.update();
+			keyboardControl.update();
             checkBoundary(playerShip);
             playerShip.draw();
         }
@@ -934,11 +938,12 @@ function canvasApp(){
            Physics.call(this);
         
         this.autoSpawn = false;
-        this.thrustAccel = 0.06;
+        this.thrustAccel = 0.03;
         this.alphaSpeed = 0.03;
         this.shieldActive = false;
         this.shieldDisabled = false;
 		this.maxVelocity = 4;
+        this.missilesSpeed = 5;
         
     }
     
@@ -1049,7 +1054,7 @@ function canvasApp(){
                 return;
         }
 
-        this.missiles.get(this.x+10, this.y+10, "missile", this.angle, 5);
+        this.missiles.get(this.x+10, this.y+10, "missile", this.angle, this.missilesSpeed);
 		
     };
     
@@ -1062,7 +1067,7 @@ function canvasApp(){
         this.size;
         this.spriteAnimation = new SpriteAnimation();
         this.spriteAnimation.setCanvas(mainCanvas);
-        this.explosion = new Explosion(15);
+        this.explosion = new Explosion(7);
         this.explosion.setCanvas(mainCanvas);
         this.type = 'rock';
     
@@ -1072,8 +1077,8 @@ function canvasApp(){
         
           var spriteAnimationInfo,
               largeRockSpeed = 0.5,
-              mediumRockSpeed = 1.5,
-              smallRockSpeed = 2,
+              mediumRockSpeed = 1,
+              smallRockSpeed = 1.2,
               randomAngle;
         
         
@@ -1360,6 +1365,7 @@ function canvasApp(){
         
             this.thrust = false;
             this.autoSpawn = true;
+            this.thrustAccel = 0.04;
             this.easeValue = 0.03;
             this.spriteAnimation = new SpriteAnimation();
             this.spriteAnimation.setCanvas(mainCanvas);
@@ -1486,6 +1492,7 @@ function canvasApp(){
         
             Spacecraft.call(this);
         
+        this.missilesSpeed = 3;
 		this.thrustAccel = 0.03;
         this.type = "enemy";
         
@@ -1529,6 +1536,7 @@ function canvasApp(){
         this.type = undefined;
         this.alpha = 0;
         this.alphaSpeed = 0.02;
+        this.missilesSpeed = 3;
         this.numShips = 0;
         this.type = "mothership";
     
@@ -1723,9 +1731,9 @@ function canvasApp(){
 				var currentParticle = this.particles[i];
 				currentParticle.x = x;
 				currentParticle.y = y;
-				currentParticle.maxLife = Math.random()*30+10;
-				currentParticle.velX = Math.random()*7-5;
-				currentParticle.velY = Math.random()*7-5;
+				currentParticle.maxLife = Math.random()*45+15;
+				currentParticle.velX = Math.random()*4-2.8;
+				currentParticle.velY = Math.random()*4-2.8;
 				currentParticle.alive = true;
 				currentParticle.life = 0;
 			}
@@ -1896,7 +1904,6 @@ function canvasApp(){
                             var meteor = new Rock();
                             meteor.setCanvas(mainCanvas);
                             meteor.init("large");
-                            //meteor.alive = false;
                             meteor.type = "largeRock";
                             this.pool.push(meteor);
                         }
@@ -1904,7 +1911,6 @@ function canvasApp(){
                             var meteorMedium = new Rock();
                             meteorMedium.setCanvas(mainCanvas);
                             meteorMedium.init("medium");
-                            //meteorMedium.alive = false;
                             meteorMedium.type = "mediumRock";
                             this.pool.push(meteorMedium);
                         }
@@ -1912,7 +1918,6 @@ function canvasApp(){
                             var meteorSmall = new Rock();
                             meteorSmall.setCanvas(mainCanvas);
                             meteorSmall.init("small");
-                            //meteorSmall.alive = false;
                             meteorSmall.type = "smallRock";
                             this.pool.push(meteorSmall);
                         }
@@ -1958,32 +1963,44 @@ function canvasApp(){
                 if(currentItem.alive){
                 
                 for(var h = 0; h<argsLength; h++){
-                    
+                    //each argument represents the objects being passed in to this method.
                     var currentArgument = arguments[h];
-                    
-                    if(hitTest(currentItem, currentArgument)){
-                        
-                        if(currentArgument instanceof Shield){
-                            if(!(currentItem instanceof Rock)){
-                                currentItem.destroy();
-                                currentArgument.reduceLife(10);
-                                recordCollision(currentItem.type);
-                            }
-                        }else if(currentItem instanceof Perk){
-                            currentItem.destroy();
-                            recordCollision(currentItem.type);
-                        }else{
-                            currentArgument.destroy();
-                            currentItem.destroy();
-                            recordCollision(currentArgument.type);
-                            recordCollision(currentItem.type);
-                        }
-                    }
+					
+					//if one of the arguments to check for collision is a pool of objects, iterate over each item.
+					if(Array.isArray(currentArgument)){
+						for(var j = 0, len = currentArgument.length; j < len; j++){
+							var currentPoolItem = currentArgument[j];
+							checkCollision(currentItem, currentPoolItem);
+						}
+					}else{
+							checkCollision(currentItem, currentArgument);
+					}
                 }
             }
                 
         }
-            
+			//function in charge of testing for collision and executing what to do when there is a collision, it also makes a call to the recordCollision function which handles the recording of collisions for points and score.
+			function checkCollision(item1, item2){
+				
+					if(hitTest(item1, item2)){
+							if(item2 instanceof Shield){
+								if(!(item1 instanceof Rock)){
+										item1.destroy();
+										item2.reduceLife(10);
+										recordCollision(item1.type);
+									}
+								}else if(item1 instanceof Perk){
+									item1.destroy();
+									recordCollision(item1.type);
+								}else{
+									item2.destroy();
+									item1.destroy();
+									recordCollision(item2.type);
+									recordCollision(item1.type);
+								}
+						}
+
+			}
     };
     
     Pool.prototype.hideItems  = function(){
