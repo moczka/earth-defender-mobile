@@ -584,6 +584,7 @@ function canvasApp(){
         
         //hide debugging frame counter on final versions
 		frameRateCounter.innerHTML = "Frames: "+frameRate.lastFrameCount;
+        frameRateCounter.innerHTML = "";
         
 		
         if(playerShip.alive){
@@ -943,7 +944,7 @@ function canvasApp(){
         this.shieldActive = false;
         this.shieldDisabled = false;
 		this.maxVelocity = 4;
-        this.missilesSpeed = 5;
+        this.missilesSpeed = 2.5;
         
     }
     
@@ -1366,6 +1367,7 @@ function canvasApp(){
             this.thrust = false;
             this.autoSpawn = true;
             this.thrustAccel = 0.04;
+            this.missilesSpeed = 3.2;
             this.easeValue = 0.03;
             this.spriteAnimation = new SpriteAnimation();
             this.spriteAnimation.setCanvas(mainCanvas);
@@ -1492,7 +1494,6 @@ function canvasApp(){
         
             Spacecraft.call(this);
         
-        this.missilesSpeed = 3;
 		this.thrustAccel = 0.03;
         this.type = "enemy";
         
@@ -1534,9 +1535,9 @@ function canvasApp(){
         this.spriteAnimation = new SpriteAnimation();
         this.spriteAnimation.setCanvas(mainCanvas);
         this.type = undefined;
+        this.missilesSpeed = 3;
         this.alpha = 0;
         this.alphaSpeed = 0.02;
-        this.missilesSpeed = 3;
         this.numShips = 0;
         this.type = "mothership";
     

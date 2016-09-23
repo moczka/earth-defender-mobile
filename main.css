@@ -158,9 +158,9 @@ button{
 .scrollBox{
  margin-bottom: 10px;
  /* Starting position */
- -moz-transform:translateY(100%);
- -webkit-transform:translateY(100%);	
- transform:translateY(100%);
+ -moz-transform:translateY(80%);
+ -webkit-transform:translateY(80%);	
+ transform:translateY(80%);
  /* Apply animation to this element */	
  -moz-animation: scrollBox 210s linear infinite;
  -webkit-animation: scrollBox 210s linear infinite;
@@ -239,10 +239,11 @@ button{
  clear: both;
  margin-right: 10px;
  text-align: left;
-    
+ font-size: 0.9em;
 }
 
 #credits{
+   font-size: 0.9em;
    color: #00FF00; 
    background-color: #000;
 }
