@@ -220,7 +220,7 @@ button{
 }
 
 #howToPlayHolder{
-    background-image: url(assets/mobile/how-to-play.png);
+    background-image: url(../assets/mobile/how-to-play.png);
     background-size: auto 100%;
     background-repeat: no-repeat;
     background-color: #000;
@@ -269,7 +269,7 @@ button{
 
 #levelTransition{
     background-color: #000;
-	background-image: url(assets/sprites/backgroundPiece.png);
+	background-image: url(../assets/sprites/backgroundPiece.png);
 	background-repeat: repeat;
     text-align: left;
 }
@@ -291,7 +291,7 @@ button{
 
 #beatGame{
     background-color: #000;
-    background-image: url("assets/sprites/beatGame_background.png");
+    background-image: url("../assets/sprites/beatGame_background.png");
     background-repeat: no-repeat;
     background-position: center;
     background-size: auto 100%;
@@ -313,7 +313,7 @@ button{
 }
 #gameOver{
     background-color: #000;
-    background-image: url("assets/sprites/game_over_background.png");
+    background-image: url("../assets/sprites/game_over_background.png");
     background-repeat: no-repeat;
     background-position: center;
     background-size: auto 100%;

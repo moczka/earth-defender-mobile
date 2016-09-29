@@ -1,3 +1,6 @@
+
+var PubSub = require('./PubSub.js');
+
 var keyboardControl = function(){
 	
 	//control keys
@@ -122,3 +125,5 @@ var keyboardControl = function(){
 	}
 	
 }();
+
+module.exports = keyboardControl;

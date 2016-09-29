@@ -1,3 +1,5 @@
+var Howl = require('howler');
+
 var ResourceLoader = (function(){
 	
 	var totalAssets = 0,
@@ -147,3 +149,5 @@ var ResourceLoader = (function(){
 	}
 	
 })();
+
+module.exports = ResourceLoader;

@@ -58,3 +58,5 @@ var PubSub = {};
 	};
 
 })(PubSub);
+
+module.exports = PubSub;

@@ -127,3 +127,5 @@ var SpriteAnimation = (function(){
 	
 	
  })();
+
+module.exports = SpriteAnimation;
