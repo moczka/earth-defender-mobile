@@ -304,14 +304,14 @@ function canvasApp(){
 	    
 		//sounds 5 sounds
 		soundTrack = new Howl({
-                    src: ['../assets/sounds/soundtrack.mp3','assets/sounds/soundtrack.wav'],
+                    src: ['../assets/sounds/soundtrack.mp3','../assets/sounds/soundtrack.wav'],
                     volume: 0.5,
                     loop: false
                         });
 
 		
         finalLevelSound = new Howl({
-                     src: ['../assets/sounds/finalLevelSound.mp3','assets/sounds/finalLevelSound.wav'],
+                     src: ['../assets/sounds/finalLevelSound.mp3','../assets/sounds/finalLevelSound.wav'],
                      volume: 1,
                         });
 	
