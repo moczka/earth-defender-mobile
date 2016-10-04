@@ -1,12 +1,24 @@
-window.addEventListener('load', canvasApp, false);
+window.addEventListener('load', onWindowLoad, false);
 
-function canvasApp(){	
-	
 	var Display = require('./Display'),
 		SpriteAnimation = require('./SpriteAnimation.js'),
 		ResourceLoader = require('./ResourceLoader.js'),
 		PubSub = require('./PubSub.js'),
 		keyboardControl = require('./keyboardControl.js');
+
+
+
+function onWindowLoad(){
+    
+    
+    canvasApp();
+    
+}
+
+
+function canvasApp(){	
+	
+
 	
 	
 	
@@ -548,11 +560,6 @@ function canvasApp(){
                 currentMeteor.draw();
                 checkBoundary(currentMeteor);
                 playerShip.missiles.isCollidingWith(currentMeteor);
-                /*
-                enemyShipsPool.pool.forEach(function(enemy){
-                    enemy.missiles.isCollidingWith(currentMeteor);
-                });
-                */
             }
         }
         
@@ -563,12 +570,20 @@ function canvasApp(){
             var currentEnemy = enemyShipsPool.pool[h];
             
             if(currentEnemy.alive){
+                
                 currentEnemy.draw();
                 checkBoundary(currentEnemy);
                 currentEnemy.follow(playerShip);
                 currentEnemy.attack(playerShip);
                 currentEnemy.missiles.isCollidingWith(playerShip, playerShip.shield, meteorPool.pool);
                 playerShip.missiles.isCollidingWith(currentEnemy, currentEnemy.shield);
+                if(hitTest(currentEnemy, playerShip)){
+                    currentEnemy.destroy();
+                    playerShip.destroy();
+                    recordCollision(currentEnemy.type);
+                    recordCollision(playerShip.type);
+                }
+                
             }
             
         }

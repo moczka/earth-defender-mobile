@@ -86,7 +86,7 @@ var keyboardControl = function(){
 			}else{
 				object.thrust = false;
 			}
-			if(keyPressList[SPACE_BAR] == false){
+			if(keyPressList[SPACE_BAR] == false){                
 				keyPressList[SPACE_BAR] = true;
 				if(!object.shield.active){
 				object.shoot();
