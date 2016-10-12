@@ -1,13 +1,5 @@
 window.addEventListener('load', onWindowLoad, false);
 
-	var Display = require('./Display'),
-		SpriteAnimation = require('./SpriteAnimation.js'),
-		ResourceLoader = require('./ResourceLoader.js'),
-		PubSub = require('./PubSub.js'),
-		keyboardControl = require('./keyboardControl.js');
-
-
-
 function onWindowLoad(){
     
     
@@ -18,9 +10,12 @@ function onWindowLoad(){
 
 function canvasApp(){	
 	
-
-	
-	
+		var Display = require('./Display'),
+		SpriteAnimation = require('./SpriteAnimation.js'),
+		ResourceLoader = require('./ResourceLoader.js'),
+		PubSub = require('./PubSub.js'),
+		keyboardControl = require('./keyboardControl.js');
+        
 	
 			//sets up game engine
 		window.requestAnimFrame = (function(){
@@ -52,6 +47,28 @@ function canvasApp(){
     STATE_CREDITS = 12;
 		var appState;
 		var previousAppState;
+    
+    var state = {
+		CURRENT: "",
+        STATE_LOADING: 1,
+        STATE_INIT : 2,
+        STATE_STORY_LINE : 3,
+	    STATE_TITLE_SCREEN : 4,
+        STATE_HOW_TO_PLAY : 5,
+        STATE_PLAYING : 6,
+        STATE_WAITING : 7,
+        STATE_LEVEL_TRANSITION : 8,
+        STATE_NEXT_LEVEL : 9,
+        STATE_USER_BEAT_GAME : 10,
+        STATE_GAME_OVER : 11,
+        STATE_ASPECT_RATIO : 13,
+        STATE_ORIENTATION_CHANGE : 14,
+        STATE_USER_AGENT : 15,
+        STATE_CREDITS : 12
+    };
+    
+	//adding the state object to the keyboardControl state property
+	keyboardControl.state = state;
 	
 	//userAgent info and canvas control
 	var userAgent = {mobile:false,platform:"", portrait:false};
@@ -305,6 +322,10 @@ function canvasApp(){
 		
 		loopOn = true;
 		appState = STATE_INIT;
+		
+		//temp
+		state.CURRENT = state.STATE_INIT;
+		
 		gameLoop();
 		
 	}
@@ -500,7 +521,7 @@ function canvasApp(){
         //alienMothership.init("alien");
         alienMothership.spawn(randomX, randomY);
         alienMothership.shield.active = true;
-        alienMothership.setRelease(levelEnemies, 8);
+        alienMothership.setRelease(levelEnemies, 8000);
         
         updateCounter('level');
         updateCounter('life');
@@ -533,8 +554,8 @@ function canvasApp(){
         checkBoundary(alienMothership);
         alienMothership.follow(playerShip);
         alienMothership.attack(playerShip);
-        alienMothership.missiles.isCollidingWith(playerShip, playerShip.shield);
-        playerShip.missiles.isCollidingWith(alienMothership, alienMothership.shield);
+       	alienMothership.missiles.isCollidingWith(playerShip, playerShip.shield);
+       	playerShip.missiles.isCollidingWith(alienMothership, alienMothership.shield);
         }
 
             for(var m=0; m<perksPool.pool.length; m++){
@@ -962,7 +983,7 @@ function canvasApp(){
         this.missilesSpeed = 2.5;
         
     }
-    
+		
     Spacecraft.prototype.init = function(width, height){
         
             Display.prototype.init.call(this, width, height);
@@ -970,8 +991,9 @@ function canvasApp(){
         var shield = new Shield();
             shield.setCanvas(mainCanvas);
             shield.init(80,80);
-        var missilePool = new Pool(10);
-            missilePool.init('missile');
+		var missilePool = new Pool(10);
+			missilePool.init('missile');
+            
         var explosion = new Explosion(15);
             explosion.setCanvas(mainCanvas);
             
@@ -980,6 +1002,8 @@ function canvasApp(){
         this.missiles = missilePool;
         
     };    
+	
+	
     Spacecraft.prototype.follow = function(object){
         
 			if(!object.alive){
@@ -1022,10 +1046,8 @@ function canvasApp(){
     };
     
     Spacecraft.prototype.destroy = function(){
-        
         this.colliding = true;  
         explosionSound.play();
-        
     };
 
     Spacecraft.prototype.draw = function(){
@@ -1615,37 +1637,19 @@ function canvasApp(){
             this.numShips = numShip;
             
             //checks if time to release ships was passed in
-            time = (time == undefined)? 5: time;
-
-            var countDownRunning = true;
-            var currentTime = 0;
-            var finalTime = time;
-            var self = this;
-            
-            tick();  
-            
-            function tick(){
-                
-            if(countDownRunning){
-                
-                currentTime++;
-                    if(currentTime >= finalTime){
-                        
-                        Mothership.prototype.releaseShips.call(self);
-                        countDownRunning = false;
-                        currentTime = 0;
-                        tick();
-                    }
-                window.setTimeout(tick, 1000);   
-                }    
-            }   
-             
+            time = (!time)? 5000: time;
+		
+			var self = this;
+		
+			this.interval = window.setTimeout(function(){
+				//release ships after the time has passed
+				Mothership.prototype.releaseShips.call(self);	
+			}, time);   
+		
         };
     
     Mothership.prototype.releaseShips = function(){
-        
-            if(!this.alive) return;
-        
+       
         console.log('ship release function has been called');
             
             this.hasReleasedShips = true;
@@ -1677,7 +1681,10 @@ function canvasApp(){
             
         };
     
-    
+    Mothership.prototype.destroy = function(){
+		Spacecraft.prototype.destroy.call(this);
+		window.clearTimeout(this.interval);
+	};
     Mothership.prototype.spawn = function(x, y, angle, speed){
             
             Spacecraft.prototype.spawn.call(this, x, y, angle, speed);

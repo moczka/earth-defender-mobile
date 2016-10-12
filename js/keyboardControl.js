@@ -93,6 +93,9 @@ var keyboardControl = function(){
 				}
 				console.log(object.missiles.pool.length);
 				//PubSub.publish('gamestate', 'paused');
+				console.log("current state is: ", keyboardControl.state.CURRENT);
+				
+				
 			}
 			if(keyPressList[X_KEY]){
 				object.shield.active = true;

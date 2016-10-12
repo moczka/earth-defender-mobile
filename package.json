@@ -4,7 +4,7 @@
   "description": "An HTML5 canvas game, runs on desktop and mobile",
   "main": "index.html",
   "scripts": {
-    "test": "js/scripts.min.js"
+    "test": "bin/scripts.min.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +26,9 @@
     "webpack": "^1.13.2"
   },
   "devDependencies": {
+    "babel-core": "^6.17.0",
+    "babel-loader": "^6.2.5",
+    "babel-preset-es2015": "^6.16.0",
     "webpack-dev-server": "^1.16.1"
   }
 }
