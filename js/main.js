@@ -1637,7 +1637,7 @@ function canvasApp(){
             this.numShips = numShip;
             
             //checks if time to release ships was passed in
-            time = (!time)? 5000: time;
+            time = (typeof time != "number")? 5000: time;
 		
 			var self = this;
 		
