@@ -57,21 +57,15 @@ var SpriteAnimation = (function(){
             
             //creates a variable holding the length of the array holding the frames
             var totalFramesLength = spriteObject.numCol * spriteObject.numRow;
-            
+
             for(var i = 0; i < totalFramesLength; i++){
                 var frame = {};
 					frame.regX = this.offsetX;
 					frame.regY = this.offsetY;
+            
+                frame.regX += (i % this.numCol)*this.width;
+                frame.regY += (i % this.numRow)*this.height;
                 
-                //indexes the regX and regY points of each sprite frame into the array.
-                if(i>=this.numCol){
-                    frame.regX += (i - Math.floor(i/this.numCol)*this.numCol)*this.width;
-                    frame.regY += Math.floor(i/this.numCol)*this.height;
-
-                }else{
-                    frame.regX += i * this.width;
-                    frame.regY += 0;
-                }
                 //pushes the objects with the regX and regY for each frame into a frame array.
                 this._frames.push(frame);
                 
