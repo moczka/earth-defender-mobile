@@ -16,11 +16,8 @@ function canvasApp(){
             PubSub = require('./PubSub.js'),
             keyboardControl = require('./keyboardControl.js'),
             UIController = require('./UIController');
-    
-        window.PubSub = PubSub;
+            
         window.UIControl = UIController;
-        
-        
 	
 			//sets up game engine
 		window.requestAnimFrame = (function(){
@@ -136,7 +133,7 @@ function canvasApp(){
 	var gameStartHolder = $('#gameStart');
 	var gamePlayHolder = $('#gamePlay');
 	var gameOverHolder = $('#gameOver');
-    var howToPlayHolder = $('#howToPlayHolder');
+    var howToPlayHolder = $('#howToPlay');
     var storyLineHolder = $('#storyLineHolder');
     var levelTransitionHolder = $('#levelTransition');
     var creditsHolder = $('#credits');
