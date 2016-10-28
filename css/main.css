@@ -142,11 +142,11 @@ button{
 }
 
 
-#storyLineHolder{
+#storyLine{
     overflow: hidden;
     text-align: left;
 }
-#storyLineHolder p{
+#storyLine p{
     text-indent: 25px; 
 }
 
@@ -189,19 +189,20 @@ button{
 }
 
 
-.loading{
-    background: #FFF;
+#loading{
+    background: #000;
 }
 
 .loading-bar{
     width: 50%;
     height: 40px;
     margin:  40% auto;
-    border: 1px solid #000;
+    border: 1px solid #00FF00;
     border-radius: 3px;
+    display: inline-block;
 }
 .loading-bar div{
-    background: green;
+    background: #00FF00;
     height: 100%;
     width: 0%;
 }
@@ -229,7 +230,7 @@ button{
     font-size: 1.1em;
 }
 
-#gameStart h1{
+#titleScreen h1{
     display: inline-block;
     font-size: 2.0em;
     color: white;
@@ -304,6 +305,24 @@ button{
     color: #00FF00;
     display: block;
 }
+
+#onPause{
+    
+    background: #000;
+    
+}
+
+#onPause h2{
+    
+    display: inline-block;
+    font-size: 33px;
+    color: #fff;
+    font-family: inherit;
+    margin: 20% auto;
+    text-transform: uppercase;
+    
+}
+
 
 #beatGame{
     background-color: #000;
