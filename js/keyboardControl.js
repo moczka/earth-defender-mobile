@@ -10,7 +10,25 @@ var keyboardControl = function(){
 		DOWN_ARROW = 40,
 		X_KEY = 88,
 		SPACE_BAR = 32,
-		LETTER_P = 80;
+		LETTER_P = 80,
+          
+        state = {
+            INIT : -1,
+            LOADING: 0,
+            STORY_LINE : 1,
+            TITLE_SCREEN : 2,
+            GAME_PLAY : 3,
+            LEVEL_TRANSITION : 4,
+            BEAT_GAME : 5,
+            GAME_OVER : 6,
+            CREDITS : 7,
+            HOW_TO_PLAY : 8,
+            PAUSED : 9,
+            SHIP_JUMP : 10,
+            SET_UP_LEVEL: 11,
+
+            CURRENT : -1 
+    };
 	
 	//array of active and deactive keys
 	var keyPressList = [],
@@ -26,24 +44,32 @@ var keyboardControl = function(){
 				objects.push(arguments[element]);
 			}
 		}
-		
-		PubSub.subscribe('statechange', handleStateChange);
 	
 		document.addEventListener('keyup', onKeyUp, false);
 		document.addEventListener('keydown', onKeyDown, false);
 		initialized = true;
 		console.log('Keyword Control Module Initialized');
+        PubSub.subscribe('statechange', handleStateChange.bind(this));
 		
 	}
 	
 	function handleStateChange(event, data){
-		inGamePlay = (data != "gameplay")? false : true;
+		state.CURRENT = data.to;
 	}
 	
 	function onKeyUp(e){
+        
 		if(!initialized) return(console.log('Keyword Module has not been initialized...'));
 		e.preventDefault();
 		keyPressList[e.keyCode] = false;
+        
+        if(keyPressList[LETTER_P] == false && state.CURRENT === state.PAUSED){
+				keyPressList[LETTER_P] = true;
+                PubSub.publish('statechange', {from: state.PAUSED, to: state.GAME_PLAY});
+				console.log('Letter P has been pressed');
+
+			}
+        
 	}
 	
 	function onKeyDown(e){
@@ -53,9 +79,8 @@ var keyboardControl = function(){
 	}
 	
 	function runKeys(){
-		
+        
 		var length = objects.length;
-		
 		
 		for(var i = 0; i<length; i++){
 			
@@ -90,12 +115,7 @@ var keyboardControl = function(){
 				keyPressList[SPACE_BAR] = true;
 				if(!object.shield.active){
 				object.shoot();
-				}
-				console.log(object.missiles.pool.length);
-				//PubSub.publish('gamestate', 'paused');
-				console.log("current state is: ", keyboardControl.state.CURRENT);
-				
-				
+				}				
 			}
 			if(keyPressList[X_KEY]){
 				object.shield.active = true;
@@ -105,9 +125,9 @@ var keyboardControl = function(){
 			}
 			if(keyPressList[LETTER_P] == false){
 				keyPressList[LETTER_P] = true;
+                PubSub.publish('statechange', {from: state.GAME_PLAY, to: state.PAUSED});
 				console.log('Letter P has been pressed');
-				var unsubID = PubSub.unsubscribe(9101);
-				console.log(unsubID);
+
 			}
 			
 		}

@@ -1,4 +1,5 @@
-var Howl = require('howler');
+var Howl = require('howler').Howl;
+
 
 var ResourceLoader = (function(){
 	

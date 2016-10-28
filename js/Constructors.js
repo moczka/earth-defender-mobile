@@ -1,11 +1,11 @@
 var ResourceLoader = require('./ResourceLoader'),
     Algorithms = require('./Algorithms'),
     mainCanvas = document.getElementById('bgCanvas'),
+    PubSub = require('./PubSub'),
     centerX = mainCanvas.width / 2,
     centerY = mainCanvas.height / 2;
 
-    function runInheritance(){
-    
+
         inheritFrom(Display, Physics);
         inheritFrom(Physics, Spacecraft);
         inheritFrom(Display, Background);
@@ -19,7 +19,7 @@ var ResourceLoader = require('./ResourceLoader'),
         inheritFrom(Spacecraft, Mothership);
         inheritFrom(Physics, Perk);   
     
-    }
+
 
     //inheriter function
     function inheritFrom(parent, child){
@@ -336,19 +336,6 @@ var ResourceLoader = require('./ResourceLoader'),
             ResourceLoader.assets.meteorExplosionSound.play();
             this.colliding = true;
             
-            switch(this.size){
-                case "large":
-                meteorPool.get(this.x, this.y, "mediumRock");
-                meteorPool.get(this.x, this.y, "mediumRock");
-                    break;
-                case "medium":
-                meteorPool.get(this.x, this.y, "smallRock");
-                meteorPool.get(this.x, this.y, "smallRock");
-                    break;
-                case "small":
-                    //no rocks
-                    break;     
-            }  
     };    
     
 	function Background(){
@@ -607,14 +594,15 @@ var ResourceLoader = require('./ResourceLoader'),
             
         };
     
-    Mothership.prototype.setRelease = function(numShip, time){
+    Mothership.prototype.setRelease = function(shipsPool, numShips, time){
             
             if(this.hasReleasedShips){
-              return;   
+                return;   
             }
             
             //assigns number of ships to release
-            this.numShips = numShip;
+            this.numShips = numShips;
+            this.shipsPool = shipsPool;
             
             //checks if time to release ships was passed in
             time = (typeof time != "number")? 5000: time;
@@ -623,7 +611,8 @@ var ResourceLoader = require('./ResourceLoader'),
 		
 			this.interval = window.setTimeout(function(){
 				//release ships after the time has passed
-				Mothership.prototype.releaseShips.call(self);	
+				Mothership.prototype.releaseShips.call(self);
+                
 			}, time);   
 		
         };
@@ -635,29 +624,16 @@ var ResourceLoader = require('./ResourceLoader'),
             this.hasReleasedShips = true;
             this.shield.active = false;
             
-            switch(this.type){
-                case "alien":
-                    
-                    for(var i=0; i<this.numShips; i++){
-                    
-                    var positionX = this.x + enemyShipsPool.pool[i].width*i;
-                    var positionY = this.y + enemyShipsPool.pool[i].height*i;
-                    enemyShipsPool.get(positionX, positionY, 'enemy');
-                    enemyShipsPool.pool[i].shield.active = false;
-                        
-                        } 
-                    
-                    break;
-                case "human":
-                    
-                   for(var j=0; j<this.numShips; j++){
 
-                    enemyShipsPool.pool[j].spawn(this.x, this.y);   
+            for(var i=0; i<this.numShips; i++){
                     
-                        }  
-                    
-                    break;      
+                var positionX = this.x + this.shipsPool.pool[i].width*i;
+                var positionY = this.y + this.shipsPool.pool[i].height*i;
+                this.shipsPool.get(positionX, positionY, 'enemy');
+                this.shipsPool.pool[i].shield.active = false;
+                        
             } 
+                    
             
         };
     
@@ -975,7 +951,7 @@ var ResourceLoader = require('./ResourceLoader'),
 						}
 					}else{
 							checkCollision(currentItem, currentArgument);
-					}
+					   }
                 }
             }
                 
@@ -988,16 +964,16 @@ var ResourceLoader = require('./ResourceLoader'),
 								if(!(item1 instanceof Rock)){
 										item1.destroy();
 										item2.reduceLife(10);
-										recordCollision(item1.type);
+										//recordCollision(item1.type);
 									}
 								}else if(item1 instanceof Perk){
 									item1.destroy();
-									recordCollision(item1.type);
+									//recordCollision(item1.type);
 								}else{
 									item2.destroy();
 									item1.destroy();
-									recordCollision(item2.type);
-									recordCollision(item1.type);
+									//recordCollision(item2.type);
+									//recordCollision(item1.type);
 								}
 						}
 
@@ -1126,10 +1102,7 @@ var ResourceLoader = require('./ResourceLoader'),
             this._frameIndex = (frameIndex == undefined)? 0: frameIndex;
             return this._frames[this._frameIndex];
         };
-
     
-
-
 module.exports = {
     
     Display : Display,
@@ -1145,7 +1118,6 @@ module.exports = {
     Explosion : Explosion,
     Shield : Shield,
     Pool : Pool,
-    SpriteAnimation : SpriteAnimation,
-    runInheritance : runInheritance
+    SpriteAnimation : SpriteAnimation
     
 };

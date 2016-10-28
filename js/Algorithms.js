@@ -32,12 +32,12 @@ function hitTest(object1, object2){
         if (object1.type == "humanShip" && object1.velX == 0) return(false);
         if (object2.type == "humanShip" && object2.velX == 0) return(false);
         
-        if(object2 instanceof Spacecraft){
+        if(object2.hasOwnProperty('shield')){
             if(object2.shield.active){
                 return (false);
             }
         }
-        if(object1 instanceof Spacecraft){
+        if(object1.hasOwnProperty('shield')){
             if(object1.shield.active){
                 return (false);
             }

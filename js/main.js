@@ -12,6 +12,7 @@ function canvasApp(){
 	
 		var ResourceLoader = require('./ResourceLoader.js'),
             PubSub = require('./PubSub.js'),
+            Consctructors = require('./Constructors'),
             UIController = require('./UIController'),
             Game = require('./Game');
     
@@ -30,21 +31,27 @@ function canvasApp(){
 
     
     var state = {
-        INIT : -1,
-        LOADING: 0,
-        STORY_LINE : 1,
-	    TITLE_SCREEN : 2,
-        GAME_PLAY : 3,
-        LEVEL_TRANSITION : 4,
-        BEAT_GAME : 5,
-        GAME_OVER : 6,
-        CREDITS : 7,
-        HOW_TO_PLAY : 8
+            INIT : -1,
+            LOADING: 0,
+            STORY_LINE : 1,
+            TITLE_SCREEN : 2,
+            GAME_PLAY : 3,
+            LEVEL_TRANSITION : 4,
+            BEAT_GAME : 5,
+            GAME_OVER : 6,
+            CREDITS : 7,
+            HOW_TO_PLAY : 8,
+            PAUSED : 9,
+            SHIP_JUMP : 10,
+            SET_UP_LEVEL: 11,
+
+            CURRENT : -1 
     };
     
-        UIController.init();
-        
     
+    UIController.init();
+    
+    window.ResourceLoader = ResourceLoader;
 	//adding the state object to the keyboardControl state property
     var preloadImage = document.getElementById('preload');
     
@@ -83,8 +90,8 @@ function canvasApp(){
                         volume: 1,
                         },
                     playerShootSound : {
-                                    src: ['assets/sounds/shoot.mp3','assets/sounds/shoot.wav'],
-                                    volume: 0.3,
+                        src: ['assets/sounds/shoot.mp3','assets/sounds/shoot.wav'],
+                        volume: 0.3,
                         },
                     explosionSound : {
                                     src: ['assets/sounds/explosion.mp3','assets/sounds/explosion.wav'],
@@ -104,11 +111,15 @@ function canvasApp(){
                         }
                 }
 			},
+            useHowl : true,
+        
 			onload : function(item){
 				loadBar.setAttribute('style', 'width: '+ResourceLoader.loaded*100+'%;');
 			},
+        
 			final : function(){
-				
+                Game.init();
+				PubSub.publish('statechange', {from:state.LOADING, to:state.STORY_LINE});
 			}
 		};
     
@@ -117,8 +128,9 @@ function canvasApp(){
     ResourceLoader.init(loaderOptions);
     ResourceLoader.downloadAll();
     
+    
    
-    Game.init();
+    
     
     
     //PubSub.publish('statechange', {from: state.LOADING, to: state.STORY_LINE});

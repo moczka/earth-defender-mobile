@@ -1,25 +1,34 @@
 var PubSub = require('./PubSub'),
+
     state = {
-        loading : 0,
+        loading: 0,
         storyLine : 1,
-        titleScreen : 2,
+	    titleScreen : 2,
         gamePlay : 3,
         levelTransition : 4,
         beatGame : 5,
         gameOver : 6,
         credits : 7,
-        howToPlay : 8
+        howToPlay : 8,
+        onPause : 9,
+        shipJump : 10,
+        setUpLevel: 11,
+
+        current : -1 
     };
 
 function init(){
     
     if(this.hasInitialized) return this;
+    
+    
     this.hasInitialized = true;
-    
-    
     this.pages = document.getElementsByClassName('appPage');
     this.interface = document.getElementById('interfaceWrapper');
+    this.counters = document.getElementsByClassName('counter');
+    
     this.subId = PubSub.subscribe('statechange', handleStateChange.bind(this));
+    
     delegateClicks.call(this);
     
     return this;
@@ -51,6 +60,14 @@ function handleClick(event){
     if(from && to){
          PubSub.publish('statechange', {from: state[from], to: state[to]});   
     }
+    
+}
+
+function updateCounters(couter, value){
+    
+    this.counters[counter].innerHTML(value);
+    
+    return this;
     
 }
 
@@ -106,7 +123,8 @@ module.exports = {
     show : show,
     hide : hide,
     hideAll : hideAll,
-    hasInitialized : false
+    hasInitialized : false,
+    updateCounter : updateCounters
     
     
 };
