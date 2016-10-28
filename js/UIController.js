@@ -1,9 +1,21 @@
-var PubSub = require('./PubSub');
+var PubSub = require('./PubSub'),
+    state = {
+        loading : 0,
+        storyLine : 1,
+        titleScreen : 2,
+        gamePlay : 3,
+        levelTransition : 4,
+        beatGame : 5,
+        gameOver : 6,
+        credits : 7,
+        howToPlay : 8
+    };
 
 function init(){
     
     if(this.hasInitialized) return this;
     this.hasInitialized = true;
+    
     
     this.pages = document.getElementsByClassName('appPage');
     this.interface = document.getElementById('interfaceWrapper');
@@ -26,23 +38,29 @@ function delegateClicks(){
         
     }
     
-    
     return pages;
     
 }
 
 function handleClick(event){
     
-    var button = event.target;
+    var button = event.target,
+        from = button.getAttribute('data-from'),
+        to = button.getAttribute('data-to');
     
-    console.log(button);
-    
+    if(from && to){
+         PubSub.publish('statechange', {from: state[from], to: state[to]});   
+    }
     
 }
 
 function show(pageName){
- 
-    this.pages[pageName].setAttribute('style', 'display: block;');
+    
+    if(this.pages[pageName]){
+        
+        this.pages[pageName].setAttribute('style', 'display: block;');
+        
+    }
     
     return this;
     
@@ -50,9 +68,14 @@ function show(pageName){
 
 function hide(pageName){
     
-    this.pages[pageName].setAttribute('style', 'display: none;');
+    if(this.pages[pageName]){
+        
+        this.pages[pageName].setAttribute('style', 'display: none;');
+        
+    }
     
     return this;
+    
 }
 
 function hideAll(){

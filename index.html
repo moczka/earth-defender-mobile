@@ -29,31 +29,17 @@
          
     <div id="interfaceWrapper">
         
-        <div class="appPage" id="gameStart">
-          <div class="titleMenu">
-              <h1>EARTH DEFENDER!</h1>
-              <span id="startGame" class="buttonControl">Start Game</span>
-              <span id="storyLine" class="buttonControl">Story Line</span>
-              <span id="howToPlay" class="buttonControl">How To Play</span>
-              <a class="buttonControl" href="assets/mobile/en_badge_web_generic.png" target="_blank" >Add To Chrome</a>      
+        <div class="appPage" id="loading">
+        
+            <div class="loading-bar">
+                <div id="loadBar"></div>
             </div>
-          <a id="creditsButton" class="nextButton">Credits</a>
-            <div class="socialPlugins">
-            <a id="appleStore" class="fl" href='assets/mobile/badge-download-on-the-app-store.svg' target='_blank'><img src='assets/mobile/badge-download-on-the-app-store.svg' style='width:175px;' /></a>
-            <a id="googlePlay" class="fr"  href='assets/mobile/en_badge_web_generic.png' target='_blank'><img alt='Get it on Google Play' src='assets/mobile/en_badge_web_generic.png' style='width: 200px;'/></a>
-            </div>
+        
+        
         </div>
         
-        <div class="appPage" id="howToPlayHolder">
-            <h2>How To Play</h2>
-            <p>MOBILE: To play on your mobile device, all you need to do is use your device gyroscope sensors to move your ship around space. Tap on the screen to launch missiles and tap and hold with two fingers to activate your ship's protective shield.</p>
-            <p>DESKTOP: move the ship around with the arrow keys on your keyboard. Use the "X" key to activate your ship's protective shield and press "Space Bar" to launch a missile. You can pause the game by pressing "P"</p>
-        
-        <a class="buttonControl nextButton" id="howToBack">BACK</a>
-        </div>
-        
-        <div class="appPage" id="storyLineHolder">
-            <button class="buttonControl nextButton" id="skipStoryLine" value="gameStart">GO</button>
+        <div class="appPage" id="storyLine">
+            <button class="buttonControl nextButton" data-from="storyLine" data-to="titleScreen">GO</button>
             <div class="scrollBox">
                <p>The vastness of space was considered the last frontier of exploration for mankind. Shortly after we landed on the moon, the curiosity to explore beyond our solar system became evident. Movies, books and stories were made describing the possibility of human kind coming into contact with an alien civilization. However, even after human colonization of space began 2 centuries after a space elevator was developed in the year of 2137. No advanced alien civilization was found. We began colonizing habitable planets near our solar system. One of the first and biggest colonies was Chromos. It is located 25 light years away from planet Earth, and holds the largest human population after Earth. 
         After Chromos was colonized, we expanded our radius of exploration to 45 light years from Earth. We colonized 5 other habitable planets in different solar systems. These 5 planets had small but growing human populations. We were able to reach these planets thanks to limited wormhole technology developed by scientists in the 2500s. These wormholes were considered limited because the energy necessary to maintain the wormhole open and allow ships through was proportional to the distance. Each colony needed to harvest enough energy from the nearby star for a full two weeks to open a wormhole connecting to Earth. Chromos only needed a week of harvesting but for the outer colonies it was little over a week. For this reason, all colonies agreed to open their portals every two weeks to exchange supplies, communication and ships with Earth. </p>
@@ -63,28 +49,22 @@
         <p>
         Nevertheless, 54 years passed and still no signs of any aliens. Martial law was lifted and things appeared to be going back to normal in Earth and all the colonies. On the second week of May, 2849, two of our most far away colonies, Cygnus and Quasis failed to open their portals. A defense fleet was dispatched and sent to Cygnus. Nothing but destruction was found, the space station off the planet was completely destroyed and all that was left standing was a small fleet of our ships. We were informed by Cygnus that the aliens that attacked our exploration fleet had returned but were defeated. They were given the name of Equitans. On the following day a new fleet of Equitan ships appeared and began attacking once again. The defense fleet that was sent to rescue Cygnus fled and reported back to Earth. Once they arrived back in Earth, they were informed that all of the outer colonies were attacked and were under Equitans control. The only remaining human colonies are Chromos and Sirius. It is up to you to defend planet Earth and the remaining colonies!</p>  
             </div>
-        </div>        
+        </div>   
         
-        <div class="appPage" id="credits" style="">
-            <h2>Credits:</h2>
-            <p>This game was possible thanks to the work of these wonderful people!</p>
-            <h2>Sounds</h2>
-            <ul>
-            <li>shield.wav by @sammyF70 on FreeSound.org</li>
-            <li>lasershoot.wav by @MusicLegends on FreeSound.org</li>
-            <li>explosion.wav by @ProjectsU012 on FreeSound.org</li>
-            <li>perk.wav by @RunnerPack on Freesound.org</li>
-            <li>meteorExplosion.wav by Jeff and Steve Fulton from their HTML5 Canvas book</li>
-            <li>victory.wav by @unadamlar on FreeSound.org</li>
-            <li>gameover.wav by @fins on FreeSound.org</li>
-            </ul>
-            <h2>Resources</h2>
-            <ul>
-            <li>Howler.js made by http://goldfirestudios.com used for extensive audio manipulation in this game.</li>
-            <li>HTML5 Canvas, 2nd Edition By Steve Fulton, Jeff Fulton, incredible book, gave me a jump start from beginner to intermediate.</li>
-            </ul>
-            <a class="buttonControl nextButton" id="skipCredits">BACK</a>   
-        </div>                    
+        <div class="appPage" id="titleScreen">
+          <div class="titleMenu">
+              <h1>EARTH DEFENDER!</h1>
+              <span data-from="titleScreen" data-to="gamePlay" class="buttonControl">Start Game</span>
+              <span data-from="titleScreen" data-to="storyLine" class="buttonControl">Story Line</span>
+              <span data-from="titleScreen" data-to="howToPlay" class="buttonControl">How To Play</span>
+              <a class="buttonControl" href="assets/mobile/en_badge_web_generic.png" target="_blank" >Add To Chrome</a>      
+            </div>
+          <a data-from="titleScreen" data-to="credits" class="nextButton">Credits</a>
+            <div class="socialPlugins">
+            <a id="appleStore" class="fl" href='assets/mobile/badge-download-on-the-app-store.svg' target='_blank'><img src='assets/mobile/badge-download-on-the-app-store.svg' style='width:175px;' /></a>
+            <a id="googlePlay" class="fr"  href='assets/mobile/en_badge_web_generic.png' target='_blank'><img alt='Get it on Google Play' src='assets/mobile/en_badge_web_generic.png' style='width: 200px;'/></a>
+            </div>
+        </div>
         
         <div class="appPage" id="gamePlay" style="">
             <span id="levelCounter">Level: 1</span>
@@ -113,8 +93,8 @@
                 </script>
                 -->
             </div> 
-            <a class="buttonControl nextButton" id="nextLevel" >NEXT</a>
-        </div>   
+            <a class="buttonControl nextButton" data-from="levelTransition" data-to="gamePlay">NEXT</a>
+        </div> 
         
         <div class="appPage" id="beatGame" style="">
             <div>
@@ -122,12 +102,40 @@
             <span id="beatGameScore">Your Score: </span>
             <span>Highest Score: 3000</span>
             </div>
-            <a class="buttonControl nextButton" id="shareStart">MENU</a>
-        </div>        
+            <a class="buttonControl nextButton" data-from="beatGame" data-to="titleScreen">MENU</a>
+        </div>  
         
         <div class="appPage" id="gameOver" style="">
             <h1>Game Over!</h1>	
-            <a class="buttonControl nextButton" id="restart">RESTART</a>	
+            <a class="buttonControl nextButton" data-from="gameOver" data-to="titleScreen">RESTART</a>	
+        </div>
+        
+        <div class="appPage" id="credits" style="">
+            <h2>Credits:</h2>
+            <p>This game was possible thanks to the work of these wonderful people!</p>
+            <h2>Sounds</h2>
+            <ul>
+            <li>shield.wav by @sammyF70 on FreeSound.org</li>
+            <li>lasershoot.wav by @MusicLegends on FreeSound.org</li>
+            <li>explosion.wav by @ProjectsU012 on FreeSound.org</li>
+            <li>perk.wav by @RunnerPack on Freesound.org</li>
+            <li>meteorExplosion.wav by Jeff and Steve Fulton from their HTML5 Canvas book</li>
+            <li>victory.wav by @unadamlar on FreeSound.org</li>
+            <li>gameover.wav by @fins on FreeSound.org</li>
+            </ul>
+            <h2>Resources</h2>
+            <ul>
+            <li>Howler.js made by http://goldfirestudios.com used for extensive audio manipulation in this game.</li>
+            <li>HTML5 Canvas, 2nd Edition By Steve Fulton, Jeff Fulton, incredible book, gave me a jump start from beginner to intermediate.</li>
+            </ul>
+            <a class="buttonControl nextButton" data-from="credits" data-to="titleScreen">BACK</a>   
+        </div>  
+        
+        <div class="appPage" id="howToPlay">
+            <h2>How To Play</h2>
+            <p>MOBILE: To play on your mobile device, all you need to do is use your device gyroscope sensors to move your ship around space. Tap on the screen to launch missiles and tap and hold with two fingers to activate your ship's protective shield.</p>
+            <p>DESKTOP: move the ship around with the arrow keys on your keyboard. Use the "X" key to activate your ship's protective shield and press "Space Bar" to launch a missile. You can pause the game by pressing "P"</p>
+        <a class="buttonControl nextButton" data-from="howToPlay" data-to="titleScreen">BACK</a>
         </div>
         
     </div>
