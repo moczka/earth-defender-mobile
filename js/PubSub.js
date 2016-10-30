@@ -1,12 +1,12 @@
-var PubSub = {};
 
-(function(p){
+
+
 	
 	var events = {},
 		idRegistry = 9100;
 	
 	
-	p.subscribe = function(event, func){
+	function Subscribe(event, func){
 		if(!events.hasOwnProperty(event)){
 			events[event] = [];
 		}
@@ -22,15 +22,21 @@ var PubSub = {};
 		
 		return eventID;
 
-	};
+	}
 	
-	p.publish = function(event, data){
+	function Publish(){
+        
+        
+        
+        var event = arguments[0],
+            data = arguments[1],
+            realOne = arguments[2];
 		
-		for(var event in events){
+        
+        
 			if(!events.hasOwnProperty(event)){
 				return false;
 			}
-		}
 			
 		var subs = events[event];
 
@@ -40,9 +46,9 @@ var PubSub = {};
 			
 		}
 		
-	};
+	}
 	
-	p.unsubscribe = function(id){
+	function Unsubscribe(id){
 		
 		for(var event in events){
 			if(events.hasOwnProperty(event)){
@@ -55,8 +61,14 @@ var PubSub = {};
 			}
 		}
 		
-	};
+	}
 
-})(PubSub);
 
-module.exports = PubSub;
+
+module.exports = {
+    
+    subscribe : Subscribe,
+    publish : Publish,
+    unsubscribe : Unsubscribe
+    
+};

@@ -49,7 +49,7 @@ var keyboardControl = function(){
 		document.addEventListener('keydown', onKeyDown, false);
 		initialized = true;
 		console.log('Keyword Control Module Initialized');
-        PubSub.subscribe('statechange', handleStateChange.bind(this));
+        PubSub.subscribe('statechange', handleStateChange);
 		
 	}
 	

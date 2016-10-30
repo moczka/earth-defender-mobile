@@ -21,13 +21,15 @@ function init(){
     
     if(this.hasInitialized) return this;
     
+    var self = this;
+    
     
     this.hasInitialized = true;
     this.pages = document.getElementsByClassName('appPage');
     this.interface = document.getElementById('interfaceWrapper');
     this.counters = document.getElementsByClassName('counter');
     
-    this.subId = PubSub.subscribe('statechange', handleStateChange.bind(this));
+    this.subId = PubSub.subscribe('statechange', handleStateChange.bind(self));
     
     delegateClicks.call(this);
     
@@ -63,9 +65,9 @@ function handleClick(event){
     
 }
 
-function updateCounters(couter, value){
+function updateCounters(counter, value){
     
-    this.counters[counter].innerHTML(value);
+    this.counters[counter].innerHTML = value;
     
     return this;
     

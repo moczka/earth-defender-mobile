@@ -1,4 +1,5 @@
 var Howl = require('howler').Howl;
+var PubSub = require('./PubSub');
 
 
 var ResourceLoader = (function(){
@@ -57,6 +58,8 @@ var ResourceLoader = (function(){
 		
 		//return if all assets have already loaded and indexed.
 		if(assetsDownloaded) return;
+        
+        PubSub.publish('statechange', {from: state.INIT, to: state.LOADING});
 		
 		//sets to true so this method (downloadAll()) is called only onced.
 		assetsDownloaded = true;

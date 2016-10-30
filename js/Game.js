@@ -38,7 +38,8 @@ var ResourceLoader = require('./ResourceLoader.js'),
         levelRocks = 5,
         levelEnemies = 8,
         levelPerks = 4,
-        enemiesKilled = 0,
+        enemiesKilled = 0
+        currentScore = 0,
         shipLives = 4,
         rocksDestroyed = 0,
         currentLevel = 0,
@@ -94,9 +95,11 @@ function init(){
         //add game control for desktop based on keyboard events
         keyboardControl.init(playerShip);
     
-        //var subID2 = PubSub.subscribe('meteor_explosion', handleMeteorExplosion);
+        
         //sign up for subscriptions
         var subID1 = PubSub.subscribe('statechange', handleStateChange.bind(self));
+        var subID2 = PubSub.subscribe('meteor_explosion', handleMeteorExplosion.bind(self));
+        var subID3 = PubSub.subscribe('collision', recordCollision.bind(self));
     
     
 }
@@ -274,7 +277,7 @@ function handleGamePlay(){
                             console.log(currentPerk);
                             console.log(playerShip);
                             currentPerk.destroy();
-                            recordCollision(currentPerk.type);
+                            PubSub.publish('collision', currentPerk.type);
                         }
                     }
                 }
@@ -304,11 +307,14 @@ function handleGamePlay(){
                 currentEnemy.attack(playerShip);
                 currentEnemy.missiles.isCollidingWith(playerShip, playerShip.shield, meteorPool.pool);
                 playerShip.missiles.isCollidingWith(currentEnemy, currentEnemy.shield);
+                
                 if(Algorithms.hitTest(currentEnemy, playerShip)){
+                    
                     currentEnemy.destroy();
                     playerShip.destroy();
-                    recordCollision(currentEnemy.type);
-                    recordCollision(playerShip.type);
+                    PubSub.publish('collision', currentEnemy.type);
+                    PubSub.publish('collision', playerShip.type);
+                    
                 }
                 
             }
@@ -324,34 +330,29 @@ function handleGamePlay(){
         }
         
         
-        if(shipLives <= 0 && !playerShip.colliding && appState == STATE_PLAYING){
+        if(shipLives <= 0 && !playerShip.colliding && state.CURRENT == state.GAME_PLAY){
             
                     if(currentLevel == lastLevel){
-						finalLevelSound.stop();
+						ResourceLoader.assets.finalLevelSound.stop();
 					}else{
-						soundTrack.stop(); 
+						ResourceLoader.assets.soundTrack.stop(); 
 					}
             
                 currentLevel = 0;
-                appState = STATE_GAME_OVER;
             
-        }else if(levelEnemies <= 0 && !playerShip.colliding && playerShip.alive && appState == STATE_PLAYING){
+        }else if(levelEnemies <= 0 && !playerShip.colliding && playerShip.alive && state.CURRENT == state.GAME_PLAY){
             
                     if(currentLevel == lastLevel){
-						finalLevelSound.stop();
+						ResourceLoader.assets.finalLevelSound.stop();
 					}else{
-						soundTrack.stop(); 
+						ResourceLoader.assets.soundTrack.stop(); 
 					}
             
             playerShip.angle = playerShip.velY = playerShip.velX = 0;
             playerShip.velX = 1;
             
             
-            PubSub.publish('statechange', {from: state.GAME_PLAY, to: state.LEVEL_TRANSITION});
-            
-            //updateCounter('level');
-            
-            state.CURRENT = state.LEVEL_TRANSITION;
+            PubSub.publish('statechange', {from: state.GAME_PLAY, to: state.SHIP_JUMP});
 
         }
     
@@ -428,7 +429,6 @@ function handleShipJump(){
         if(playerShip.x >= 1020-playerShip.width){ 
             
             PubSub.publish('statechange', {from: state.SHIP_JUMP, to: state.LEVEL_TRANSITION});
-            state.CURRENT = state.LEVEL_TRANSITION;
             
         }
     
@@ -483,7 +483,7 @@ function handleGameOver(){
     
 }
 
-function recordCollision(objectType){
+function recordCollision(event, objectType){
     
         switch(objectType){
             case "largeRock":
@@ -520,7 +520,7 @@ function recordCollision(objectType){
                 
             case "life":
                 shipLives++;
-                UIController.updateCounter('score', shipLives);
+                UIController.updateCounter('lives', shipLives);
                 break;
                 
             case "shield":

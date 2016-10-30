@@ -253,7 +253,7 @@ var ResourceLoader = require('./ResourceLoader'),
               smallRockSpeed = 1.2,
               randomAngle;
         
-        
+          this.sprite = ResourceLoader.assets.meteorSprite;
             
             size = size || "large";
     
@@ -262,7 +262,6 @@ var ResourceLoader = require('./ResourceLoader'),
                     
                     spriteAnimationInfo = {width:56,height:55, offsetX: 0, offsetY: 0, numCol:2, numRow:9,fps:60,speed:8,loop:false,from:0,to:17};
                     this.spriteAnimation.init(spriteAnimationInfo);
-                    this.sprite = ResourceLoader.assets.meteorSprite;
                     randomAngle = Math.random()*(Math.PI*2);
                     Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
                     Physics.prototype.spawn.call(this, 0, 0, randomAngle, largeRockSpeed);
@@ -276,7 +275,6 @@ var ResourceLoader = require('./ResourceLoader'),
                     
                     spriteAnimationInfo = {width:44,height:44, numCol:3, numRow:6,fps:60,offsetX: 130, offsetY : 0, speed:12,loop:true,from:0,to:17};   
                     this.spriteAnimation.init(spriteAnimationInfo);
-                    this.sprite = ResourceLoader.assets.meteorSprite;
                     randomAngle = Math.random()*(Math.PI*2);
                     Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
                     Physics.prototype.spawn.call(this, 0, 0, randomAngle, mediumRockSpeed);
@@ -290,7 +288,6 @@ var ResourceLoader = require('./ResourceLoader'),
                     
                     spriteAnimationInfo = {width:33,height:33, numCol:3,offsetX: 290, offsetY: 0, numRow:6,fps:60,speed:15,loop:true,from:0,to:17};
                     this.spriteAnimation.init(spriteAnimationInfo);
-                    this.sprite = ResourceLoader.assets.meteorSprite;
                     randomAngle = Math.random()*(Math.PI*2);
                     Display.prototype.init.call(this, spriteAnimationInfo.width, spriteAnimationInfo.height);
                     Physics.prototype.spawn.call(this, 0, 0, randomAngle, smallRockSpeed);
@@ -336,6 +333,8 @@ var ResourceLoader = require('./ResourceLoader'),
             ResourceLoader.assets.meteorExplosionSound.play();
             this.colliding = true;
             
+            PubSub.publish('meteor_explosion', this);
+        
     };    
     
 	function Background(){
@@ -965,14 +964,18 @@ var ResourceLoader = require('./ResourceLoader'),
 										item1.destroy();
 										item2.reduceLife(10);
 										//recordCollision(item1.type);
+                                        PubSub.publish('collision', item1.type);
 									}
 								}else if(item1 instanceof Perk){
 									item1.destroy();
 									//recordCollision(item1.type);
+                                    PubSub.publish('collision', item1.type);
 								}else{
 									item2.destroy();
 									item1.destroy();
 									//recordCollision(item2.type);
+                                    PubSub.publish('collision', item2.type);
+                                    PubSub.publish('collision', item1.type);
 									//recordCollision(item1.type);
 								}
 						}

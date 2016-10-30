@@ -49,8 +49,6 @@ function canvasApp(){
     };
     
     
-    UIController.init();
-    
     window.ResourceLoader = ResourceLoader;
 	//adding the state object to the keyboardControl state property
     var preloadImage = document.getElementById('preload');
@@ -94,8 +92,8 @@ function canvasApp(){
                         volume: 0.3,
                         },
                     explosionSound : {
-                                    src: ['assets/sounds/explosion.mp3','assets/sounds/explosion.wav'],
-                                    volume: 0.2,
+                        src: ['assets/sounds/explosion.mp3','assets/sounds/explosion.wav'],
+                        volume: 0.2,
                         },
                     perkSound : {
                         src: ['assets/sounds/perk.mp3','assets/sounds/perk.wav'],
@@ -123,8 +121,7 @@ function canvasApp(){
 			}
 		};
     
-    
-    PubSub.publish('statechange', {from: state.INIT, to: state.LOADING});
+    UIController.init();
     ResourceLoader.init(loaderOptions);
     ResourceLoader.downloadAll();
     
@@ -251,6 +248,7 @@ function canvasApp(){
 	
 	//removes the default behavior of pinching zoom on Mobile
 	function onTouchMove(e){
+		
 		e.preventDefault();
 	}
 
