@@ -43,7 +43,7 @@ var ResourceLoader = require('./ResourceLoader.js'),
         shipLives = 4,
         rocksDestroyed = 0,
         currentLevel = 0,
-        lastLevel = 1;
+        lastLevel = 14;
 
 	//TEMP: player instance and enemies
     var playerShip,
