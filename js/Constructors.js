@@ -114,6 +114,8 @@ var ResourceLoader = require('./ResourceLoader'),
         this.shieldDisabled = false;
 		this.maxVelocity = 4;
         this.missilesSpeed = 2.5;
+		this.easeValue = 0.03;
+		this.jumping = false;
         
     }
 		
@@ -135,13 +137,11 @@ var ResourceLoader = require('./ResourceLoader'),
         this.shield = shield;
         this.missiles = missilePool;
         
-        
-        
     };    
 	
     Spacecraft.prototype.follow = function(object){
         
-			if(!object.alive){
+			if(!object.alive || this.jumping){
 				return;
 			}	
 			var dx, dy, distance, newVelX, newVelY, futureVel, direction;
@@ -177,6 +177,7 @@ var ResourceLoader = require('./ResourceLoader'),
             Physics.prototype.spawn.call(this, x, y, angle, speed);
             this.missiles.hideItems();
             //this.shield.reset();
+			this.jumping = false;
         
     };
     
@@ -184,6 +185,17 @@ var ResourceLoader = require('./ResourceLoader'),
         this.colliding = true;  
         ResourceLoader.assets.explosionSound.play();
     };
+
+	Spacecraft.prototype.jump = function(){
+		
+		//if spacecraft is not jumping, have it face to the right and no Y velocity.
+		if(!this.jumping){
+			this.velY = this.angle = 0;
+			this.velX = 1;
+			this.jumping = true;
+		}
+		
+	};
 
     Spacecraft.prototype.draw = function(){
         
@@ -216,7 +228,16 @@ var ResourceLoader = require('./ResourceLoader'),
                 this.shield.x = this.x-this.shield.centerX+this.centerX;
                 this.shield.y = this.y-this.shield.centerY+this.centerY;
                 this.shield.draw();
-        }    
+        }
+		
+		//if spacecraft is jumping, ease the spacecraft out.
+		if(this.jumping && this.velX < 10){
+			
+			this.velX += this.velX*this.easeValue;
+			
+		}
+		
+		
         
     };
     
@@ -369,7 +390,6 @@ var ResourceLoader = require('./ResourceLoader'),
             this.autoSpawn = true;
             this.thrustAccel = 0.04;
             this.missilesSpeed = 3.2;
-            this.easeValue = 0.03;
             this.spriteAnimation = new SpriteAnimation();
             this.spriteAnimation.setCanvas(mainCanvas);
             this.spriteAnimation.init(shipSpriteInfo); 
@@ -545,17 +565,6 @@ var ResourceLoader = require('./ResourceLoader'),
         this.type = "mothership";
     
     }
-    
-    Mothership.prototype.jump = function(){
-        
-            console.log('JUMPED MOTHERSHIP!');
-            if(this.alpha == 0 && this.hasReleasedShips){
-                this.alive = false;
-            } 
-            this.alive = false;
-            this.shield.active = false;
-        
-        };
     
     Mothership.prototype.init = function(shipType){
         

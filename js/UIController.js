@@ -1,5 +1,6 @@
 var PubSub = require('./PubSub'),
 
+	//state dictionary given property names for each state. 
     state = {
         loading: 0,
         storyLine : 1,
@@ -20,36 +21,16 @@ var PubSub = require('./PubSub'),
 function init(){
     
     if(this.hasInitialized) return this;
-    
-    var self = this;
-    
-    
+     
     this.hasInitialized = true;
     this.pages = document.getElementsByClassName('appPage');
     this.interface = document.getElementById('interfaceWrapper');
     this.counters = document.getElementsByClassName('counter');
-    
-    this.subId = PubSub.subscribe('statechange', handleStateChange.bind(self));
-    
-    delegateClicks.call(this);
+    this.subId = PubSub.subscribe('statechange', handleStateChange.bind(this));
+    //Adds mousedown event listener to the div containing all the app pages
+	this.interface.addEventListener('mousedown', handleClick);
     
     return this;
-    
-}
-
-function delegateClicks(){
-    
-    var pages = [].slice.call(this.pages, 0, this.pages.length); 
-    
-    for(var i=0, len=pages.length; i<len; i++){
-        
-        var currentPage = pages[i];
-        
-        currentPage.addEventListener('mousedown', handleClick);
-        
-    }
-    
-    return pages;
     
 }
 
@@ -59,6 +40,7 @@ function handleClick(event){
         from = button.getAttribute('data-from'),
         to = button.getAttribute('data-to');
     
+	//if the element that triggered event has data-to and from attributes, trigger event.
     if(from && to){
          PubSub.publish('statechange', {from: state[from], to: state[to]});   
     }
@@ -67,14 +49,21 @@ function handleClick(event){
 
 function updateCounters(counter, value){
     
-    this.counters[counter].innerHTML = value;
+	//if the counter exists update its value.
+	if(this.counters[counter]){
+
+		 this.counters[counter].innerHTML = value;
+		
+	}
+   
     
     return this;
     
 }
 
 function show(pageName){
-    
+	
+    //if the page exists show it. 
     if(this.pages[pageName]){
         
         this.pages[pageName].setAttribute('style', 'display: block;');
@@ -87,6 +76,7 @@ function show(pageName){
 
 function hide(pageName){
     
+	//if the page is defined, hide it. 
     if(this.pages[pageName]){
         
         this.pages[pageName].setAttribute('style', 'display: none;');
@@ -100,9 +90,11 @@ function hide(pageName){
 function hideAll(){
     
     var self = this;
- 
+	
+ 	//delegates the forEach array method to iterate and hide each page.
     [].forEach.call(this.pages, function(curretPage, index){
        
+		//calls the module hide method with the current context.
         hide.call(self, index);
         
     });
@@ -114,6 +106,7 @@ function hideAll(){
 
 function handleStateChange(event, data){
     
+	//hides away current state page and shows new state page.
     hide.call(this, data.from);
     show.call(this, data.to);
     

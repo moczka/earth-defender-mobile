@@ -79,7 +79,7 @@ function canvasApp(){
                         volume: 0.5,
                         loop: false
                         },
-                    finaLevelSound : {
+                    lastLevelSound : {
                          src: ['assets/sounds/finalLevelSound.mp3','assets/sounds/finalLevelSound.wav'],
                          volume: 1,
                         },
@@ -197,25 +197,10 @@ function canvasApp(){
         
     }
     
-	//updates game board, scores, level etc..
-	function updateCounter(object){
-		switch(object){
-			case "life":
-				livesCounter.innerHTML = "Lives: "+shipLives;
-				break;
-			case "score":
-				scoreCounter.innerHTML = "Score: "+currentScore;
-				break;
-			case "level":
-				levelCounter.innerHTML = "Level: "+currentLevel;
-				break;
-		}
-	}
-	
 	//handles the mousemove interaction at title screen.
 	function onMouseMove(event){
         
-		if(appState != STATE_TITLE_SCREEN){
+		if(state.CURRENT != state.TITLE_SCREEN){
             return;
         }
         

@@ -43,7 +43,7 @@ var ResourceLoader = require('./ResourceLoader.js'),
         shipLives = 4,
         rocksDestroyed = 0,
         currentLevel = 0,
-        lastLevel = 14;
+        lastLevel = 1;
 
 	//TEMP: player instance and enemies
     var playerShip,
@@ -56,7 +56,6 @@ var ResourceLoader = require('./ResourceLoader.js'),
         humanShipsPool,
         perksPool,
         meteorPool;   
-
 
 function init(){
         
@@ -101,6 +100,8 @@ function init(){
         var subID2 = PubSub.subscribe('meteor_explosion', handleMeteorExplosion.bind(self));
         var subID3 = PubSub.subscribe('collision', recordCollision.bind(self));
     
+	window.alienMothership = alienMothership;
+	window.playerShip = playerShip;
     
 }
 
@@ -129,12 +130,12 @@ function handleSetUpLevel(){
         //checks if game is over
         if(currentLevel > lastLevel){
             userBeatGame = true;
-            PubSub.publish('statechange', {from: state.CURRENT, to: state.GAME_OVER});
+            PubSub.publish('statechange', {from: state.CURRENT, to: state.BEAT_GAME});
             return;
         }
            
         if(currentLevel == lastLevel){
-            ResourceLoader.assets.finalLevelSound.play();
+            ResourceLoader.assets.lastLevelSound.play();
         }else{
             //begins normal soundtrack 
 		   ResourceLoader.assets.soundTrack.play();
@@ -186,6 +187,10 @@ function handleSetUpLevel(){
         //updateCounter('level');
         //updateCounter('life');
         //updateCounter('score');
+    
+        UIController.updateCounter('level', currentLevel);
+        UIController.updateCounter('lives', shipLives);
+        UIController.updateCounter('score', currentScore);
         
         PubSub.publish('statechange', {from: state.SET_UP_LEVEL, to: state.GAME_PLAY});
     
@@ -333,24 +338,22 @@ function handleGamePlay(){
         if(shipLives <= 0 && !playerShip.colliding && state.CURRENT == state.GAME_PLAY){
             
                     if(currentLevel == lastLevel){
-						ResourceLoader.assets.finalLevelSound.stop();
+						ResourceLoader.assets.lastLevelSound.stop();
 					}else{
 						ResourceLoader.assets.soundTrack.stop(); 
 					}
+                
+                PubSub.publish('statechange', {from: state.GAME_PLAY, to: state.GAME_OVER});
             
                 currentLevel = 0;
             
         }else if(levelEnemies <= 0 && !playerShip.colliding && playerShip.alive && state.CURRENT == state.GAME_PLAY){
             
                     if(currentLevel == lastLevel){
-						ResourceLoader.assets.finalLevelSound.stop();
+						ResourceLoader.assets.lastLevelSound.stop();
 					}else{
 						ResourceLoader.assets.soundTrack.stop(); 
 					}
-            
-            playerShip.angle = playerShip.velY = playerShip.velX = 0;
-            playerShip.velX = 1;
-            
             
             PubSub.publish('statechange', {from: state.GAME_PLAY, to: state.SHIP_JUMP});
 
@@ -366,10 +369,12 @@ function handleLevelTransition(){
         gameLoop();
 
     }
-        
-    //reportEnemiesKilled.innerHTML = "Enemies Killed: "+enemiesKilled;
-    //reportRocksDestroyed.innerHTML = "Asteroids Destroyed: "+rocksDestroyed;
-    //reportScore.innerHTML = "Score: "+currentScore;
+
+    
+    UIController.updateCounter('reportScore', currentScore);
+    UIController.updateCounter('reportCarnage', enemiesKilled);   
+    UIController.updateCounter('reportAsteroids', rocksDestroyed);
+
     
 }
 
@@ -422,7 +427,7 @@ function handleShipJump(){
             }
         });
         
-        playerShip.velX += playerShip.velX*playerShip.easeValue;
+		playerShip.jump();
         playerShip.draw();
         
         
@@ -437,9 +442,8 @@ function handleShipJump(){
 function handlePause(){
  
     ResourceLoader.assets.soundTrack.pause();
-    ResourceLoader.assets.finaLevelSound.pause();
+    ResourceLoader.assets.lastLevelSound.pause();
     loopOn = false;
-    gameLoop();
     
 }
 
@@ -448,13 +452,14 @@ function handleBeatGame(){
         if(loopOn){
             
             loopOn = false;
-            gameLoop();
             
         }
 		
         //outputs the final score to the winner gamer :)
         //ResourceLoader.finalLevelSound.stop();       
         //beatGameScore.innerHTML = "Your Score: "+currentScore;
+    
+        UIController.updateCounter('beatGameScore', currentScore);
         userBeatGame = false;
                 
         ResourceLoader.assets.victorySound.play();
@@ -470,7 +475,6 @@ function handleGameOver(){
         if(loopOn){
          
             loopOn = false;
-            gameLoop();
             
         }
         
@@ -534,12 +538,18 @@ function recordCollision(event, objectType){
 
 function handleCredits(){
     
+	if(loopOn){
+		loopOn = false;
+	}
     
     
 }
 
 function handleHowToPlay(){
     
+	if(loopOn){
+		loopOn = false;
+	}
     
     
 }
@@ -562,10 +572,14 @@ function runState(state){
 function gameLoop(){
     
     if(loopOn){
-        
-			requestAnimFrame(gameLoop, FRAME_RATE);
-			runState(state.CURRENT);
-        
+     
+		requestAnimFrame(gameLoop, FRAME_RATE);
+			
+		runState(state.CURRENT);
+		
+		console.log('game loop running');
+		
+		
 		}
 }
 
