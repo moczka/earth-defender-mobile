@@ -26,9 +26,7 @@ function canvasApp(){
 			function(/* function */ callback, /* DOMElement */ element){
 				window.setTimeout(callback, FRAME_RATE);
 			};
-        })();
-
-
+        })(); 
     
     var state = {
             INIT : -1,
