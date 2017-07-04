@@ -1,21 +1,21 @@
 window.addEventListener('load', onWindowLoad, false);
 
 function onWindowLoad(){
-    
-    
+
+
     canvasApp();
-    
+
 }
 
 
-function canvasApp(){	
-	
+function canvasApp(){
+
 		var ResourceLoader = require('./ResourceLoader.js'),
             PubSub = require('./PubSub.js'),
             Consctructors = require('./Constructors'),
             UIController = require('./UIController'),
             Game = require('./Game');
-    
+
 			//sets up game engine
 		window.requestAnimFrame = (function(){
 	return  window.requestAnimationFrame   ||
@@ -26,8 +26,8 @@ function canvasApp(){
 			function(/* function */ callback, /* DOMElement */ element){
 				window.setTimeout(callback, FRAME_RATE);
 			};
-        })(); 
-    
+        })();
+
     var state = {
             INIT : -1,
             LOADING: 0,
@@ -43,22 +43,22 @@ function canvasApp(){
             SHIP_JUMP : 10,
             SET_UP_LEVEL: 11,
 
-            CURRENT : -1 
+            CURRENT : -1
     };
-    
-    
+
+
     window.ResourceLoader = ResourceLoader;
 	//adding the state object to the keyboardControl state property
     var preloadImage = document.getElementById('preload');
-    
+
     preloadImage.setAttribute('style', 'display: none;');
-	
+
 	//frame, assets counter and audio support
 	var frameRate = new FrameRateCounter();
 
-	
+
     var loadBar = document.getElementById('loadBar');
-    
+
 	//set up loader
 	var loaderOptions = {
 			assets : {
@@ -108,29 +108,29 @@ function canvasApp(){
                 }
 			},
             useHowl : true,
-        
+
 			onload : function(item){
 				loadBar.setAttribute('style', 'width: '+ResourceLoader.loaded*100+'%;');
 			},
-        
+
 			final : function(){
                 Game.init();
 				PubSub.publish('statechange', {from:state.LOADING, to:state.STORY_LINE});
 			}
 		};
-    
+
     UIController.init();
     ResourceLoader.init(loaderOptions);
     ResourceLoader.downloadAll();
-    
-    
-   
-    
-    
-    
+
+
+
+
+
+
     //PubSub.publish('statechange', {from: state.LOADING, to: state.STORY_LINE});
-    
-	
+
+
 	//counters
 	var scoreCounter = document.getElementById('scoreCounter');
 	var levelCounter = document.getElementById('levelCounter');
@@ -140,13 +140,13 @@ function canvasApp(){
     var reportRocksDestroyed = document.getElementById('eportAsteroids');
     var reportScore = document.getElementById('reportScore');
     var beatGameScore = document.getElementById('beatGameScore');
-	
 
-	
 
-        
+
+
+
     //game score tracker
-    
+
     function recordCollision(objectType){
         switch(objectType){
             case "largeRock":
@@ -154,54 +154,54 @@ function canvasApp(){
                 updateCounter('score');
                 rocksDestroyed++;
                 break;
-                
+
             case "mediumRock":
                 currentScore += 10;
                 updateCounter('score');
                 rocksDestroyed++;
                 break;
-                
+
             case "smallRock":
                 currentScore += 5;
                 updateCounter('score');
                 rocksDestroyed++;
                 break;
-                
+
             case "humanShip":
                 shipLives--;
                 currentScore -= 50;
                 updateCounter('score');
                 updateCounter('life');
                 break;
-                
+
             case "enemy":
                 currentScore += 50;
                 updateCounter('score');
                 levelEnemies--;
                 enemiesKilled++;
                 break;
-                
+
             case "life":
                 shipLives++;
                 updateCounter('life');
                 break;
-                
+
             case "shield":
                 playerShip.shield.reset();
                 break;
             case "cash":
                 break;
         }
-        
+
     }
-    
+
 	//handles the mousemove interaction at title screen.
 	function onMouseMove(event){
-        
+
 		if(state.CURRENT != state.TITLE_SCREEN){
             return;
         }
-        
+
 		if ( event.layerX ||  event.layerX == 0) { // Firefox
    			mouse.x = event.layerX ;
     		mouse.y = event.layerY;
@@ -209,9 +209,9 @@ function canvasApp(){
     		mouse.x = event.offsetX;
     		mouse.y = event.offsetY;
   		}
-		
+
 	}
-	
+
 	//Checks for device orientation
 	function onOrientationChange(e){
 
@@ -226,17 +226,17 @@ function canvasApp(){
             interfaceWrapper.setAttribute('style', '');
 			userAgent.portrait = false;
 		}
-		
+
 	}
-	
+
 	//removes the default behavior of pinching zoom on Mobile
 	function onTouchMove(e){
-		
+
 		e.preventDefault();
 	}
 
 	//FramRate Class
-	
+
 	function FrameRateCounter() {
 
         this.lastFrameCount = 0;
